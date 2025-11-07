@@ -88,6 +88,26 @@ async function handlePost(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid position' }, { status: 400 })
     }
 
+    // Validate location restrictions based on position
+    if (position === 'mca' && !ward_id) {
+      return NextResponse.json(
+        { error: 'MCA candidates must be assigned to a specific ward' },
+        { status: 400 }
+      )
+    }
+    if (position === 'mp' && !constituency_id) {
+      return NextResponse.json(
+        { error: 'MP candidates must be assigned to a specific constituency' },
+        { status: 400 }
+      )
+    }
+    if ((position === 'governor' || position === 'senator' || position === 'women_rep') && !county_id) {
+      return NextResponse.json(
+        { error: `${position.replace('_', ' ')} candidates must be assigned to a specific county` },
+        { status: 400 }
+      )
+    }
+
     // Handle profile photo upload
     let profile_photo = null
     if (files.profile_photo && files.profile_photo.length > 0) {

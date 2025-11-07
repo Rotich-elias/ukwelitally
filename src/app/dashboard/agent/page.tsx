@@ -6,6 +6,7 @@ import DashboardNav from '@/components/DashboardNav'
 
 interface AgentInfo {
   agent_id: number
+  candidate_id: number
   full_name: string
   candidate_name: string
   candidate_position: string
@@ -125,7 +126,7 @@ export default function AgentDashboard() {
       const token = localStorage.getItem('token')
       const submitData = new FormData()
       submitData.append('polling_station_id', agentInfo.polling_station_id.toString())
-      submitData.append('candidate_id', agentInfo.agent_id.toString()) // Use agent's candidate
+      submitData.append('candidate_id', agentInfo.candidate_id.toString()) // Use agent's candidate
       submitData.append('submission_type', 'primary')
 
       // Add photos

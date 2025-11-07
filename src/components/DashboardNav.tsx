@@ -49,12 +49,15 @@ export default function DashboardNav() {
               >
                 Dashboard
               </a>
-              <a
-                href="/results"
-                className="text-sm text-dark-300 hover:text-white transition-colors"
-              >
-                Results
-              </a>
+              {/* Hide Results link from agents */}
+              {user.role !== 'agent' && (
+                <a
+                  href="/results"
+                  className="text-sm text-dark-300 hover:text-white transition-colors"
+                >
+                  Results
+                </a>
+              )}
               <span className="text-sm px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full border border-blue-500/30">
                 {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
               </span>

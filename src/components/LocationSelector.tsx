@@ -44,6 +44,9 @@ interface LocationSelectorProps {
     pollingStationId?: number
   }) => void
   showPollingStations?: boolean
+  showCounty?: boolean
+  showConstituency?: boolean
+  showWard?: boolean
   required?: boolean
   initialValues?: {
     countyId?: number
@@ -56,6 +59,9 @@ interface LocationSelectorProps {
 export default function LocationSelector({
   onLocationChange,
   showPollingStations = false,
+  showCounty = true,
+  showConstituency = true,
+  showWard = true,
   required = false,
   initialValues,
 }: LocationSelectorProps) {
@@ -209,67 +215,73 @@ export default function LocationSelector({
   return (
     <div className="space-y-4">
       {/* County Selector */}
-      <div>
-        <label className="block text-sm font-medium text-dark-200 mb-2">
-          County {required && <span className="text-red-400">*</span>}
-        </label>
-        <select
-          value={selectedCounty || ''}
-          onChange={handleCountyChange}
-          className={selectClassName}
-          required={required}
-          disabled={loading.counties}
-        >
-          <option value="">Select County</option>
-          {counties.map(county => (
-            <option key={county.id} value={county.id}>
-              {county.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {showCounty && (
+        <div>
+          <label className="block text-sm font-medium text-dark-200 mb-2">
+            County {required && <span className="text-red-400">*</span>}
+          </label>
+          <select
+            value={selectedCounty || ''}
+            onChange={handleCountyChange}
+            className={selectClassName}
+            required={required && showCounty}
+            disabled={loading.counties}
+          >
+            <option value="">Select County</option>
+            {counties.map(county => (
+              <option key={county.id} value={county.id}>
+                {county.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Constituency Selector */}
-      <div>
-        <label className="block text-sm font-medium text-dark-200 mb-2">
-          Constituency {required && <span className="text-red-400">*</span>}
-        </label>
-        <select
-          value={selectedConstituency || ''}
-          onChange={handleConstituencyChange}
-          className={selectClassName}
-          required={required}
-          disabled={!selectedCounty || loading.constituencies}
-        >
-          <option value="">Select Constituency</option>
-          {constituencies.map(constituency => (
-            <option key={constituency.id} value={constituency.id}>
-              {constituency.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {showConstituency && (
+        <div>
+          <label className="block text-sm font-medium text-dark-200 mb-2">
+            Constituency {required && <span className="text-red-400">*</span>}
+          </label>
+          <select
+            value={selectedConstituency || ''}
+            onChange={handleConstituencyChange}
+            className={selectClassName}
+            required={required && showConstituency}
+            disabled={!selectedCounty || loading.constituencies}
+          >
+            <option value="">Select Constituency</option>
+            {constituencies.map(constituency => (
+              <option key={constituency.id} value={constituency.id}>
+                {constituency.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Ward Selector */}
-      <div>
-        <label className="block text-sm font-medium text-dark-200 mb-2">
-          Ward {required && <span className="text-red-400">*</span>}
-        </label>
-        <select
-          value={selectedWard || ''}
-          onChange={handleWardChange}
-          className={selectClassName}
-          required={required}
-          disabled={!selectedConstituency || loading.wards}
-        >
-          <option value="">Select Ward</option>
-          {wards.map(ward => (
-            <option key={ward.id} value={ward.id}>
-              {ward.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {showWard && (
+        <div>
+          <label className="block text-sm font-medium text-dark-200 mb-2">
+            Ward {required && <span className="text-red-400">*</span>}
+          </label>
+          <select
+            value={selectedWard || ''}
+            onChange={handleWardChange}
+            className={selectClassName}
+            required={required && showWard}
+            disabled={!selectedConstituency || loading.wards}
+          >
+            <option value="">Select Ward</option>
+            {wards.map(ward => (
+              <option key={ward.id} value={ward.id}>
+                {ward.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Polling Station Selector (optional) */}
       {showPollingStations && (

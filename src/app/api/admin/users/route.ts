@@ -31,7 +31,11 @@ export async function GET(request: NextRequest) {
                WHEN u.role = 'candidate' THEN c.id
                WHEN u.role = 'agent' THEN a.id
                ELSE NULL
-             END as profile_id
+             END as profile_id,
+             c.position,
+             c.payment_status,
+             c.payment_amount,
+             c.payment_date
       FROM users u
       LEFT JOIN candidates c ON u.id = c.user_id
       LEFT JOIN agents a ON u.id = a.user_id
@@ -130,16 +134,16 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
-      if ((position === 'governor' || position === 'senator') && !county_id) {
+      if ((position === 'governor' || position === 'senator' || position === 'women_rep') && !county_id) {
         return NextResponse.json(
-          { error: `${position} candidates must be assigned to a specific county` },
+          { error: `${position.replace('_', ' ')} candidates must be assigned to a specific county` },
           { status: 400 }
         )
       }
 
       await query(
-        `INSERT INTO candidates (user_id, party_name, position, county_id, constituency_id, ward_id)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO candidates (user_id, party_name, position, county_id, constituency_id, ward_id, is_system_user)
+         VALUES ($1, $2, $3, $4, $5, $6, true)`,
         [
           newUser.id,
           body.party_name || 'Independent',

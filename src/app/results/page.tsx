@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
 import LocationSelector from '@/components/LocationSelector'
 
@@ -22,16 +23,41 @@ interface Summary {
   reporting_percentage: number
 }
 
+interface CandidateProfile {
+  position: string
+  county_id?: number
+  constituency_id?: number
+  ward_id?: number
+  electoral_area: string
+}
+
 export default function ResultsPage() {
+  const router = useRouter()
   const [results, setResults] = useState<ResultsData[]>([])
   const [summary, setSummary] = useState<Summary | null>(null)
   const [loading, setLoading] = useState(false)
+  const [candidateProfile, setCandidateProfile] = useState<CandidateProfile | null>(null)
 
   // Use individual state variables to avoid object reference issues
   const [countyId, setCountyId] = useState<number | undefined>()
   const [constituencyId, setConstituencyId] = useState<number | undefined>()
   const [wardId, setWardId] = useState<number | undefined>()
   const [pollingStationId, setPollingStationId] = useState<number | undefined>()
+
+  // Check authorization - block agents from viewing results
+  useEffect(() => {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) {
+      router.push('/login')
+      return
+    }
+
+    const user = JSON.parse(userStr)
+    if (user.role === 'agent') {
+      router.push('/dashboard/agent')
+      return
+    }
+  }, [router])
 
   const fetchResults = async () => {
     setLoading(true)
@@ -55,18 +81,146 @@ export default function ResultsPage() {
     }
   }
 
+  // Fetch candidate profile on load if logged in
+  useEffect(() => {
+    const fetchCandidateProfile = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) return
+
+        const response = await fetch('/api/candidates/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          const profile = data.data as CandidateProfile
+          setCandidateProfile(profile)
+
+          // Auto-set location filters based on candidate position
+          if (profile.position === 'mca' && profile.ward_id) {
+            // MCA: Lock to their ward
+            setWardId(profile.ward_id)
+            setConstituencyId(profile.constituency_id)
+            setCountyId(profile.county_id)
+          } else if (profile.position === 'mp' && profile.constituency_id) {
+            // MP: Lock to their constituency, allow ward selection
+            setConstituencyId(profile.constituency_id)
+            setCountyId(profile.county_id)
+          } else if (
+            (profile.position === 'governor' ||
+             profile.position === 'senator' ||
+             profile.position === 'women_rep') &&
+            profile.county_id
+          ) {
+            // County-level: Lock to their county, allow constituency/ward selection
+            setCountyId(profile.county_id)
+          }
+          // President: No restrictions, show all selectors
+        }
+      } catch (error) {
+        console.error('Failed to fetch candidate profile:', error)
+      }
+    }
+
+    fetchCandidateProfile()
+  }, [])
+
   // Only re-fetch when location filters actually change
   useEffect(() => {
     fetchResults()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countyId, constituencyId, wardId, pollingStationId])
 
-  const handleLocationChange = (location: any) => {
-    setCountyId(location.countyId)
-    setConstituencyId(location.constituencyId)
-    setWardId(location.wardId)
-    setPollingStationId(location.pollingStationId)
-  }
+  const handleLocationChange = useCallback((location: any) => {
+    // Only update filters that are not locked by candidate position
+    if (!candidateProfile) {
+      // Not a candidate, allow all changes
+      setCountyId(location.countyId)
+      setConstituencyId(location.constituencyId)
+      setWardId(location.wardId)
+      setPollingStationId(location.pollingStationId)
+    } else {
+      // Candidate: Respect their position restrictions
+      if (candidateProfile.position === 'mca') {
+        // MCA: Cannot change any location (locked to ward)
+        // Keep existing values
+      } else if (candidateProfile.position === 'mp') {
+        // MP: Can only change ward within their constituency
+        setWardId(location.wardId)
+      } else if (
+        candidateProfile.position === 'governor' ||
+        candidateProfile.position === 'senator' ||
+        candidateProfile.position === 'women_rep'
+      ) {
+        // County-level: Can change constituency and ward within their county
+        setConstituencyId(location.constituencyId)
+        setWardId(location.wardId)
+      } else {
+        // President: No restrictions
+        setCountyId(location.countyId)
+        setConstituencyId(location.constituencyId)
+        setWardId(location.wardId)
+        setPollingStationId(location.pollingStationId)
+      }
+    }
+  }, [candidateProfile])
+
+  // Determine which selectors to show based on candidate position
+  const locationSelectorProps = useMemo(() => {
+    if (!candidateProfile) {
+      // Not a candidate, show all selectors
+      return {
+        showCounty: true,
+        showConstituency: true,
+        showWard: true,
+      }
+    }
+
+    if (candidateProfile.position === 'mca') {
+      // MCA: No selectors (locked to their ward)
+      return {
+        showCounty: false,
+        showConstituency: false,
+        showWard: false,
+      }
+    } else if (candidateProfile.position === 'mp') {
+      // MP: Only ward selector
+      return {
+        showCounty: false,
+        showConstituency: false,
+        showWard: true,
+      }
+    } else if (
+      candidateProfile.position === 'governor' ||
+      candidateProfile.position === 'senator' ||
+      candidateProfile.position === 'women_rep'
+    ) {
+      // County-level: Show constituency and ward
+      return {
+        showCounty: false,
+        showConstituency: true,
+        showWard: true,
+      }
+    } else {
+      // President: Show all
+      return {
+        showCounty: true,
+        showConstituency: true,
+        showWard: true,
+      }
+    }
+  }, [candidateProfile])
+
+  // Memoize initial values to prevent recreation on every render
+  const locationInitialValues = useMemo(() => ({
+    countyId,
+    constituencyId,
+    wardId,
+    pollingStationId,
+  }), [countyId, constituencyId, wardId, pollingStationId])
 
   return (
     <div className="min-h-screen bg-dark-950">
@@ -84,9 +238,29 @@ export default function ResultsPage() {
           <div className="lg:col-span-1">
             <div className="glass-effect rounded-xl p-6 sticky top-4">
               <h2 className="text-xl font-semibold text-white mb-4">Filter by Location</h2>
+
+              {/* Show candidate's electoral area if logged in as candidate */}
+              {candidateProfile && (
+                <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <p className="text-xs text-blue-300 mb-1">Your Electoral Area</p>
+                  <p className="text-sm font-semibold text-white">{candidateProfile.electoral_area}</p>
+                  <p className="text-xs text-blue-400 mt-1">
+                    {candidateProfile.position === 'mca' && 'Results locked to your ward'}
+                    {candidateProfile.position === 'mp' && 'Select wards within your constituency'}
+                    {(candidateProfile.position === 'governor' ||
+                      candidateProfile.position === 'senator' ||
+                      candidateProfile.position === 'women_rep') && 'Select areas within your county'}
+                    {candidateProfile.position === 'president' && 'View results nationwide'}
+                  </p>
+                </div>
+              )}
+
               <LocationSelector
+                key={candidateProfile ? `candidate-${candidateProfile.constituency_id || candidateProfile.county_id || candidateProfile.position}` : 'public'}
                 onLocationChange={handleLocationChange}
                 showPollingStations={false}
+                {...locationSelectorProps}
+                initialValues={locationInitialValues}
               />
 
               {/* Summary Stats */}
