@@ -175,7 +175,8 @@ export default function LocationSelector({
         pollingStationId: selectedStation,
       })
     }
-  }, [selectedCounty, selectedConstituency, selectedWard, selectedStation, onLocationChange])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCounty, selectedConstituency, selectedWard, selectedStation])
 
   const handleCountyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value ? Number(e.target.value) : undefined

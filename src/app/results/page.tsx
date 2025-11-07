@@ -26,21 +26,21 @@ export default function ResultsPage() {
   const [results, setResults] = useState<ResultsData[]>([])
   const [summary, setSummary] = useState<Summary | null>(null)
   const [loading, setLoading] = useState(false)
-  const [locationFilter, setLocationFilter] = useState<{
-    countyId?: number
-    constituencyId?: number
-    wardId?: number
-    pollingStationId?: number
-  }>({})
+
+  // Use individual state variables to avoid object reference issues
+  const [countyId, setCountyId] = useState<number | undefined>()
+  const [constituencyId, setConstituencyId] = useState<number | undefined>()
+  const [wardId, setWardId] = useState<number | undefined>()
+  const [pollingStationId, setPollingStationId] = useState<number | undefined>()
 
   const fetchResults = async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      if (locationFilter.countyId) params.append('county_id', locationFilter.countyId.toString())
-      if (locationFilter.constituencyId) params.append('constituency_id', locationFilter.constituencyId.toString())
-      if (locationFilter.wardId) params.append('ward_id', locationFilter.wardId.toString())
-      if (locationFilter.pollingStationId) params.append('polling_station_id', locationFilter.pollingStationId.toString())
+      if (countyId) params.append('county_id', countyId.toString())
+      if (constituencyId) params.append('constituency_id', constituencyId.toString())
+      if (wardId) params.append('ward_id', wardId.toString())
+      if (pollingStationId) params.append('polling_station_id', pollingStationId.toString())
 
       const response = await fetch(`/api/results/aggregate?${params.toString()}`)
       if (response.ok) {
@@ -55,12 +55,17 @@ export default function ResultsPage() {
     }
   }
 
+  // Only re-fetch when location filters actually change
   useEffect(() => {
     fetchResults()
-  }, [locationFilter])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countyId, constituencyId, wardId, pollingStationId])
 
   const handleLocationChange = (location: any) => {
-    setLocationFilter(location)
+    setCountyId(location.countyId)
+    setConstituencyId(location.constituencyId)
+    setWardId(location.wardId)
+    setPollingStationId(location.pollingStationId)
   }
 
   return (

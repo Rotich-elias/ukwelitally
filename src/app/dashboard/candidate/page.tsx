@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
 
@@ -38,18 +38,8 @@ export default function CandidateDashboard() {
   const [results, setResults] = useState<CandidateResult[]>([])
   const [summary, setSummary] = useState<ResultsSummary | null>(null)
 
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      router.push('/login')
-      return
-    }
-
-    fetchProfile()
-    fetchResults()
-  }, [router])
-
-  const fetchProfile = async () => {
+  // Fetch profile data
+  const fetchProfile = useCallback(async () => {
     try {
       const token = localStorage.getItem('token')
       const response = await fetch('/api/candidates/me', {
@@ -65,13 +55,16 @@ export default function CandidateDashboard() {
     } catch (error) {
       console.error('Failed to fetch profile:', error)
     }
-  }
+  }, [])
 
-  const fetchResults = async () => {
+  // Fetch results data
+  const fetchResults = useCallback(async () => {
+    if (!profile) return // Don't fetch until profile is loaded
+
     try {
       const token = localStorage.getItem('token')
       // The API will automatically restrict based on candidate's electoral area
-      const response = await fetch(`/api/results/aggregate?position=${profile?.position || 'president'}`, {
+      const response = await fetch(`/api/results/aggregate?position=${profile.position}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -87,7 +80,25 @@ export default function CandidateDashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [profile])
+
+  // Initial load - fetch profile
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      router.push('/login')
+      return
+    }
+
+    fetchProfile()
+  }, [router, fetchProfile])
+
+  // Fetch results when profile is loaded
+  useEffect(() => {
+    if (profile) {
+      fetchResults()
+    }
+  }, [profile, fetchResults])
 
   const getProgressPercentage = () => {
     if (!summary || summary.total_stations === 0) return 0

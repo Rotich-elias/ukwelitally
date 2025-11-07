@@ -178,3 +178,163 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
   }
 }
+
+// PUT - Update user (admin only)
+export async function PUT(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const token = authHeader.substring(7)
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
+
+    if (decoded.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const { user_id, email, phone, full_name, active } = body
+
+    if (!user_id) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    }
+
+    // Get current user data
+    const currentUser = await queryOne('SELECT * FROM users WHERE id = $1', [user_id])
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Build update query dynamically
+    const updates: string[] = []
+    const params: any[] = []
+    let paramIndex = 1
+
+    if (email && email !== currentUser.email) {
+      updates.push(`email = $${paramIndex}`)
+      params.push(email)
+      paramIndex++
+    }
+
+    if (phone && phone !== currentUser.phone) {
+      const normalizedPhone = normalizePhoneNumber(phone)
+      updates.push(`phone = $${paramIndex}`)
+      params.push(normalizedPhone)
+      paramIndex++
+    }
+
+    if (full_name && full_name !== currentUser.full_name) {
+      updates.push(`full_name = $${paramIndex}`)
+      params.push(full_name)
+      paramIndex++
+    }
+
+    if (typeof active === 'boolean' && active !== currentUser.active) {
+      updates.push(`active = $${paramIndex}`)
+      params.push(active)
+      paramIndex++
+    }
+
+    if (updates.length === 0) {
+      return NextResponse.json({ error: 'No changes to update' }, { status: 400 })
+    }
+
+    params.push(user_id)
+    const queryText = `UPDATE users SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${paramIndex} RETURNING *`
+
+    const updatedUser = await queryOne(queryText, params)
+
+    // Audit log
+    await query(
+      `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, old_values, new_values, ip_address)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        decoded.userId,
+        'user_updated',
+        'user',
+        user_id,
+        JSON.stringify({ email: currentUser.email, phone: currentUser.phone, full_name: currentUser.full_name, active: currentUser.active }),
+        JSON.stringify({ email, phone, full_name, active }),
+        request.headers.get('x-forwarded-for') || 'unknown',
+      ]
+    )
+
+    return NextResponse.json({
+      success: true,
+      message: 'User updated successfully',
+      data: updatedUser,
+    })
+  } catch (error) {
+    console.error('Error updating user:', error)
+    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
+  }
+}
+
+// DELETE - Delete user (admin only)
+export async function DELETE(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const token = authHeader.substring(7)
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
+
+    if (decoded.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })
+    }
+
+    const searchParams = request.nextUrl.searchParams
+    const userId = searchParams.get('user_id')
+
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    }
+
+    // Prevent admin from deleting themselves
+    if (parseInt(userId) === decoded.userId) {
+      return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 })
+    }
+
+    // Get user before deletion for audit log
+    const userToDelete = await queryOne('SELECT * FROM users WHERE id = $1', [userId])
+    if (!userToDelete) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Delete related records first (due to foreign key constraints)
+    // Delete candidate profile if exists
+    await query('DELETE FROM candidates WHERE user_id = $1', [userId])
+
+    // Delete agent profile if exists
+    await query('DELETE FROM agents WHERE user_id = $1', [userId])
+
+    // Delete the user
+    await query('DELETE FROM users WHERE id = $1', [userId])
+
+    // Audit log
+    await query(
+      `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, old_values, ip_address)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        decoded.userId,
+        'user_deleted',
+        'user',
+        userId,
+        JSON.stringify({ email: userToDelete.email, role: userToDelete.role, full_name: userToDelete.full_name }),
+        request.headers.get('x-forwarded-for') || 'unknown',
+      ]
+    )
+
+    return NextResponse.json({
+      success: true,
+      message: 'User deleted successfully',
+    })
+  } catch (error) {
+    console.error('Error deleting user:', error)
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 })
+  }
+}
