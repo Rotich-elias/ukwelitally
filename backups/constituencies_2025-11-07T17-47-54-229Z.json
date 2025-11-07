@@ -1,0 +1,2322 @@
+[
+  {
+    "id": 89,
+    "county_id": 108,
+    "name": "MBEERE NORTH",
+    "code": "066",
+    "registered_voters": 130395,
+    "created_at": "2025-11-06T13:07:50.140Z"
+  },
+  {
+    "id": 88,
+    "county_id": 108,
+    "name": "MBEERE SOUTH",
+    "code": "065",
+    "registered_voters": 118773,
+    "created_at": "2025-11-06T13:07:50.139Z"
+  },
+  {
+    "id": 87,
+    "county_id": 108,
+    "name": "RUNYENJES",
+    "code": "064",
+    "registered_voters": 144851,
+    "created_at": "2025-11-06T13:07:50.138Z"
+  },
+  {
+    "id": 51,
+    "county_id": 101,
+    "name": "BALAMBALA",
+    "code": "028",
+    "registered_voters": 72869,
+    "created_at": "2025-11-06T13:07:50.081Z"
+  },
+  {
+    "id": 53,
+    "county_id": 101,
+    "name": "DADAAB",
+    "code": "030",
+    "registered_voters": 71911,
+    "created_at": "2025-11-06T13:07:50.084Z"
+  },
+  {
+    "id": 54,
+    "county_id": 101,
+    "name": "FAFI",
+    "code": "031",
+    "registered_voters": 75907,
+    "created_at": "2025-11-06T13:07:50.086Z"
+  },
+  {
+    "id": 50,
+    "county_id": 101,
+    "name": "GARISSA TOWNSHIP",
+    "code": "027",
+    "registered_voters": 83800,
+    "created_at": "2025-11-06T13:07:50.080Z"
+  },
+  {
+    "id": 55,
+    "county_id": 101,
+    "name": "IJARA",
+    "code": "032",
+    "registered_voters": 77043,
+    "created_at": "2025-11-06T13:07:50.087Z"
+  },
+  {
+    "id": 52,
+    "county_id": 101,
+    "name": "LAGDERA",
+    "code": "029",
+    "registered_voters": 68202,
+    "created_at": "2025-11-06T13:07:50.082Z"
+  },
+  {
+    "id": 72,
+    "county_id": 105,
+    "name": "ISIOLO NORTH",
+    "code": "049",
+    "registered_voters": 252953,
+    "created_at": "2025-11-06T13:07:50.115Z"
+  },
+  {
+    "id": 73,
+    "county_id": 105,
+    "name": "ISIOLO SOUTH",
+    "code": "050",
+    "registered_voters": 273884,
+    "created_at": "2025-11-06T13:07:50.116Z"
+  },
+  {
+    "id": 135,
+    "county_id": 116,
+    "name": "GATUNDU NORTH",
+    "code": "112",
+    "registered_voters": 43937,
+    "created_at": "2025-11-06T13:07:50.208Z"
+  },
+  {
+    "id": 139,
+    "county_id": 116,
+    "name": "GITHUNGURI",
+    "code": "116",
+    "registered_voters": 40933,
+    "created_at": "2025-11-06T13:07:50.214Z"
+  },
+  {
+    "id": 136,
+    "county_id": 116,
+    "name": "JUJA",
+    "code": "113",
+    "registered_voters": 44609,
+    "created_at": "2025-11-06T13:07:50.209Z"
+  },
+  {
+    "id": 142,
+    "county_id": 116,
+    "name": "KABETE",
+    "code": "119",
+    "registered_voters": 45327,
+    "created_at": "2025-11-06T13:07:50.219Z"
+  },
+  {
+    "id": 141,
+    "county_id": 116,
+    "name": "KIAMBAA",
+    "code": "118",
+    "registered_voters": 40657,
+    "created_at": "2025-11-06T13:07:50.217Z"
+  },
+  {
+    "id": 140,
+    "county_id": 116,
+    "name": "KIAMBU",
+    "code": "117",
+    "registered_voters": 34161,
+    "created_at": "2025-11-06T13:07:50.215Z"
+  },
+  {
+    "id": 143,
+    "county_id": 116,
+    "name": "KIKUYU",
+    "code": "120",
+    "registered_voters": 42810,
+    "created_at": "2025-11-06T13:07:50.220Z"
+  },
+  {
+    "id": 145,
+    "county_id": 116,
+    "name": "LARI",
+    "code": "122",
+    "registered_voters": 37054,
+    "created_at": "2025-11-06T13:07:50.223Z"
+  },
+  {
+    "id": 144,
+    "county_id": 116,
+    "name": "LIMURU",
+    "code": "121",
+    "registered_voters": 41320,
+    "created_at": "2025-11-06T13:07:50.222Z"
+  },
+  {
+    "id": 138,
+    "county_id": 116,
+    "name": "RUIRU",
+    "code": "115",
+    "registered_voters": 35560,
+    "created_at": "2025-11-06T13:07:50.213Z"
+  },
+  {
+    "id": 137,
+    "county_id": 116,
+    "name": "THIKA TOWN",
+    "code": "114",
+    "registered_voters": 47035,
+    "created_at": "2025-11-06T13:07:50.211Z"
+  },
+  {
+    "id": 38,
+    "county_id": 97,
+    "name": "GANZE",
+    "code": "015",
+    "registered_voters": 82239,
+    "created_at": "2025-11-06T13:07:50.056Z"
+  },
+  {
+    "id": 36,
+    "county_id": 97,
+    "name": "KALOLENI",
+    "code": "013",
+    "registered_voters": 68750,
+    "created_at": "2025-11-06T13:07:50.053Z"
+  },
+  {
+    "id": 34,
+    "county_id": 97,
+    "name": "KILIFI NORTH",
+    "code": "011",
+    "registered_voters": 59787,
+    "created_at": "2025-11-06T13:07:50.049Z"
+  },
+  {
+    "id": 35,
+    "county_id": 97,
+    "name": "KILIFI SOUTH",
+    "code": "012",
+    "registered_voters": 61589,
+    "created_at": "2025-11-06T13:07:50.051Z"
+  },
+  {
+    "id": 40,
+    "county_id": 97,
+    "name": "MAGARINI",
+    "code": "017",
+    "registered_voters": 62028,
+    "created_at": "2025-11-06T13:07:50.059Z"
+  },
+  {
+    "id": 39,
+    "county_id": 97,
+    "name": "MALINDI",
+    "code": "016",
+    "registered_voters": 63062,
+    "created_at": "2025-11-06T13:07:50.058Z"
+  },
+  {
+    "id": 37,
+    "county_id": 97,
+    "name": "RABAI",
+    "code": "014",
+    "registered_voters": 61149,
+    "created_at": "2025-11-06T13:07:50.055Z"
+  },
+  {
+    "id": 124,
+    "county_id": 114,
+    "name": "GICHUGU",
+    "code": "101",
+    "registered_voters": 111001,
+    "created_at": "2025-11-06T13:07:50.194Z"
+  },
+  {
+    "id": 123,
+    "county_id": 114,
+    "name": "MWEA",
+    "code": "100",
+    "registered_voters": 105079,
+    "created_at": "2025-11-06T13:07:50.189Z"
+  },
+  {
+    "id": 125,
+    "county_id": 114,
+    "name": "NDIA",
+    "code": "102",
+    "registered_voters": 136728,
+    "created_at": "2025-11-06T13:07:50.195Z"
+  },
+  {
+    "id": 95,
+    "county_id": 109,
+    "name": "KITUI CENTRAL",
+    "code": "072",
+    "registered_voters": 59436,
+    "created_at": "2025-11-06T13:07:50.149Z"
+  },
+  {
+    "id": 96,
+    "county_id": 109,
+    "name": "KITUI EAST",
+    "code": "073",
+    "registered_voters": 51430,
+    "created_at": "2025-11-06T13:07:50.151Z"
+  },
+  {
+    "id": 94,
+    "county_id": 109,
+    "name": "KITUI RURAL",
+    "code": "071",
+    "registered_voters": 66743,
+    "created_at": "2025-11-06T13:07:50.147Z"
+  },
+  {
+    "id": 97,
+    "county_id": 109,
+    "name": "KITUI SOUTH",
+    "code": "074",
+    "registered_voters": 58775,
+    "created_at": "2025-11-06T13:07:50.152Z"
+  },
+  {
+    "id": 93,
+    "county_id": 109,
+    "name": "KITUI WEST",
+    "code": "070",
+    "registered_voters": 66249,
+    "created_at": "2025-11-06T13:07:50.146Z"
+  },
+  {
+    "id": 92,
+    "county_id": 109,
+    "name": "MWINGI CENTRAL",
+    "code": "069",
+    "registered_voters": 65676,
+    "created_at": "2025-11-06T13:07:50.145Z"
+  },
+  {
+    "id": 90,
+    "county_id": 109,
+    "name": "MWINGI NORTH",
+    "code": "067",
+    "registered_voters": 62156,
+    "created_at": "2025-11-06T13:07:50.142Z"
+  },
+  {
+    "id": 91,
+    "county_id": 109,
+    "name": "MWINGI WEST",
+    "code": "068",
+    "registered_voters": 53349,
+    "created_at": "2025-11-06T13:07:50.144Z"
+  },
+  {
+    "id": 33,
+    "county_id": 96,
+    "name": "KINANGO",
+    "code": "010",
+    "registered_voters": 114798,
+    "created_at": "2025-11-06T13:07:50.047Z"
+  },
+  {
+    "id": 31,
+    "county_id": 96,
+    "name": "LUNGALUNGA",
+    "code": "008",
+    "registered_voters": 114939,
+    "created_at": "2025-11-06T13:07:50.040Z"
+  },
+  {
+    "id": 32,
+    "county_id": 96,
+    "name": "MATUGA",
+    "code": "009",
+    "registered_voters": 148266,
+    "created_at": "2025-11-06T13:07:50.042Z"
+  },
+  {
+    "id": 30,
+    "county_id": 96,
+    "name": "MSAMBWENI",
+    "code": "007",
+    "registered_voters": 109091,
+    "created_at": "2025-11-06T13:07:50.039Z"
+  },
+  {
+    "id": 44,
+    "county_id": 99,
+    "name": "LAMU EAST",
+    "code": "021",
+    "registered_voters": 250094,
+    "created_at": "2025-11-06T13:07:50.069Z"
+  },
+  {
+    "id": 45,
+    "county_id": 99,
+    "name": "LAMU WEST",
+    "code": "022",
+    "registered_voters": 298222,
+    "created_at": "2025-11-06T13:07:50.071Z"
+  },
+  {
+    "id": 102,
+    "county_id": 110,
+    "name": "KATHIANI",
+    "code": "079",
+    "registered_voters": 58028,
+    "created_at": "2025-11-06T13:07:50.160Z"
+  },
+  {
+    "id": 104,
+    "county_id": 110,
+    "name": "MACHAKOS TOWN",
+    "code": "081",
+    "registered_voters": 61925,
+    "created_at": "2025-11-06T13:07:50.162Z"
+  },
+  {
+    "id": 98,
+    "county_id": 110,
+    "name": "MASINGA",
+    "code": "075",
+    "registered_voters": 74549,
+    "created_at": "2025-11-06T13:07:50.153Z"
+  },
+  {
+    "id": 101,
+    "county_id": 110,
+    "name": "MATUNGULU",
+    "code": "078",
+    "registered_voters": 71659,
+    "created_at": "2025-11-06T13:07:50.157Z"
+  },
+  {
+    "id": 103,
+    "county_id": 110,
+    "name": "MAVOKO",
+    "code": "080",
+    "registered_voters": 51180,
+    "created_at": "2025-11-06T13:07:50.161Z"
+  },
+  {
+    "id": 105,
+    "county_id": 110,
+    "name": "MWALA",
+    "code": "082",
+    "registered_voters": 58583,
+    "created_at": "2025-11-06T13:07:50.164Z"
+  },
+  {
+    "id": 99,
+    "county_id": 110,
+    "name": "YATTA",
+    "code": "076",
+    "registered_voters": 58021,
+    "created_at": "2025-11-06T13:07:50.154Z"
+  },
+  {
+    "id": 108,
+    "county_id": 111,
+    "name": "KAITI",
+    "code": "085",
+    "registered_voters": 97395,
+    "created_at": "2025-11-06T13:07:50.167Z"
+  },
+  {
+    "id": 111,
+    "county_id": 111,
+    "name": "KIBWEZI EAST",
+    "code": "088",
+    "registered_voters": 92365,
+    "created_at": "2025-11-06T13:07:50.171Z"
+  },
+  {
+    "id": 110,
+    "county_id": 111,
+    "name": "KIBWEZI WEST",
+    "code": "087",
+    "registered_voters": 87818,
+    "created_at": "2025-11-06T13:07:50.170Z"
+  },
+  {
+    "id": 107,
+    "county_id": 111,
+    "name": "KILOME",
+    "code": "084",
+    "registered_voters": 88845,
+    "created_at": "2025-11-06T13:07:50.166Z"
+  },
+  {
+    "id": 109,
+    "county_id": 111,
+    "name": "MAKUENI",
+    "code": "086",
+    "registered_voters": 88355,
+    "created_at": "2025-11-06T13:07:50.168Z"
+  },
+  {
+    "id": 106,
+    "county_id": 111,
+    "name": "MBOONI",
+    "code": "083",
+    "registered_voters": 96986,
+    "created_at": "2025-11-06T13:07:50.165Z"
+  },
+  {
+    "id": 63,
+    "county_id": 103,
+    "name": "BANISSA",
+    "code": "040",
+    "registered_voters": 92759,
+    "created_at": "2025-11-06T13:07:50.099Z"
+  },
+  {
+    "id": 67,
+    "county_id": 103,
+    "name": "LAFEY",
+    "code": "044",
+    "registered_voters": 93718,
+    "created_at": "2025-11-06T13:07:50.106Z"
+  },
+  {
+    "id": 66,
+    "county_id": 103,
+    "name": "MANDERA EAST",
+    "code": "043",
+    "registered_voters": 85666,
+    "created_at": "2025-11-06T13:07:50.104Z"
+  },
+  {
+    "id": 65,
+    "county_id": 103,
+    "name": "MANDERA SOUTH",
+    "code": "042",
+    "registered_voters": 75810,
+    "created_at": "2025-11-06T13:07:50.102Z"
+  },
+  {
+    "id": 62,
+    "county_id": 103,
+    "name": "MANDERA WEST",
+    "code": "039",
+    "registered_voters": 85159,
+    "created_at": "2025-11-06T13:07:50.098Z"
+  },
+  {
+    "id": 71,
+    "county_id": 104,
+    "name": "LAISAMIS",
+    "code": "048",
+    "registered_voters": 115960,
+    "created_at": "2025-11-06T13:07:50.113Z"
+  },
+  {
+    "id": 68,
+    "county_id": 104,
+    "name": "MOYALE",
+    "code": "045",
+    "registered_voters": 136838,
+    "created_at": "2025-11-06T13:07:50.108Z"
+  },
+  {
+    "id": 69,
+    "county_id": 104,
+    "name": "NORTH HORR",
+    "code": "046",
+    "registered_voters": 131767,
+    "created_at": "2025-11-06T13:07:50.110Z"
+  },
+  {
+    "id": 70,
+    "county_id": 104,
+    "name": "SAKU",
+    "code": "047",
+    "registered_voters": 119684,
+    "created_at": "2025-11-06T13:07:50.112Z"
+  },
+  {
+    "id": 80,
+    "county_id": 106,
+    "name": "BUURI",
+    "code": "057",
+    "registered_voters": 64323,
+    "created_at": "2025-11-06T13:07:50.129Z"
+  },
+  {
+    "id": 81,
+    "county_id": 106,
+    "name": "CENTRAL IMENTI",
+    "code": "058",
+    "registered_voters": 60130,
+    "created_at": "2025-11-06T13:07:50.130Z"
+  },
+  {
+    "id": 75,
+    "county_id": 106,
+    "name": "IGEMBE CENTRAL",
+    "code": "052",
+    "registered_voters": 64831,
+    "created_at": "2025-11-06T13:07:50.120Z"
+  },
+  {
+    "id": 76,
+    "county_id": 106,
+    "name": "IGEMBE NORTH",
+    "code": "053",
+    "registered_voters": 62839,
+    "created_at": "2025-11-06T13:07:50.122Z"
+  },
+  {
+    "id": 74,
+    "county_id": 106,
+    "name": "IGEMBE SOUTH",
+    "code": "051",
+    "registered_voters": 62425,
+    "created_at": "2025-11-06T13:07:50.119Z"
+  },
+  {
+    "id": 79,
+    "county_id": 106,
+    "name": "NORTH IMENTI",
+    "code": "056",
+    "registered_voters": 59356,
+    "created_at": "2025-11-06T13:07:50.127Z"
+  },
+  {
+    "id": 82,
+    "county_id": 106,
+    "name": "SOUTH IMENTI",
+    "code": "059",
+    "registered_voters": 55018,
+    "created_at": "2025-11-06T13:07:50.131Z"
+  },
+  {
+    "id": 78,
+    "county_id": 106,
+    "name": "TIGANIA EAST",
+    "code": "055",
+    "registered_voters": 62257,
+    "created_at": "2025-11-06T13:07:50.126Z"
+  },
+  {
+    "id": 77,
+    "county_id": 106,
+    "name": "TIGANIA WEST",
+    "code": "054",
+    "registered_voters": 54408,
+    "created_at": "2025-11-06T13:07:50.124Z"
+  },
+  {
+    "id": 24,
+    "county_id": 95,
+    "name": "CHANGAMWE",
+    "code": "001",
+    "registered_voters": 125000,
+    "created_at": "2025-11-06T13:07:50.026Z"
+  },
+  {
+    "id": 25,
+    "county_id": 95,
+    "name": "JOMVU",
+    "code": "002",
+    "registered_voters": 115000,
+    "created_at": "2025-11-06T13:07:50.029Z"
+  },
+  {
+    "id": 26,
+    "county_id": 95,
+    "name": "KISAUNI",
+    "code": "003",
+    "registered_voters": 140000,
+    "created_at": "2025-11-06T13:07:50.030Z"
+  },
+  {
+    "id": 29,
+    "county_id": 95,
+    "name": "MVITA",
+    "code": "006",
+    "registered_voters": 110000,
+    "created_at": "2025-11-06T13:07:50.036Z"
+  },
+  {
+    "id": 27,
+    "county_id": 95,
+    "name": "NYALI",
+    "code": "004",
+    "registered_voters": 130000,
+    "created_at": "2025-11-06T13:07:50.032Z"
+  },
+  {
+    "id": 133,
+    "county_id": 115,
+    "name": "GATANGA",
+    "code": "110",
+    "registered_voters": 62521,
+    "created_at": "2025-11-06T13:07:50.205Z"
+  },
+  {
+    "id": 132,
+    "county_id": 115,
+    "name": "KANDARA",
+    "code": "109",
+    "registered_voters": 80868,
+    "created_at": "2025-11-06T13:07:50.204Z"
+  },
+  {
+    "id": 127,
+    "county_id": 115,
+    "name": "KANGEMA",
+    "code": "104",
+    "registered_voters": 70088,
+    "created_at": "2025-11-06T13:07:50.198Z"
+  },
+  {
+    "id": 130,
+    "county_id": 115,
+    "name": "KIGUMO",
+    "code": "107",
+    "registered_voters": 77743,
+    "created_at": "2025-11-06T13:07:50.201Z"
+  },
+  {
+    "id": 129,
+    "county_id": 115,
+    "name": "KIHARU",
+    "code": "106",
+    "registered_voters": 60589,
+    "created_at": "2025-11-06T13:07:50.200Z"
+  },
+  {
+    "id": 131,
+    "county_id": 115,
+    "name": "MARAGWA",
+    "code": "108",
+    "registered_voters": 79709,
+    "created_at": "2025-11-06T13:07:50.202Z"
+  },
+  {
+    "id": 128,
+    "county_id": 115,
+    "name": "MATHIOYA",
+    "code": "105",
+    "registered_voters": 57735,
+    "created_at": "2025-11-06T13:07:50.199Z"
+  },
+  {
+    "id": 112,
+    "county_id": 112,
+    "name": "KINANGOP",
+    "code": "089",
+    "registered_voters": 101105,
+    "created_at": "2025-11-06T13:07:50.172Z"
+  },
+  {
+    "id": 113,
+    "county_id": 112,
+    "name": "KIPIPIRI",
+    "code": "090",
+    "registered_voters": 88697,
+    "created_at": "2025-11-06T13:07:50.174Z"
+  },
+  {
+    "id": 116,
+    "county_id": 112,
+    "name": "NDARAGWA",
+    "code": "093",
+    "registered_voters": 87740,
+    "created_at": "2025-11-06T13:07:50.178Z"
+  },
+  {
+    "id": 114,
+    "county_id": 112,
+    "name": "OL KALOU",
+    "code": "091",
+    "registered_voters": 81151,
+    "created_at": "2025-11-06T13:07:50.176Z"
+  },
+  {
+    "id": 118,
+    "county_id": 113,
+    "name": "KIENI",
+    "code": "095",
+    "registered_voters": 90422,
+    "created_at": "2025-11-06T13:07:50.182Z"
+  },
+  {
+    "id": 119,
+    "county_id": 113,
+    "name": "MATHIRA",
+    "code": "096",
+    "registered_voters": 96313,
+    "created_at": "2025-11-06T13:07:50.184Z"
+  },
+  {
+    "id": 121,
+    "county_id": 113,
+    "name": "MUKURWEINI",
+    "code": "098",
+    "registered_voters": 74616,
+    "created_at": "2025-11-06T13:07:50.186Z"
+  },
+  {
+    "id": 122,
+    "county_id": 113,
+    "name": "NYERI TOWN",
+    "code": "099",
+    "registered_voters": 68570,
+    "created_at": "2025-11-06T13:07:50.188Z"
+  },
+  {
+    "id": 120,
+    "county_id": 113,
+    "name": "OTHAYA",
+    "code": "097",
+    "registered_voters": 79087,
+    "created_at": "2025-11-06T13:07:50.185Z"
+  },
+  {
+    "id": 117,
+    "county_id": 113,
+    "name": "TETU",
+    "code": "094",
+    "registered_voters": 81178,
+    "created_at": "2025-11-06T13:07:50.180Z"
+  },
+  {
+    "id": 48,
+    "county_id": 100,
+    "name": "MWATATE",
+    "code": "025",
+    "registered_voters": 111104,
+    "created_at": "2025-11-06T13:07:50.077Z"
+  },
+  {
+    "id": 46,
+    "county_id": 100,
+    "name": "TAVETA",
+    "code": "023",
+    "registered_voters": 130460,
+    "created_at": "2025-11-06T13:07:50.073Z"
+  },
+  {
+    "id": 49,
+    "county_id": 100,
+    "name": "VOI",
+    "code": "026",
+    "registered_voters": 147811,
+    "created_at": "2025-11-06T13:07:50.078Z"
+  },
+  {
+    "id": 47,
+    "county_id": 100,
+    "name": "WUNDANYI",
+    "code": "024",
+    "registered_voters": 103514,
+    "created_at": "2025-11-06T13:07:50.074Z"
+  },
+  {
+    "id": 43,
+    "county_id": 98,
+    "name": "BURA",
+    "code": "020",
+    "registered_voters": 177858,
+    "created_at": "2025-11-06T13:07:50.068Z"
+  },
+  {
+    "id": 42,
+    "county_id": 98,
+    "name": "GALOLE",
+    "code": "019",
+    "registered_voters": 133557,
+    "created_at": "2025-11-06T13:07:50.067Z"
+  },
+  {
+    "id": 41,
+    "county_id": 98,
+    "name": "GARSEN",
+    "code": "018",
+    "registered_voters": 199694,
+    "created_at": "2025-11-06T13:07:50.061Z"
+  },
+  {
+    "id": 83,
+    "county_id": 107,
+    "name": "MAARA",
+    "code": "060",
+    "registered_voters": 166907,
+    "created_at": "2025-11-06T13:07:50.132Z"
+  },
+  {
+    "id": 85,
+    "county_id": 107,
+    "name": "THARAKA",
+    "code": "062",
+    "registered_voters": 144304,
+    "created_at": "2025-11-06T13:07:50.135Z"
+  },
+  {
+    "id": 149,
+    "county_id": 117,
+    "name": "LOIMA",
+    "code": "126",
+    "registered_voters": 68755,
+    "created_at": "2025-11-06T13:07:50.229Z"
+  },
+  {
+    "id": 148,
+    "county_id": 117,
+    "name": "TURKANA CENTRAL",
+    "code": "125",
+    "registered_voters": 93113,
+    "created_at": "2025-11-06T13:07:50.227Z"
+  },
+  {
+    "id": 146,
+    "county_id": 117,
+    "name": "TURKANA NORTH",
+    "code": "123",
+    "registered_voters": 93963,
+    "created_at": "2025-11-06T13:07:50.224Z"
+  },
+  {
+    "id": 147,
+    "county_id": 117,
+    "name": "TURKANA WEST",
+    "code": "124",
+    "registered_voters": 67019,
+    "created_at": "2025-11-06T13:07:50.225Z"
+  },
+  {
+    "id": 60,
+    "county_id": 102,
+    "name": "ELDAS",
+    "code": "037",
+    "registered_voters": 82780,
+    "created_at": "2025-11-06T13:07:50.095Z"
+  },
+  {
+    "id": 58,
+    "county_id": 102,
+    "name": "TARBAJ",
+    "code": "035",
+    "registered_voters": 90891,
+    "created_at": "2025-11-06T13:07:50.092Z"
+  },
+  {
+    "id": 57,
+    "county_id": 102,
+    "name": "WAJIR EAST",
+    "code": "034",
+    "registered_voters": 74566,
+    "created_at": "2025-11-06T13:07:50.089Z"
+  },
+  {
+    "id": 56,
+    "county_id": 102,
+    "name": "WAJIR NORTH",
+    "code": "033",
+    "registered_voters": 94439,
+    "created_at": "2025-11-06T13:07:50.088Z"
+  },
+  {
+    "id": 61,
+    "county_id": 102,
+    "name": "WAJIR SOUTH",
+    "code": "038",
+    "registered_voters": 72026,
+    "created_at": "2025-11-06T13:07:50.096Z"
+  },
+  {
+    "id": 59,
+    "county_id": 102,
+    "name": "WAJIR WEST",
+    "code": "036",
+    "registered_voters": 91956,
+    "created_at": "2025-11-06T13:07:50.093Z"
+  },
+  {
+    "id": 181,
+    "county_id": 124,
+    "name": "BARINGO  NORTH",
+    "code": "158",
+    "registered_voters": 68792,
+    "created_at": "2025-11-06T13:07:50.276Z"
+  },
+  {
+    "id": 183,
+    "county_id": 124,
+    "name": "BARINGO SOUTH",
+    "code": "160",
+    "registered_voters": 91835,
+    "created_at": "2025-11-06T13:07:50.280Z"
+  },
+  {
+    "id": 184,
+    "county_id": 124,
+    "name": "MOGOTIO",
+    "code": "161",
+    "registered_voters": 81116,
+    "created_at": "2025-11-06T13:07:50.281Z"
+  },
+  {
+    "id": 180,
+    "county_id": 124,
+    "name": "TIATY",
+    "code": "157",
+    "registered_voters": 89883,
+    "created_at": "2025-11-06T13:07:50.275Z"
+  },
+  {
+    "id": 220,
+    "county_id": 130,
+    "name": "BOMET CENTRAL",
+    "code": "197",
+    "registered_voters": 99541,
+    "created_at": "2025-11-06T13:07:50.331Z"
+  },
+  {
+    "id": 219,
+    "county_id": 130,
+    "name": "BOMET EAST",
+    "code": "196",
+    "registered_voters": 100670,
+    "created_at": "2025-11-06T13:07:50.329Z"
+  },
+  {
+    "id": 218,
+    "county_id": 130,
+    "name": "CHEPALUNGU",
+    "code": "195",
+    "registered_voters": 110301,
+    "created_at": "2025-11-06T13:07:50.328Z"
+  },
+  {
+    "id": 221,
+    "county_id": 130,
+    "name": "KONOIN",
+    "code": "198",
+    "registered_voters": 115611,
+    "created_at": "2025-11-06T13:07:50.332Z"
+  },
+  {
+    "id": 217,
+    "county_id": 130,
+    "name": "SOTIK",
+    "code": "194",
+    "registered_voters": 99256,
+    "created_at": "2025-11-06T13:07:50.327Z"
+  },
+  {
+    "id": 242,
+    "county_id": 133,
+    "name": "BUMULA",
+    "code": "219",
+    "registered_voters": 53085,
+    "created_at": "2025-11-06T13:07:50.359Z"
+  },
+  {
+    "id": 241,
+    "county_id": 133,
+    "name": "KABUCHAI",
+    "code": "218",
+    "registered_voters": 57284,
+    "created_at": "2025-11-06T13:07:50.358Z"
+  },
+  {
+    "id": 243,
+    "county_id": 133,
+    "name": "KANDUYI",
+    "code": "220",
+    "registered_voters": 48906,
+    "created_at": "2025-11-06T13:07:50.362Z"
+  },
+  {
+    "id": 246,
+    "county_id": 133,
+    "name": "KIMILILI",
+    "code": "223",
+    "registered_voters": 63654,
+    "created_at": "2025-11-06T13:07:50.366Z"
+  },
+  {
+    "id": 239,
+    "county_id": 133,
+    "name": "MT.ELGON",
+    "code": "216",
+    "registered_voters": 60237,
+    "created_at": "2025-11-06T13:07:50.355Z"
+  },
+  {
+    "id": 240,
+    "county_id": 133,
+    "name": "SIRISIA",
+    "code": "217",
+    "registered_voters": 52906,
+    "created_at": "2025-11-06T13:07:50.357Z"
+  },
+  {
+    "id": 247,
+    "county_id": 133,
+    "name": "TONGAREN",
+    "code": "224",
+    "registered_voters": 51244,
+    "created_at": "2025-11-06T13:07:50.368Z"
+  },
+  {
+    "id": 244,
+    "county_id": 133,
+    "name": "WEBUYE EAST",
+    "code": "221",
+    "registered_voters": 49975,
+    "created_at": "2025-11-06T13:07:50.363Z"
+  },
+  {
+    "id": 245,
+    "county_id": 133,
+    "name": "WEBUYE WEST",
+    "code": "222",
+    "registered_voters": 53728,
+    "created_at": "2025-11-06T13:07:50.364Z"
+  },
+  {
+    "id": 252,
+    "county_id": 134,
+    "name": "BUTULA",
+    "code": "229",
+    "registered_voters": 81539,
+    "created_at": "2025-11-06T13:07:50.378Z"
+  },
+  {
+    "id": 253,
+    "county_id": 134,
+    "name": "FUNYULA",
+    "code": "230",
+    "registered_voters": 72987,
+    "created_at": "2025-11-06T13:07:50.380Z"
+  },
+  {
+    "id": 251,
+    "county_id": 134,
+    "name": "MATAYOS",
+    "code": "228",
+    "registered_voters": 66928,
+    "created_at": "2025-11-06T13:07:50.377Z"
+  },
+  {
+    "id": 250,
+    "county_id": 134,
+    "name": "NAMBALE",
+    "code": "227",
+    "registered_voters": 73001,
+    "created_at": "2025-11-06T13:07:50.374Z"
+  },
+  {
+    "id": 248,
+    "county_id": 134,
+    "name": "TESO NORTH",
+    "code": "225",
+    "registered_voters": 57251,
+    "created_at": "2025-11-06T13:07:50.369Z"
+  },
+  {
+    "id": 249,
+    "county_id": 134,
+    "name": "TESO SOUTH",
+    "code": "226",
+    "registered_voters": 76507,
+    "created_at": "2025-11-06T13:07:50.372Z"
+  },
+  {
+    "id": 172,
+    "county_id": 122,
+    "name": "KEIYO NORTH",
+    "code": "149",
+    "registered_voters": 108175,
+    "created_at": "2025-11-06T13:07:50.263Z"
+  },
+  {
+    "id": 173,
+    "county_id": 122,
+    "name": "KEIYO SOUTH",
+    "code": "150",
+    "registered_voters": 118401,
+    "created_at": "2025-11-06T13:07:50.264Z"
+  },
+  {
+    "id": 170,
+    "county_id": 122,
+    "name": "MARAKWET EAST",
+    "code": "147",
+    "registered_voters": 104109,
+    "created_at": "2025-11-06T13:07:50.261Z"
+  },
+  {
+    "id": 171,
+    "county_id": 122,
+    "name": "MARAKWET WEST",
+    "code": "148",
+    "registered_voters": 141847,
+    "created_at": "2025-11-06T13:07:50.262Z"
+  },
+  {
+    "id": 272,
+    "county_id": 137,
+    "name": "HOMA BAY TOWN",
+    "code": "249",
+    "registered_voters": 50624,
+    "created_at": "2025-11-06T13:07:50.408Z"
+  },
+  {
+    "id": 269,
+    "county_id": 137,
+    "name": "KABONDO KASIPUL",
+    "code": "246",
+    "registered_voters": 61034,
+    "created_at": "2025-11-06T13:07:50.404Z"
+  },
+  {
+    "id": 270,
+    "county_id": 137,
+    "name": "KARACHUONYO",
+    "code": "247",
+    "registered_voters": 70296,
+    "created_at": "2025-11-06T13:07:50.406Z"
+  },
+  {
+    "id": 268,
+    "county_id": 137,
+    "name": "KASIPUL",
+    "code": "245",
+    "registered_voters": 66586,
+    "created_at": "2025-11-06T13:07:50.402Z"
+  },
+  {
+    "id": 274,
+    "county_id": 137,
+    "name": "MBITA",
+    "code": "251",
+    "registered_voters": 53706,
+    "created_at": "2025-11-06T13:07:50.411Z"
+  },
+  {
+    "id": 273,
+    "county_id": 137,
+    "name": "NDHIWA",
+    "code": "250",
+    "registered_voters": 57723,
+    "created_at": "2025-11-06T13:07:50.409Z"
+  },
+  {
+    "id": 271,
+    "county_id": 137,
+    "name": "RANGWE",
+    "code": "248",
+    "registered_voters": 66361,
+    "created_at": "2025-11-06T13:07:50.407Z"
+  },
+  {
+    "id": 275,
+    "county_id": 137,
+    "name": "SUBA",
+    "code": "252",
+    "registered_voters": 67810,
+    "created_at": "2025-11-06T13:07:50.412Z"
+  },
+  {
+    "id": 208,
+    "county_id": 128,
+    "name": "KAJIADO EAST",
+    "code": "185",
+    "registered_voters": 97586,
+    "created_at": "2025-11-06T13:07:50.313Z"
+  },
+  {
+    "id": 206,
+    "county_id": 128,
+    "name": "KAJIADO NORTH",
+    "code": "183",
+    "registered_voters": 98285,
+    "created_at": "2025-11-06T13:07:50.310Z"
+  },
+  {
+    "id": 210,
+    "county_id": 128,
+    "name": "KAJIADO SOUTH",
+    "code": "187",
+    "registered_voters": 86561,
+    "created_at": "2025-11-06T13:07:50.315Z"
+  },
+  {
+    "id": 209,
+    "county_id": 128,
+    "name": "KAJIADO WEST",
+    "code": "186",
+    "registered_voters": 91289,
+    "created_at": "2025-11-06T13:07:50.314Z"
+  },
+  {
+    "id": 230,
+    "county_id": 131,
+    "name": "BUTERE",
+    "code": "207",
+    "registered_voters": 45748,
+    "created_at": "2025-11-06T13:07:50.345Z"
+  },
+  {
+    "id": 233,
+    "county_id": 131,
+    "name": "IKOLOMANI",
+    "code": "210",
+    "registered_voters": 48193,
+    "created_at": "2025-11-06T13:07:50.348Z"
+  },
+  {
+    "id": 231,
+    "county_id": 131,
+    "name": "KHWISERO",
+    "code": "208",
+    "registered_voters": 36731,
+    "created_at": "2025-11-06T13:07:50.346Z"
+  },
+  {
+    "id": 223,
+    "county_id": 131,
+    "name": "LIKUYANI",
+    "code": "200",
+    "registered_voters": 43100,
+    "created_at": "2025-11-06T13:07:50.334Z"
+  },
+  {
+    "id": 222,
+    "county_id": 131,
+    "name": "LUGARI",
+    "code": "199",
+    "registered_voters": 36125,
+    "created_at": "2025-11-06T13:07:50.333Z"
+  },
+  {
+    "id": 225,
+    "county_id": 131,
+    "name": "LURAMBI",
+    "code": "202",
+    "registered_voters": 46758,
+    "created_at": "2025-11-06T13:07:50.337Z"
+  },
+  {
+    "id": 224,
+    "county_id": 131,
+    "name": "MALAVA",
+    "code": "201",
+    "registered_voters": 35090,
+    "created_at": "2025-11-06T13:07:50.336Z"
+  },
+  {
+    "id": 229,
+    "county_id": 131,
+    "name": "MATUNGU",
+    "code": "206",
+    "registered_voters": 34374,
+    "created_at": "2025-11-06T13:07:50.344Z"
+  },
+  {
+    "id": 228,
+    "county_id": 131,
+    "name": "MUMIAS EAST",
+    "code": "205",
+    "registered_voters": 40736,
+    "created_at": "2025-11-06T13:07:50.342Z"
+  },
+  {
+    "id": 227,
+    "county_id": 131,
+    "name": "MUMIAS WEST",
+    "code": "204",
+    "registered_voters": 38767,
+    "created_at": "2025-11-06T13:07:50.341Z"
+  },
+  {
+    "id": 232,
+    "county_id": 131,
+    "name": "SHINYALU",
+    "code": "209",
+    "registered_voters": 45931,
+    "created_at": "2025-11-06T13:07:50.347Z"
+  },
+  {
+    "id": 213,
+    "county_id": 129,
+    "name": "AINAMOI",
+    "code": "190",
+    "registered_voters": 83237,
+    "created_at": "2025-11-06T13:07:50.318Z"
+  },
+  {
+    "id": 215,
+    "county_id": 129,
+    "name": "BELGUT",
+    "code": "192",
+    "registered_voters": 82619,
+    "created_at": "2025-11-06T13:07:50.321Z"
+  },
+  {
+    "id": 214,
+    "county_id": 129,
+    "name": "BURETI",
+    "code": "191",
+    "registered_voters": 83628,
+    "created_at": "2025-11-06T13:07:50.320Z"
+  },
+  {
+    "id": 211,
+    "county_id": 129,
+    "name": "KIPKELION EAST",
+    "code": "188",
+    "registered_voters": 68589,
+    "created_at": "2025-11-06T13:07:50.316Z"
+  },
+  {
+    "id": 212,
+    "county_id": 129,
+    "name": "KIPKELION WEST",
+    "code": "189",
+    "registered_voters": 88604,
+    "created_at": "2025-11-06T13:07:50.316Z"
+  },
+  {
+    "id": 216,
+    "county_id": 129,
+    "name": "SIGOWET/SOIN",
+    "code": "193",
+    "registered_voters": 94092,
+    "created_at": "2025-11-06T13:07:50.326Z"
+  },
+  {
+    "id": 263,
+    "county_id": 136,
+    "name": "KISUMU CENTRAL",
+    "code": "240",
+    "registered_voters": 95000,
+    "created_at": "2025-11-06T13:07:50.395Z"
+  },
+  {
+    "id": 261,
+    "county_id": 136,
+    "name": "KISUMU EAST",
+    "code": "238",
+    "registered_voters": 90000,
+    "created_at": "2025-11-06T13:07:50.392Z"
+  },
+  {
+    "id": 262,
+    "county_id": 136,
+    "name": "KISUMU WEST",
+    "code": "239",
+    "registered_voters": 88000,
+    "created_at": "2025-11-06T13:07:50.394Z"
+  },
+  {
+    "id": 266,
+    "county_id": 136,
+    "name": "MUHORONI",
+    "code": "243",
+    "registered_voters": 80000,
+    "created_at": "2025-11-06T13:07:50.400Z"
+  },
+  {
+    "id": 267,
+    "county_id": 136,
+    "name": "NYAKACH",
+    "code": "244",
+    "registered_voters": 78000,
+    "created_at": "2025-11-06T13:07:50.401Z"
+  },
+  {
+    "id": 265,
+    "county_id": 136,
+    "name": "NYANDO",
+    "code": "242",
+    "registered_voters": 85000,
+    "created_at": "2025-11-06T13:07:50.398Z"
+  },
+  {
+    "id": 264,
+    "county_id": 136,
+    "name": "SEME",
+    "code": "241",
+    "registered_voters": 75000,
+    "created_at": "2025-11-06T13:07:50.397Z"
+  },
+  {
+    "id": 187,
+    "county_id": 125,
+    "name": "LAIKIPIA EAST",
+    "code": "164",
+    "registered_voters": 170405,
+    "created_at": "2025-11-06T13:07:50.286Z"
+  },
+  {
+    "id": 188,
+    "county_id": 125,
+    "name": "LAIKIPIA NORTH",
+    "code": "165",
+    "registered_voters": 134763,
+    "created_at": "2025-11-06T13:07:50.287Z"
+  },
+  {
+    "id": 197,
+    "county_id": 126,
+    "name": "BAHATI",
+    "code": "174",
+    "registered_voters": 45580,
+    "created_at": "2025-11-06T13:07:50.299Z"
+  },
+  {
+    "id": 192,
+    "county_id": 126,
+    "name": "GILGIL",
+    "code": "169",
+    "registered_voters": 38680,
+    "created_at": "2025-11-06T13:07:50.292Z"
+  },
+  {
+    "id": 194,
+    "county_id": 126,
+    "name": "KURESOI NORTH",
+    "code": "171",
+    "registered_voters": 41693,
+    "created_at": "2025-11-06T13:07:50.295Z"
+  },
+  {
+    "id": 193,
+    "county_id": 126,
+    "name": "KURESOI SOUTH",
+    "code": "170",
+    "registered_voters": 51502,
+    "created_at": "2025-11-06T13:07:50.294Z"
+  },
+  {
+    "id": 189,
+    "county_id": 126,
+    "name": "MOLO",
+    "code": "166",
+    "registered_voters": 50344,
+    "created_at": "2025-11-06T13:07:50.289Z"
+  },
+  {
+    "id": 191,
+    "county_id": 126,
+    "name": "NAIVASHA",
+    "code": "168",
+    "registered_voters": 49632,
+    "created_at": "2025-11-06T13:07:50.291Z"
+  },
+  {
+    "id": 199,
+    "county_id": 126,
+    "name": "NAKURU TOWN EAST",
+    "code": "176",
+    "registered_voters": 50585,
+    "created_at": "2025-11-06T13:07:50.301Z"
+  },
+  {
+    "id": 198,
+    "county_id": 126,
+    "name": "NAKURU TOWN WEST",
+    "code": "175",
+    "registered_voters": 39243,
+    "created_at": "2025-11-06T13:07:50.300Z"
+  },
+  {
+    "id": 190,
+    "county_id": 126,
+    "name": "NJORO",
+    "code": "167",
+    "registered_voters": 39747,
+    "created_at": "2025-11-06T13:07:50.290Z"
+  },
+  {
+    "id": 196,
+    "county_id": 126,
+    "name": "RONGAI",
+    "code": "173",
+    "registered_voters": 41939,
+    "created_at": "2025-11-06T13:07:50.297Z"
+  },
+  {
+    "id": 195,
+    "county_id": 126,
+    "name": "SUBUKIA",
+    "code": "172",
+    "registered_voters": 41147,
+    "created_at": "2025-11-06T13:07:50.296Z"
+  },
+  {
+    "id": 175,
+    "county_id": 123,
+    "name": "ALDAI",
+    "code": "152",
+    "registered_voters": 87327,
+    "created_at": "2025-11-06T13:07:50.267Z"
+  },
+  {
+    "id": 177,
+    "county_id": 123,
+    "name": "CHESUMEI",
+    "code": "154",
+    "registered_voters": 92849,
+    "created_at": "2025-11-06T13:07:50.270Z"
+  },
+  {
+    "id": 178,
+    "county_id": 123,
+    "name": "EMGWEN",
+    "code": "155",
+    "registered_voters": 76212,
+    "created_at": "2025-11-06T13:07:50.271Z"
+  },
+  {
+    "id": 179,
+    "county_id": 123,
+    "name": "MOSOP",
+    "code": "156",
+    "registered_voters": 90029,
+    "created_at": "2025-11-06T13:07:50.273Z"
+  },
+  {
+    "id": 176,
+    "county_id": 123,
+    "name": "NANDI HILLS",
+    "code": "153",
+    "registered_voters": 81429,
+    "created_at": "2025-11-06T13:07:50.269Z"
+  },
+  {
+    "id": 201,
+    "county_id": 127,
+    "name": "EMURUA DIKIRR",
+    "code": "178",
+    "registered_voters": 67348,
+    "created_at": "2025-11-06T13:07:50.304Z"
+  },
+  {
+    "id": 200,
+    "county_id": 127,
+    "name": "KILGORIS",
+    "code": "177",
+    "registered_voters": 71186,
+    "created_at": "2025-11-06T13:07:50.303Z"
+  },
+  {
+    "id": 203,
+    "county_id": 127,
+    "name": "NAROK EAST",
+    "code": "180",
+    "registered_voters": 98289,
+    "created_at": "2025-11-06T13:07:50.306Z"
+  },
+  {
+    "id": 202,
+    "county_id": 127,
+    "name": "NAROK NORTH",
+    "code": "179",
+    "registered_voters": 88021,
+    "created_at": "2025-11-06T13:07:50.305Z"
+  },
+  {
+    "id": 204,
+    "county_id": 127,
+    "name": "NAROK SOUTH",
+    "code": "181",
+    "registered_voters": 69671,
+    "created_at": "2025-11-06T13:07:50.308Z"
+  },
+  {
+    "id": 205,
+    "county_id": 127,
+    "name": "NAROK WEST",
+    "code": "182",
+    "registered_voters": 77782,
+    "created_at": "2025-11-06T13:07:50.309Z"
+  },
+  {
+    "id": 158,
+    "county_id": 119,
+    "name": "SAMBURU EAST",
+    "code": "135",
+    "registered_voters": 166045,
+    "created_at": "2025-11-06T13:07:50.243Z"
+  },
+  {
+    "id": 157,
+    "county_id": 119,
+    "name": "SAMBURU NORTH",
+    "code": "134",
+    "registered_voters": 160884,
+    "created_at": "2025-11-06T13:07:50.242Z"
+  },
+  {
+    "id": 156,
+    "county_id": 119,
+    "name": "SAMBURU WEST",
+    "code": "133",
+    "registered_voters": 198414,
+    "created_at": "2025-11-06T13:07:50.240Z"
+  },
+  {
+    "id": 257,
+    "county_id": 135,
+    "name": "ALEGO USONGA",
+    "code": "234",
+    "registered_voters": 87384,
+    "created_at": "2025-11-06T13:07:50.385Z"
+  },
+  {
+    "id": 259,
+    "county_id": 135,
+    "name": "BONDO",
+    "code": "236",
+    "registered_voters": 76159,
+    "created_at": "2025-11-06T13:07:50.388Z"
+  },
+  {
+    "id": 258,
+    "county_id": 135,
+    "name": "GEM",
+    "code": "235",
+    "registered_voters": 83045,
+    "created_at": "2025-11-06T13:07:50.387Z"
+  },
+  {
+    "id": 260,
+    "county_id": 135,
+    "name": "RARIEDA",
+    "code": "237",
+    "registered_voters": 71307,
+    "created_at": "2025-11-06T13:07:50.390Z"
+  },
+  {
+    "id": 255,
+    "county_id": 135,
+    "name": "UGENYA",
+    "code": "232",
+    "registered_voters": 72509,
+    "created_at": "2025-11-06T13:07:50.383Z"
+  },
+  {
+    "id": 256,
+    "county_id": 135,
+    "name": "UGUNJA",
+    "code": "233",
+    "registered_voters": 73116,
+    "created_at": "2025-11-06T13:07:50.384Z"
+  },
+  {
+    "id": 163,
+    "county_id": 120,
+    "name": "CHERANGANY",
+    "code": "140",
+    "registered_voters": 111423,
+    "created_at": "2025-11-06T13:07:50.251Z"
+  },
+  {
+    "id": 162,
+    "county_id": 120,
+    "name": "KIMININI",
+    "code": "139",
+    "registered_voters": 108469,
+    "created_at": "2025-11-06T13:07:50.250Z"
+  },
+  {
+    "id": 159,
+    "county_id": 120,
+    "name": "KWANZA",
+    "code": "136",
+    "registered_voters": 86905,
+    "created_at": "2025-11-06T13:07:50.244Z"
+  },
+  {
+    "id": 161,
+    "county_id": 120,
+    "name": "SABOTI",
+    "code": "138",
+    "registered_voters": 95292,
+    "created_at": "2025-11-06T13:07:50.249Z"
+  },
+  {
+    "id": 151,
+    "county_id": 117,
+    "name": "TURKANA EAST",
+    "code": "128",
+    "registered_voters": 80831,
+    "created_at": "2025-11-06T13:07:50.232Z"
+  },
+  {
+    "id": 150,
+    "county_id": 117,
+    "name": "TURKANA SOUTH",
+    "code": "127",
+    "registered_voters": 76424,
+    "created_at": "2025-11-06T13:07:50.230Z"
+  },
+  {
+    "id": 167,
+    "county_id": 121,
+    "name": "AINABKOI",
+    "code": "144",
+    "registered_voters": 92210,
+    "created_at": "2025-11-06T13:07:50.258Z"
+  },
+  {
+    "id": 168,
+    "county_id": 121,
+    "name": "KAPSERET",
+    "code": "145",
+    "registered_voters": 72571,
+    "created_at": "2025-11-06T13:07:50.259Z"
+  },
+  {
+    "id": 169,
+    "county_id": 121,
+    "name": "KESSES",
+    "code": "146",
+    "registered_voters": 89672,
+    "created_at": "2025-11-06T13:07:50.260Z"
+  },
+  {
+    "id": 166,
+    "county_id": 121,
+    "name": "MOIBEN",
+    "code": "143",
+    "registered_voters": 69452,
+    "created_at": "2025-11-06T13:07:50.256Z"
+  },
+  {
+    "id": 164,
+    "county_id": 121,
+    "name": "SOY",
+    "code": "141",
+    "registered_voters": 92294,
+    "created_at": "2025-11-06T13:07:50.254Z"
+  },
+  {
+    "id": 165,
+    "county_id": 121,
+    "name": "TURBO",
+    "code": "142",
+    "registered_voters": 97089,
+    "created_at": "2025-11-06T13:07:50.255Z"
+  },
+  {
+    "id": 238,
+    "county_id": 132,
+    "name": "EMUHAYA",
+    "code": "215",
+    "registered_voters": 95552,
+    "created_at": "2025-11-06T13:07:50.354Z"
+  },
+  {
+    "id": 236,
+    "county_id": 132,
+    "name": "HAMISI",
+    "code": "213",
+    "registered_voters": 111378,
+    "created_at": "2025-11-06T13:07:50.352Z"
+  },
+  {
+    "id": 237,
+    "county_id": 132,
+    "name": "LUANDA",
+    "code": "214",
+    "registered_voters": 111380,
+    "created_at": "2025-11-06T13:07:50.353Z"
+  },
+  {
+    "id": 235,
+    "county_id": 132,
+    "name": "SABATIA",
+    "code": "212",
+    "registered_voters": 98555,
+    "created_at": "2025-11-06T13:07:50.351Z"
+  },
+  {
+    "id": 234,
+    "county_id": 132,
+    "name": "VIHIGA",
+    "code": "211",
+    "registered_voters": 98538,
+    "created_at": "2025-11-06T13:07:50.349Z"
+  },
+  {
+    "id": 152,
+    "county_id": 118,
+    "name": "KAPENGURIA",
+    "code": "129",
+    "registered_voters": 142822,
+    "created_at": "2025-11-06T13:07:50.234Z"
+  },
+  {
+    "id": 155,
+    "county_id": 118,
+    "name": "POKOT SOUTH",
+    "code": "132",
+    "registered_voters": 109792,
+    "created_at": "2025-11-06T13:07:50.239Z"
+  },
+  {
+    "id": 153,
+    "county_id": 118,
+    "name": "SIGOR",
+    "code": "130",
+    "registered_voters": 148878,
+    "created_at": "2025-11-06T13:07:50.236Z"
+  },
+  {
+    "id": 182,
+    "county_id": 124,
+    "name": "BARINGO CENTRAL",
+    "code": "159",
+    "registered_voters": 87642,
+    "created_at": "2025-11-06T13:07:50.278Z"
+  },
+  {
+    "id": 185,
+    "county_id": 124,
+    "name": "ELDAMA RAVINE",
+    "code": "162",
+    "registered_voters": 89512,
+    "created_at": "2025-11-06T13:07:50.283Z"
+  },
+  {
+    "id": 254,
+    "county_id": 134,
+    "name": "BUDALANGI",
+    "code": "231",
+    "registered_voters": 77757,
+    "created_at": "2025-11-06T13:07:50.381Z"
+  },
+  {
+    "id": 86,
+    "county_id": 108,
+    "name": "MANYATTA",
+    "code": "063",
+    "registered_voters": 117237,
+    "created_at": "2025-11-06T13:07:50.136Z"
+  },
+  {
+    "id": 207,
+    "county_id": 128,
+    "name": "KAJIADO CENTRAL",
+    "code": "184",
+    "registered_voters": 84953,
+    "created_at": "2025-11-06T13:07:50.311Z"
+  },
+  {
+    "id": 226,
+    "county_id": 131,
+    "name": "NAVAKHOLO",
+    "code": "203",
+    "registered_voters": 41480,
+    "created_at": "2025-11-06T13:07:50.340Z"
+  },
+  {
+    "id": 134,
+    "county_id": 116,
+    "name": "GATUNDU SOUTH",
+    "code": "111",
+    "registered_voters": 35105,
+    "created_at": "2025-11-06T13:07:50.206Z"
+  },
+  {
+    "id": 126,
+    "county_id": 114,
+    "name": "KIRINYAGA CENTRAL",
+    "code": "103",
+    "registered_voters": 117829,
+    "created_at": "2025-11-06T13:07:50.196Z"
+  },
+  {
+    "id": 287,
+    "county_id": 139,
+    "name": "BOBASI",
+    "code": "264",
+    "registered_voters": 46005,
+    "created_at": "2025-11-06T13:07:50.430Z"
+  },
+  {
+    "id": 286,
+    "county_id": 139,
+    "name": "BOMACHOGE BORABU",
+    "code": "263",
+    "registered_voters": 52326,
+    "created_at": "2025-11-06T13:07:50.429Z"
+  },
+  {
+    "id": 288,
+    "county_id": 139,
+    "name": "BOMACHOGE CHACHE",
+    "code": "265",
+    "registered_voters": 47940,
+    "created_at": "2025-11-06T13:07:50.431Z"
+  },
+  {
+    "id": 284,
+    "county_id": 139,
+    "name": "BONCHARI",
+    "code": "261",
+    "registered_voters": 51506,
+    "created_at": "2025-11-06T13:07:50.426Z"
+  },
+  {
+    "id": 291,
+    "county_id": 139,
+    "name": "KITUTU CHACHE NORTH",
+    "code": "268",
+    "registered_voters": 65803,
+    "created_at": "2025-11-06T13:07:50.436Z"
+  },
+  {
+    "id": 292,
+    "county_id": 139,
+    "name": "KITUTU CHACHE SOUTH",
+    "code": "269",
+    "registered_voters": 64534,
+    "created_at": "2025-11-06T13:07:50.437Z"
+  },
+  {
+    "id": 290,
+    "county_id": 139,
+    "name": "NYARIBARI CHACHE",
+    "code": "267",
+    "registered_voters": 47677,
+    "created_at": "2025-11-06T13:07:50.434Z"
+  },
+  {
+    "id": 289,
+    "county_id": 139,
+    "name": "NYARIBARI MASABA",
+    "code": "266",
+    "registered_voters": 58982,
+    "created_at": "2025-11-06T13:07:50.433Z"
+  },
+  {
+    "id": 285,
+    "county_id": 139,
+    "name": "SOUTH MUGIRANGO",
+    "code": "262",
+    "registered_voters": 55631,
+    "created_at": "2025-11-06T13:07:50.427Z"
+  },
+  {
+    "id": 186,
+    "county_id": 125,
+    "name": "LAIKIPIA WEST",
+    "code": "163",
+    "registered_voters": 166130,
+    "created_at": "2025-11-06T13:07:50.285Z"
+  },
+  {
+    "id": 100,
+    "county_id": 110,
+    "name": "KANGUNDO",
+    "code": "077",
+    "registered_voters": 70960,
+    "created_at": "2025-11-06T13:07:50.155Z"
+  },
+  {
+    "id": 64,
+    "county_id": 103,
+    "name": "MANDERA NORTH",
+    "code": "041",
+    "registered_voters": 78675,
+    "created_at": "2025-11-06T13:07:50.101Z"
+  },
+  {
+    "id": 277,
+    "county_id": 138,
+    "name": "AWENDO",
+    "code": "254",
+    "registered_voters": 66658,
+    "created_at": "2025-11-06T13:07:50.415Z"
+  },
+  {
+    "id": 283,
+    "county_id": 138,
+    "name": "KURIA EAST",
+    "code": "260",
+    "registered_voters": 50623,
+    "created_at": "2025-11-06T13:07:50.424Z"
+  },
+  {
+    "id": 282,
+    "county_id": 138,
+    "name": "KURIA WEST",
+    "code": "259",
+    "registered_voters": 58881,
+    "created_at": "2025-11-06T13:07:50.423Z"
+  },
+  {
+    "id": 281,
+    "county_id": 138,
+    "name": "NYATIKE",
+    "code": "258",
+    "registered_voters": 69445,
+    "created_at": "2025-11-06T13:07:50.421Z"
+  },
+  {
+    "id": 276,
+    "county_id": 138,
+    "name": "RONGO",
+    "code": "253",
+    "registered_voters": 62112,
+    "created_at": "2025-11-06T13:07:50.413Z"
+  },
+  {
+    "id": 278,
+    "county_id": 138,
+    "name": "SUNA EAST",
+    "code": "255",
+    "registered_voters": 62805,
+    "created_at": "2025-11-06T13:07:50.416Z"
+  },
+  {
+    "id": 279,
+    "county_id": 138,
+    "name": "SUNA WEST",
+    "code": "256",
+    "registered_voters": 61407,
+    "created_at": "2025-11-06T13:07:50.418Z"
+  },
+  {
+    "id": 280,
+    "county_id": 138,
+    "name": "URIRI",
+    "code": "257",
+    "registered_voters": 69857,
+    "created_at": "2025-11-06T13:07:50.419Z"
+  },
+  {
+    "id": 28,
+    "county_id": 95,
+    "name": "LIKONI",
+    "code": "005",
+    "registered_voters": 120000,
+    "created_at": "2025-11-06T13:07:50.034Z"
+  },
+  {
+    "id": 298,
+    "county_id": 141,
+    "name": "DAGORETTI NORTH",
+    "code": "275",
+    "registered_voters": 165000,
+    "created_at": "2025-11-06T13:07:50.448Z"
+  },
+  {
+    "id": 299,
+    "county_id": 141,
+    "name": "DAGORETTI SOUTH",
+    "code": "276",
+    "registered_voters": 170000,
+    "created_at": "2025-11-06T13:07:50.450Z"
+  },
+  {
+    "id": 307,
+    "county_id": 141,
+    "name": "EMBAKASI CENTRAL",
+    "code": "284",
+    "registered_voters": 175000,
+    "created_at": "2025-11-06T13:07:50.464Z"
+  },
+  {
+    "id": 308,
+    "county_id": 141,
+    "name": "EMBAKASI EAST",
+    "code": "285",
+    "registered_voters": 185000,
+    "created_at": "2025-11-06T13:07:50.468Z"
+  },
+  {
+    "id": 306,
+    "county_id": 141,
+    "name": "EMBAKASI NORTH",
+    "code": "283",
+    "registered_voters": 180000,
+    "created_at": "2025-11-06T13:07:50.462Z"
+  },
+  {
+    "id": 305,
+    "county_id": 141,
+    "name": "EMBAKASI SOUTH",
+    "code": "282",
+    "registered_voters": 190000,
+    "created_at": "2025-11-06T13:07:50.460Z"
+  },
+  {
+    "id": 309,
+    "county_id": 141,
+    "name": "EMBAKASI WEST",
+    "code": "286",
+    "registered_voters": 170000,
+    "created_at": "2025-11-06T13:07:50.469Z"
+  },
+  {
+    "id": 311,
+    "county_id": 141,
+    "name": "KAMUKUNJI",
+    "code": "288",
+    "registered_voters": 140000,
+    "created_at": "2025-11-06T13:07:50.472Z"
+  },
+  {
+    "id": 303,
+    "county_id": 141,
+    "name": "KASARANI",
+    "code": "280",
+    "registered_voters": 195000,
+    "created_at": "2025-11-06T13:07:50.456Z"
+  },
+  {
+    "id": 301,
+    "county_id": 141,
+    "name": "KIBRA",
+    "code": "278",
+    "registered_voters": 160000,
+    "created_at": "2025-11-06T13:07:50.453Z"
+  },
+  {
+    "id": 300,
+    "county_id": 141,
+    "name": "LANGATA",
+    "code": "277",
+    "registered_voters": 175000,
+    "created_at": "2025-11-06T13:07:50.452Z"
+  },
+  {
+    "id": 310,
+    "county_id": 141,
+    "name": "MAKADARA",
+    "code": "287",
+    "registered_voters": 145000,
+    "created_at": "2025-11-06T13:07:50.471Z"
+  },
+  {
+    "id": 313,
+    "county_id": 141,
+    "name": "MATHARE",
+    "code": "290",
+    "registered_voters": 135000,
+    "created_at": "2025-11-06T13:07:50.475Z"
+  },
+  {
+    "id": 302,
+    "county_id": 141,
+    "name": "ROYSAMBU",
+    "code": "279",
+    "registered_voters": 185000,
+    "created_at": "2025-11-06T13:07:50.454Z"
+  },
+  {
+    "id": 304,
+    "county_id": 141,
+    "name": "RUARAKA",
+    "code": "281",
+    "registered_voters": 155000,
+    "created_at": "2025-11-06T13:07:50.457Z"
+  },
+  {
+    "id": 312,
+    "county_id": 141,
+    "name": "STAREHE",
+    "code": "289",
+    "registered_voters": 150000,
+    "created_at": "2025-11-06T13:07:50.474Z"
+  },
+  {
+    "id": 297,
+    "county_id": 141,
+    "name": "WESTLANDS",
+    "code": "274",
+    "registered_voters": 180000,
+    "created_at": "2025-11-06T13:07:50.447Z"
+  },
+  {
+    "id": 174,
+    "county_id": 123,
+    "name": "TINDERET",
+    "code": "151",
+    "registered_voters": 96721,
+    "created_at": "2025-11-06T13:07:50.266Z"
+  },
+  {
+    "id": 296,
+    "county_id": 140,
+    "name": "BORABU",
+    "code": "273",
+    "registered_voters": 108187,
+    "created_at": "2025-11-06T13:07:50.445Z"
+  },
+  {
+    "id": 293,
+    "county_id": 140,
+    "name": "KITUTU MASABA",
+    "code": "270",
+    "registered_voters": 132850,
+    "created_at": "2025-11-06T13:07:50.438Z"
+  },
+  {
+    "id": 295,
+    "county_id": 140,
+    "name": "NORTH MUGIRANGO",
+    "code": "272",
+    "registered_voters": 146866,
+    "created_at": "2025-11-06T13:07:50.444Z"
+  },
+  {
+    "id": 294,
+    "county_id": 140,
+    "name": "WEST MUGIRANGO",
+    "code": "271",
+    "registered_voters": 112789,
+    "created_at": "2025-11-06T13:07:50.442Z"
+  },
+  {
+    "id": 115,
+    "county_id": 112,
+    "name": "OL JOROK",
+    "code": "092",
+    "registered_voters": 102977,
+    "created_at": "2025-11-06T13:07:50.177Z"
+  },
+  {
+    "id": 84,
+    "county_id": 107,
+    "name": "CHUKA/IGAMBANG'OM",
+    "code": "061",
+    "registered_voters": 166480,
+    "created_at": "2025-11-06T13:07:50.134Z"
+  },
+  {
+    "id": 160,
+    "county_id": 120,
+    "name": "ENDEBESS",
+    "code": "137",
+    "registered_voters": 93840,
+    "created_at": "2025-11-06T13:07:50.246Z"
+  },
+  {
+    "id": 154,
+    "county_id": 118,
+    "name": "KACHELIBA",
+    "code": "131",
+    "registered_voters": 130592,
+    "created_at": "2025-11-06T13:07:50.238Z"
+  }
+]

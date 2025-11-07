@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
         u.full_name,
         u.email,
         u.phone,
-        c.name as candidate_name,
+        u2.full_name as candidate_name,
+        cand.position as candidate_position,
         ps.name as station_name,
         ps.code as station_code,
         ps.registered_voters,
@@ -45,7 +46,8 @@ export async function GET(request: NextRequest) {
         co.name as county_name
       FROM agents a
       JOIN users u ON a.user_id = u.id
-      LEFT JOIN candidates c ON a.candidate_id = c.id
+      LEFT JOIN candidates cand ON a.candidate_id = cand.id
+      LEFT JOIN users u2 ON cand.user_id = u2.id
       LEFT JOIN polling_stations ps ON a.polling_station_id = ps.id
       LEFT JOIN wards w ON ps.ward_id = w.id
       LEFT JOIN constituencies const ON w.constituency_id = const.id

@@ -44,6 +44,12 @@ export default function DashboardNav() {
             </h1>
             <div className="flex items-center gap-4">
               <a
+                href={`/dashboard/${user.role}`}
+                className="text-sm text-dark-300 hover:text-white transition-colors"
+              >
+                Dashboard
+              </a>
+              <a
                 href="/results"
                 className="text-sm text-dark-300 hover:text-white transition-colors"
               >

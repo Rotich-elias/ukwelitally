@@ -157,3 +157,46 @@ export async function parseFormData(request: Request): Promise<{
 
   return { fields, files }
 }
+
+// Save candidate profile photo (smaller size, optimized for profiles)
+export async function saveCandidatePhoto(file: File): Promise<string> {
+  await ensureUploadDir()
+
+  // Validate file type
+  if (!isValidImageType(file.type)) {
+    throw new Error('Invalid file type. Only images (JPEG, PNG, WebP) are allowed.')
+  }
+
+  // Get file buffer
+  const arrayBuffer = await file.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+
+  // Validate file size (max 5MB for profile photos)
+  const maxProfilePhotoSize = 5 * 1024 * 1024
+  if (buffer.length > maxProfilePhotoSize) {
+    throw new Error('Photo size exceeds 5MB limit')
+  }
+
+  // Compress and resize for profile (300x300 max, high quality)
+  const compressedBuffer = await sharp(buffer)
+    .resize(300, 300, {
+      fit: 'cover',
+      position: 'center',
+    })
+    .jpeg({ quality: 90 })
+    .toBuffer()
+
+  // Generate filename and full path
+  const filename = generateFilename(file.name)
+  const subdirPath = join(UPLOAD_DIR, 'candidate-photos')
+  if (!existsSync(subdirPath)) {
+    await mkdir(subdirPath, { recursive: true })
+  }
+  const filePath = join(subdirPath, filename)
+
+  // Save file
+  await writeFile(filePath, compressedBuffer)
+
+  // Return relative path for database storage
+  return `/candidate-photos/${filename}`
+}
