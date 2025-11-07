@@ -1,157 +1,174 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryMany } from '@/lib/db'
 import { AggregatedResult } from '@/types/database'
+import { getCandidateRestrictions } from '@/lib/candidate-restrictions'
+import jwt from 'jsonwebtoken'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/results/aggregate?level=ward&location_id=123&position=president
+// GET /api/results/aggregate?county_id=1&position=president
+// GET /api/results/aggregate?level=ward&location_id=123&position=president (legacy)
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const level = searchParams.get('level') || 'constituency'
-    const locationId = searchParams.get('location_id')
     const position = searchParams.get('position') || 'president'
 
-    if (!locationId) {
-      return NextResponse.json({ error: 'location_id is required' }, { status: 400 })
+    // Check if user is authenticated and get their role
+    let userRole = 'public'
+    let userId: number | null = null
+    let candidateRestrictions = null
+
+    const authHeader = req.headers.get('authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.substring(7)
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
+        userRole = decoded.role
+        userId = decoded.userId
+
+        // If user is a candidate, get their location restrictions
+        if (userRole === 'candidate') {
+          candidateRestrictions = await getCandidateRestrictions(userId)
+        }
+      } catch (error) {
+        // Invalid token, treat as public access
+        console.error('Invalid token:', error)
+      }
     }
 
-    // Build aggregation query based on level
-    let sql = ''
-    let groupByLocation = ''
-    let locationJoin = ''
-    let locationFilter = ''
+    // Support both new filtering approach and legacy level-based approach
+    let countyId = searchParams.get('county_id')
+    let constituencyId = searchParams.get('constituency_id')
+    let wardId = searchParams.get('ward_id')
+    let pollingStationId = searchParams.get('polling_station_id')
 
-    switch (level) {
-      case 'station':
-        sql = `
-          SELECT
-            ps.id as location_id,
-            ps.name as location_name,
-            'station' as level,
-            r.position,
-            cv.candidate_name,
-            cv.party_name,
-            SUM(cv.votes) as total_votes,
-            SUM(r.registered_voters) as total_registered_voters,
-            SUM(r.total_votes_cast) as total_votes_cast,
-            SUM(r.valid_votes) as total_valid_votes,
-            SUM(r.rejected_votes) as total_rejected_votes,
-            COUNT(DISTINCT s.id) as stations_reporting,
-            1 as total_stations
-          FROM polling_stations ps
-          LEFT JOIN submissions s ON ps.id = s.polling_station_id AND s.status = 'verified' AND s.submission_type = 'primary'
-          LEFT JOIN results r ON s.id = r.submission_id AND r.position = $2
-          LEFT JOIN candidate_votes cv ON r.id = cv.result_id
-          WHERE ps.id = $1
-          GROUP BY ps.id, ps.name, r.position, cv.candidate_name, cv.party_name
-        `
-        break
+    // Legacy support
+    const level = searchParams.get('level')
+    const locationId = searchParams.get('location_id')
 
-      case 'ward':
-        sql = `
-          SELECT
-            w.id as location_id,
-            w.name as location_name,
-            'ward' as level,
-            r.position,
-            cv.candidate_name,
-            cv.party_name,
-            SUM(cv.votes) as total_votes,
-            SUM(r.registered_voters) as total_registered_voters,
-            SUM(r.total_votes_cast) as total_votes_cast,
-            SUM(r.valid_votes) as total_valid_votes,
-            SUM(r.rejected_votes) as total_rejected_votes,
-            COUNT(DISTINCT s.id) as stations_reporting,
-            COUNT(DISTINCT ps.id) as total_stations
-          FROM wards w
-          LEFT JOIN polling_stations ps ON w.id = ps.ward_id
-          LEFT JOIN submissions s ON ps.id = s.polling_station_id AND s.status = 'verified' AND s.submission_type = 'primary'
-          LEFT JOIN results r ON s.id = r.submission_id AND r.position = $2
-          LEFT JOIN candidate_votes cv ON r.id = cv.result_id
-          WHERE w.id = $1
-          GROUP BY w.id, w.name, r.position, cv.candidate_name, cv.party_name
-        `
-        break
+    // If using legacy approach, convert to new filtering
+    let actualCountyId = countyId
+    let actualConstituencyId = constituencyId
+    let actualWardId = wardId
+    let actualPollingStationId = pollingStationId
 
-      case 'constituency':
-        sql = `
-          SELECT
-            c.id as location_id,
-            c.name as location_name,
-            'constituency' as level,
-            r.position,
-            cv.candidate_name,
-            cv.party_name,
-            SUM(cv.votes) as total_votes,
-            SUM(r.registered_voters) as total_registered_voters,
-            SUM(r.total_votes_cast) as total_votes_cast,
-            SUM(r.valid_votes) as total_valid_votes,
-            SUM(r.rejected_votes) as total_rejected_votes,
-            COUNT(DISTINCT s.id) as stations_reporting,
-            COUNT(DISTINCT ps.id) as total_stations
-          FROM constituencies c
-          LEFT JOIN polling_stations ps ON c.id = ps.constituency_id
-          LEFT JOIN submissions s ON ps.id = s.polling_station_id AND s.status = 'verified' AND s.submission_type = 'primary'
-          LEFT JOIN results r ON s.id = r.submission_id AND r.position = $2
-          LEFT JOIN candidate_votes cv ON r.id = cv.result_id
-          WHERE c.id = $1
-          GROUP BY c.id, c.name, r.position, cv.candidate_name, cv.party_name
-        `
-        break
-
-      case 'county':
-        sql = `
-          SELECT
-            co.id as location_id,
-            co.name as location_name,
-            'county' as level,
-            r.position,
-            cv.candidate_name,
-            cv.party_name,
-            SUM(cv.votes) as total_votes,
-            SUM(r.registered_voters) as total_registered_voters,
-            SUM(r.total_votes_cast) as total_votes_cast,
-            SUM(r.valid_votes) as total_valid_votes,
-            SUM(r.rejected_votes) as total_rejected_votes,
-            COUNT(DISTINCT s.id) as stations_reporting,
-            COUNT(DISTINCT ps.id) as total_stations
-          FROM counties co
-          LEFT JOIN polling_stations ps ON co.id = ps.county_id
-          LEFT JOIN submissions s ON ps.id = s.polling_station_id AND s.status = 'verified' AND s.submission_type = 'primary'
-          LEFT JOIN results r ON s.id = r.submission_id AND r.position = $2
-          LEFT JOIN candidate_votes cv ON r.id = cv.result_id
-          WHERE co.id = $1
-          GROUP BY co.id, co.name, r.position, cv.candidate_name, cv.party_name
-        `
-        break
-
-      default:
-        return NextResponse.json({ error: 'Invalid level' }, { status: 400 })
+    if (level && locationId) {
+      switch (level) {
+        case 'county':
+          actualCountyId = locationId
+          break
+        case 'constituency':
+          actualConstituencyId = locationId
+          break
+        case 'ward':
+          actualWardId = locationId
+          break
+        case 'station':
+          actualPollingStationId = locationId
+          break
+      }
     }
 
-    const rawResults = await queryMany(sql, [locationId, position])
+    // Apply candidate location restrictions
+    if (candidateRestrictions) {
+      switch (candidateRestrictions.position) {
+        case 'mca':
+          // MCA can only see their ward
+          actualWardId = candidateRestrictions.ward_id?.toString() || null
+          actualConstituencyId = null
+          actualCountyId = null
+          actualPollingStationId = null
+          break
+
+        case 'mp':
+          // MP can only see their constituency
+          actualConstituencyId = candidateRestrictions.constituency_id?.toString() || null
+          actualCountyId = null
+          actualWardId = null
+          actualPollingStationId = null
+          break
+
+        case 'governor':
+        case 'senator':
+          // Governor/Senator can only see their county
+          actualCountyId = candidateRestrictions.county_id?.toString() || null
+          actualConstituencyId = null
+          actualWardId = null
+          actualPollingStationId = null
+          break
+
+        case 'president':
+          // President can see all - no restrictions
+          break
+      }
+    }
+
+    // Build query with flexible filtering
+    const params: any[] = [position]
+    const whereConditions: string[] = []
+
+    if (actualPollingStationId) {
+      whereConditions.push(`ps.id = $${params.length + 1}`)
+      params.push(actualPollingStationId)
+    } else if (actualWardId) {
+      whereConditions.push(`w.id = $${params.length + 1}`)
+      params.push(actualWardId)
+    } else if (actualConstituencyId) {
+      whereConditions.push(`const.id = $${params.length + 1}`)
+      params.push(actualConstituencyId)
+    } else if (actualCountyId) {
+      whereConditions.push(`co.id = $${params.length + 1}`)
+      params.push(actualCountyId)
+    }
+
+    const whereClause = whereConditions.length > 0 ? `AND ${whereConditions.join(' AND ')}` : ''
+
+    const sql = `
+      SELECT
+        cv.candidate_name,
+        cv.party_name,
+        SUM(cv.votes) as total_votes,
+        SUM(r.registered_voters) as total_registered_voters,
+        SUM(r.total_votes_cast) as total_votes_cast,
+        SUM(r.valid_votes) as total_valid_votes,
+        SUM(r.rejected_votes) as total_rejected_votes,
+        COUNT(DISTINCT s.id) as stations_reporting,
+        COUNT(DISTINCT ps.id) as total_stations
+      FROM polling_stations ps
+      JOIN wards w ON ps.ward_id = w.id
+      JOIN constituencies const ON w.constituency_id = const.id
+      JOIN counties co ON const.county_id = co.id
+      LEFT JOIN submissions s ON ps.id = s.polling_station_id AND s.status = 'verified' AND s.submission_type = 'primary'
+      LEFT JOIN results r ON s.id = r.submission_id AND r.position = $1
+      LEFT JOIN candidate_votes cv ON r.id = cv.result_id
+      WHERE 1=1 ${whereClause}
+      GROUP BY cv.candidate_name, cv.party_name
+      HAVING cv.candidate_name IS NOT NULL
+    `
+
+    const rawResults = await queryMany(sql, params)
 
     // Process and structure results
     if (rawResults.length === 0) {
       return NextResponse.json({
-        level,
-        location_id: locationId,
-        location_name: 'Unknown',
-        position,
-        candidate_votes: [],
-        total_registered_voters: 0,
-        total_votes_cast: 0,
-        total_valid_votes: 0,
-        total_rejected_votes: 0,
-        turnout_percentage: 0,
-        stations_reporting: 0,
-        total_stations: 0,
+        success: true,
+        results: [],
+        summary: {
+          total_votes_cast: 0,
+          registered_voters: 0,
+          rejected_votes: 0,
+          turnout_percentage: 0,
+          total_stations: 0,
+          stations_reported: 0,
+          reporting_percentage: 0,
+        },
       })
     }
 
+    // Calculate totals from first row (aggregated values are same across all rows)
     const firstRow = rawResults[0]
-    const locationName = firstRow.location_name
     const totalRegisteredVoters = parseInt(firstRow.total_registered_voters) || 0
     const totalVotesCast = parseInt(firstRow.total_votes_cast) || 0
     const totalValidVotes = parseInt(firstRow.total_valid_votes) || 0
@@ -159,53 +176,31 @@ export async function GET(req: NextRequest) {
     const stationsReporting = parseInt(firstRow.stations_reporting) || 0
     const totalStations = parseInt(firstRow.total_stations) || 0
 
-    // Aggregate candidate votes
-    const candidateVotesMap = new Map<string, { candidate_name: string; party_name: string | null; total_votes: number }>()
+    // Map candidate results
+    const results = rawResults.map((row) => ({
+      candidate_name: row.candidate_name,
+      party_name: row.party_name || 'Independent',
+      total_votes: parseInt(row.total_votes) || 0,
+      percentage: totalValidVotes > 0 ? ((parseInt(row.total_votes) || 0) / totalValidVotes) * 100 : 0,
+      polling_stations_count: stationsReporting,
+    })).sort((a, b) => b.total_votes - a.total_votes)
 
-    rawResults.forEach((row) => {
-      if (row.candidate_name) {
-        const key = row.candidate_name
-        const existing = candidateVotesMap.get(key)
-        const votes = parseInt(row.total_votes) || 0
+    const turnoutPercentage = totalRegisteredVoters > 0 ? (totalVotesCast / totalRegisteredVoters) * 100 : 0
+    const reportingPercentage = totalStations > 0 ? (stationsReporting / totalStations) * 100 : 0
 
-        if (existing) {
-          existing.total_votes += votes
-        } else {
-          candidateVotesMap.set(key, {
-            candidate_name: row.candidate_name,
-            party_name: row.party_name,
-            total_votes: votes,
-          })
-        }
-      }
+    return NextResponse.json({
+      success: true,
+      results,
+      summary: {
+        total_votes_cast: totalVotesCast,
+        registered_voters: totalRegisteredVoters,
+        rejected_votes: totalRejectedVotes,
+        turnout_percentage: turnoutPercentage,
+        total_stations: totalStations,
+        stations_reported: stationsReporting,
+        reporting_percentage: reportingPercentage,
+      },
     })
-
-    const candidateVotes = Array.from(candidateVotesMap.values())
-      .map((cv) => ({
-        ...cv,
-        percentage: totalValidVotes > 0 ? (cv.total_votes / totalValidVotes) * 100 : 0,
-      }))
-      .sort((a, b) => b.total_votes - a.total_votes)
-
-    const turnoutPercentage =
-      totalRegisteredVoters > 0 ? (totalVotesCast / totalRegisteredVoters) * 100 : 0
-
-    const aggregatedResult: AggregatedResult = {
-      position: position as any,
-      level: level as any,
-      location_id: parseInt(locationId),
-      location_name: locationName,
-      candidate_votes: candidateVotes,
-      total_registered_voters: totalRegisteredVoters,
-      total_votes_cast: totalVotesCast,
-      total_valid_votes: totalValidVotes,
-      total_rejected_votes: totalRejectedVotes,
-      turnout_percentage: turnoutPercentage,
-      stations_reporting: stationsReporting,
-      total_stations: totalStations,
-    }
-
-    return NextResponse.json(aggregatedResult)
   } catch (error) {
     console.error('Error aggregating results:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

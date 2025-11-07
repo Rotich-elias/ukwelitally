@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react'
 
 interface User {
   id: string
-  name: string
+  full_name: string
+  email: string
   phone: string
   role: string
 }
@@ -36,14 +37,22 @@ export default function DashboardNav() {
     <nav className="glass-effect border-b border-dark-700/50 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          {/* Logo */}
+          {/* Logo and Navigation */}
           <div className="flex items-center gap-6">
             <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               UkweliTally
             </h1>
-            <span className="text-sm px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full border border-blue-500/30">
-              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-            </span>
+            <div className="flex items-center gap-4">
+              <a
+                href="/results"
+                className="text-sm text-dark-300 hover:text-white transition-colors"
+              >
+                Results
+              </a>
+              <span className="text-sm px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full border border-blue-500/30">
+                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+              </span>
+            </div>
           </div>
 
           {/* User Menu */}
@@ -53,11 +62,11 @@ export default function DashboardNav() {
               className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-dark-800/50 transition-colors"
             >
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                {user.name.charAt(0).toUpperCase()}
+                {user.full_name?.charAt(0).toUpperCase() || 'U'}
               </div>
               <div className="text-left hidden md:block">
-                <p className="text-sm font-medium text-white">{user.name}</p>
-                <p className="text-xs text-dark-400">{user.phone}</p>
+                <p className="text-sm font-medium text-white">{user.full_name}</p>
+                <p className="text-xs text-dark-400">{user.email}</p>
               </div>
               <svg
                 className={`w-4 h-4 text-dark-400 transition-transform ${showMenu ? 'rotate-180' : ''}`}

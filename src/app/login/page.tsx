@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 export default function LoginPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    phone: '',
+    email: '',
     password: '',
   })
   const [error, setError] = useState('')
@@ -83,17 +83,17 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Phone Number */}
+            {/* Email Address */}
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-dark-200 mb-2">
-                Phone Number
+              <label htmlFor="email" className="block text-sm font-medium text-dark-200 mb-2">
+                Email Address
               </label>
               <input
-                type="tel"
-                id="phone"
-                placeholder="+254712345678"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                type="email"
+                id="email"
+                placeholder="john@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 required
               />
@@ -152,13 +152,11 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Register Link */}
+          {/* Contact Admin */}
           <div className="mt-6 text-center">
             <p className="text-dark-300 text-sm">
               Don't have an account?{' '}
-              <a href="/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
-                Register here
-              </a>
+              <span className="text-dark-400">Contact your administrator</span>
             </p>
           </div>
         </div>

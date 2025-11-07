@@ -4,10 +4,17 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
 
-interface PollingStation {
-  id: string
-  name: string
-  code: string
+interface AgentInfo {
+  agent_id: number
+  full_name: string
+  candidate_name: string
+  station_name: string
+  station_code: string
+  registered_voters: number
+  ward_name: string
+  constituency_name: string
+  county_name: string
+  polling_station_id: number
 }
 
 export default function AgentDashboard() {
@@ -15,7 +22,8 @@ export default function AgentDashboard() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [pollingStation, setPollingStation] = useState<PollingStation | null>(null)
+  const [agentInfo, setAgentInfo] = useState<AgentInfo | null>(null)
+  const [loadingInfo, setLoadingInfo] = useState(true)
   const [formData, setFormData] = useState({
     candidate_id: '',
     votes: '',
@@ -29,7 +37,30 @@ export default function AgentDashboard() {
     const token = localStorage.getItem('token')
     if (!token) {
       router.push('/login')
+      return
     }
+
+    // Fetch agent info
+    const fetchAgentInfo = async () => {
+      try {
+        const response = await fetch('/api/agents/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setAgentInfo(data.data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch agent info:', err)
+      } finally {
+        setLoadingInfo(false)
+      }
+    }
+
+    fetchAgentInfo()
   }, [router])
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -251,16 +282,35 @@ export default function AgentDashboard() {
             {/* Station Info */}
             <div className="glass-effect rounded-xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Polling Station</h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs text-dark-400">Station Name</p>
-                  <p className="text-sm text-white font-medium">Loading...</p>
+              {loadingInfo ? (
+                <p className="text-sm text-dark-400">Loading...</p>
+              ) : agentInfo ? (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-dark-400">Station Name</p>
+                    <p className="text-sm text-white font-medium">{agentInfo.station_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-dark-400">Station Code</p>
+                    <p className="text-sm text-white font-medium">{agentInfo.station_code}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-dark-400">Registered Voters</p>
+                    <p className="text-sm text-white font-medium">{agentInfo.registered_voters?.toLocaleString() || 'N/A'}</p>
+                  </div>
+                  <div className="pt-2 border-t border-dark-700">
+                    <p className="text-xs text-dark-400">Location</p>
+                    <p className="text-sm text-white">{agentInfo.ward_name}</p>
+                    <p className="text-xs text-dark-400">{agentInfo.constituency_name}, {agentInfo.county_name}</p>
+                  </div>
+                  <div className="pt-2 border-t border-dark-700">
+                    <p className="text-xs text-dark-400">Representing</p>
+                    <p className="text-sm text-white font-medium">{agentInfo.candidate_name}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-dark-400">Station Code</p>
-                  <p className="text-sm text-white font-medium">Loading...</p>
-                </div>
-              </div>
+              ) : (
+                <p className="text-sm text-yellow-400">No polling station assigned</p>
+              )}
             </div>
 
             {/* Instructions */}

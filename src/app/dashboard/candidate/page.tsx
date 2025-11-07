@@ -4,32 +4,39 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
 
-interface Result {
-  id: string
-  level: string
-  location_name: string
-  total_votes: number
-  updated_at: string
+interface CandidateProfile {
+  full_name: string
+  party_name: string
+  position: string
+  electoral_area: string
+  county_id?: number
+  constituency_id?: number
+  ward_id?: number
 }
 
-interface Stats {
-  totalStations: number
-  submittedStations: number
-  pendingStations: number
-  totalVotes: number
+interface CandidateResult {
+  candidate_name: string
+  party_name: string
+  total_votes: number
+  percentage: number
+}
+
+interface ResultsSummary {
+  total_votes_cast: number
+  registered_voters: number
+  rejected_votes: number
+  turnout_percentage: number
+  total_stations: number
+  stations_reported: number
+  reporting_percentage: number
 }
 
 export default function CandidateDashboard() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [results, setResults] = useState<Result[]>([])
-  const [stats, setStats] = useState<Stats>({
-    totalStations: 0,
-    submittedStations: 0,
-    pendingStations: 0,
-    totalVotes: 0,
-  })
-  const [selectedLevel, setSelectedLevel] = useState('all')
+  const [profile, setProfile] = useState<CandidateProfile | null>(null)
+  const [results, setResults] = useState<CandidateResult[]>([])
+  const [summary, setSummary] = useState<ResultsSummary | null>(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -38,13 +45,33 @@ export default function CandidateDashboard() {
       return
     }
 
+    fetchProfile()
     fetchResults()
   }, [router])
+
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/candidates/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setProfile(data.data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch profile:', error)
+    }
+  }
 
   const fetchResults = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/results', {
+      // The API will automatically restrict based on candidate's electoral area
+      const response = await fetch(`/api/results/aggregate?position=${profile?.position || 'president'}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -53,14 +80,7 @@ export default function CandidateDashboard() {
       if (response.ok) {
         const data = await response.json()
         setResults(data.results || [])
-        // Calculate stats from results
-        const totalVotes = data.results?.reduce((sum: number, r: Result) => sum + r.total_votes, 0) || 0
-        setStats({
-          totalStations: 150,
-          submittedStations: data.results?.length || 0,
-          pendingStations: 150 - (data.results?.length || 0),
-          totalVotes,
-        })
+        setSummary(data.summary)
       }
     } catch (error) {
       console.error('Failed to fetch results:', error)
@@ -70,8 +90,8 @@ export default function CandidateDashboard() {
   }
 
   const getProgressPercentage = () => {
-    if (stats.totalStations === 0) return 0
-    return Math.round((stats.submittedStations / stats.totalStations) * 100)
+    if (!summary || summary.total_stations === 0) return 0
+    return Math.round(summary.reporting_percentage)
   }
 
   return (
@@ -79,10 +99,30 @@ export default function CandidateDashboard() {
       <DashboardNav />
 
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
+        {/* Header with Electoral Area */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Candidate Dashboard</h1>
           <p className="text-dark-300">Real-time election results tracking</p>
+          {profile && (
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <div>
+                <p className="text-xs text-blue-300">Electoral Area</p>
+                <p className="text-sm font-semibold text-white">{profile.electoral_area}</p>
+              </div>
+              <div className="ml-4 pl-4 border-l border-blue-500/30">
+                <p className="text-xs text-blue-300">Position</p>
+                <p className="text-sm font-semibold text-white">{profile.position.toUpperCase()}</p>
+              </div>
+              <div className="ml-4 pl-4 border-l border-blue-500/30">
+                <p className="text-xs text-blue-300">Party</p>
+                <p className="text-sm font-semibold text-white">{profile.party_name}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -97,47 +137,48 @@ export default function CandidateDashboard() {
                 </svg>
               </div>
             </div>
-            <p className="text-3xl font-bold text-white">{stats.totalStations}</p>
+            <p className="text-3xl font-bold text-white">{summary?.total_stations || 0}</p>
           </div>
 
           {/* Submitted */}
           <div className="glass-effect rounded-xl p-6">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-dark-400 text-sm">Submitted</p>
+              <p className="text-dark-400 text-sm">Reporting</p>
               <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
-            <p className="text-3xl font-bold text-white">{stats.submittedStations}</p>
+            <p className="text-3xl font-bold text-white">{summary?.stations_reported || 0}</p>
             <p className="text-xs text-emerald-400 mt-1">{getProgressPercentage()}% complete</p>
           </div>
 
-          {/* Pending */}
+          {/* Turnout */}
           <div className="glass-effect rounded-xl p-6">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-dark-400 text-sm">Pending</p>
+              <p className="text-dark-400 text-sm">Turnout</p>
               <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
-            <p className="text-3xl font-bold text-white">{stats.pendingStations}</p>
+            <p className="text-3xl font-bold text-white">{summary?.turnout_percentage.toFixed(1) || 0}%</p>
+            <p className="text-xs text-dark-400 mt-1">{summary?.total_votes_cast.toLocaleString() || 0} votes cast</p>
           </div>
 
-          {/* Total Votes */}
+          {/* Registered Voters */}
           <div className="glass-effect rounded-xl p-6">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-dark-400 text-sm">Total Votes</p>
+              <p className="text-dark-400 text-sm">Registered Voters</p>
               <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
             </div>
-            <p className="text-3xl font-bold text-white">{stats.totalVotes.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-white">{summary?.registered_voters.toLocaleString() || 0}</p>
           </div>
         </div>
 
@@ -153,6 +194,10 @@ export default function CandidateDashboard() {
               style={{ width: `${getProgressPercentage()}%` }}
             ></div>
           </div>
+          <div className="flex justify-between mt-2 text-sm text-dark-400">
+            <span>{summary?.stations_reported || 0} stations reporting</span>
+            <span>{summary?.total_stations || 0} total stations</span>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -160,18 +205,9 @@ export default function CandidateDashboard() {
           <div className="lg:col-span-2">
             <div className="glass-effect rounded-xl p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-white">Results by Location</h2>
-                <select
-                  value={selectedLevel}
-                  onChange={(e) => setSelectedLevel(e.target.value)}
-                  className="px-4 py-2 bg-dark-900/50 border border-dark-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">All Levels</option>
-                  <option value="station">Polling Stations</option>
-                  <option value="ward">Wards</option>
-                  <option value="constituency">Constituencies</option>
-                  <option value="county">Counties</option>
-                </select>
+                <h2 className="text-xl font-semibold text-white">
+                  Election Results - {profile?.electoral_area}
+                </h2>
               </div>
 
               {loading ? (
@@ -184,26 +220,36 @@ export default function CandidateDashboard() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-dark-700">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-dark-300">Location</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-dark-300">Level</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-dark-300">Candidate</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-dark-300">Party</th>
                         <th className="text-right py-3 px-4 text-sm font-medium text-dark-300">Votes</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-dark-300">Updated</th>
+                        <th className="text-right py-3 px-4 text-sm font-medium text-dark-300">Percentage</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {results.map((result) => (
-                        <tr key={result.id} className="border-b border-dark-800 hover:bg-dark-800/30 transition-colors">
-                          <td className="py-3 px-4 text-white">{result.location_name}</td>
+                      {results.map((result, index) => (
+                        <tr key={index} className="border-b border-dark-800 hover:bg-dark-800/30 transition-colors">
+                          <td className="py-3 px-4 text-white font-medium">{result.candidate_name}</td>
                           <td className="py-3 px-4">
                             <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">
-                              {result.level}
+                              {result.party_name}
                             </span>
                           </td>
                           <td className="py-3 px-4 text-right text-white font-semibold">
                             {result.total_votes.toLocaleString()}
                           </td>
-                          <td className="py-3 px-4 text-right text-dark-400 text-sm">
-                            {new Date(result.updated_at).toLocaleDateString()}
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <div className="w-16 bg-dark-800 rounded-full h-2">
+                                <div
+                                  className="bg-gradient-to-r from-blue-500 to-emerald-500 h-2 rounded-full"
+                                  style={{ width: `${result.percentage}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-white font-medium w-12 text-right">
+                                {result.percentage.toFixed(1)}%
+                              </span>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -228,14 +274,17 @@ export default function CandidateDashboard() {
             <div className="glass-effect rounded-xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <button className="w-full btn-primary text-sm py-2">
+                <button
+                  onClick={() => router.push('/dashboard/candidate/manage-agents')}
+                  className="w-full btn-primary text-sm py-2"
+                >
+                  Manage Agents
+                </button>
+                <button className="w-full btn-secondary text-sm py-2">
                   Download Report
                 </button>
                 <button className="w-full btn-secondary text-sm py-2">
-                  Compare with IEBC
-                </button>
-                <button className="w-full btn-secondary text-sm py-2">
-                  View Agents
+                  View Results Map
                 </button>
               </div>
             </div>

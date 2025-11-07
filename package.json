@@ -9,15 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "csv-parser": "^3.2.0",
+    "date-fns": "^3.6.0",
+    "jsonwebtoken": "^9.0.2",
     "next": "^14.2.0",
+    "pg": "^8.11.3",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "pg": "^8.11.3",
-    "zod": "^3.23.0",
-    "date-fns": "^3.6.0",
-    "sharp": "^0.33.0"
+    "sharp": "^0.33.0",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -26,11 +27,11 @@
     "@types/pg": "^8.11.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
-    "typescript": "^5.0.0",
+    "autoprefixer": "^10.4.0",
     "eslint": "^8.0.0",
     "eslint-config-next": "14.2.0",
-    "tailwindcss": "^3.4.0",
     "postcss": "^8.4.0",
-    "autoprefixer": "^10.4.0"
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.0.0"
   }
 }
