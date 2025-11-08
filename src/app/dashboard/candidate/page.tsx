@@ -31,12 +31,23 @@ interface ResultsSummary {
   reporting_percentage: number
 }
 
+interface Activity {
+  id: string
+  type: 'submission' | 'agent_assigned' | 'result_verified' | 'discrepancy'
+  description: string
+  details: string
+  timestamp: string
+  icon_color: 'emerald' | 'blue' | 'purple' | 'orange' | 'red'
+}
+
 export default function CandidateDashboard() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<CandidateProfile | null>(null)
   const [results, setResults] = useState<CandidateResult[]>([])
   const [summary, setSummary] = useState<ResultsSummary | null>(null)
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [activitiesLoading, setActivitiesLoading] = useState(true)
 
   // Fetch profile data
   const fetchProfile = useCallback(async () => {
@@ -82,6 +93,27 @@ export default function CandidateDashboard() {
     }
   }, [profile])
 
+  // Fetch recent activity
+  const fetchActivity = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/candidates/activity', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setActivities(data.data || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch activity:', error)
+    } finally {
+      setActivitiesLoading(false)
+    }
+  }, [])
+
   // Initial load - fetch profile
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -97,8 +129,9 @@ export default function CandidateDashboard() {
   useEffect(() => {
     if (profile) {
       fetchResults()
+      fetchActivity()
     }
-  }, [profile, fetchResults])
+  }, [profile, fetchResults, fetchActivity])
 
   const getProgressPercentage = () => {
     if (!summary || summary.total_stations === 0) return 0
@@ -303,29 +336,41 @@ export default function CandidateDashboard() {
             {/* Recent Activity */}
             <div className="glass-effect rounded-xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full mt-2"></div>
-                  <div>
-                    <p className="text-sm text-white">New submission</p>
-                    <p className="text-xs text-dark-400">Station A123 - 5m ago</p>
-                  </div>
+              {activitiesLoading ? (
+                <div className="text-center py-6">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                  <p className="text-dark-400 text-sm mt-2">Loading activity...</p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
-                  <div>
-                    <p className="text-sm text-white">Agent assigned</p>
-                    <p className="text-xs text-dark-400">John Doe - 15m ago</p>
-                  </div>
+              ) : activities.length > 0 ? (
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {activities.map((activity) => {
+                    const colorClasses = {
+                      emerald: 'bg-emerald-400',
+                      blue: 'bg-blue-400',
+                      purple: 'bg-purple-400',
+                      orange: 'bg-orange-400',
+                      red: 'bg-red-400',
+                    }
+                    return (
+                      <div key={activity.id} className="flex items-start gap-3">
+                        <div className={`w-2 h-2 ${colorClasses[activity.icon_color]} rounded-full mt-2 flex-shrink-0`}></div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-white truncate">{activity.description}</p>
+                          <p className="text-xs text-dark-400 truncate">{activity.details}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full mt-2"></div>
-                  <div>
-                    <p className="text-sm text-white">Results aggregated</p>
-                    <p className="text-xs text-dark-400">Ward 12 - 1h ago</p>
-                  </div>
+              ) : (
+                <div className="text-center py-6">
+                  <svg className="w-12 h-12 mx-auto text-dark-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-dark-400 text-sm">No recent activity</p>
+                  <p className="text-dark-500 text-xs mt-1">Activity will appear here as it happens</p>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Support */}

@@ -1621,7 +1621,7 @@ export default function AdminDashboard() {
                   onClick={() => {
                     setShowPaymentModal(false)
                     setPaymentFormData({
-                      payment_status: 'pending',
+                      expected_payment_amount: '',
                       payment_amount: '',
                       payment_method: 'M-Pesa',
                       payment_reference: '',
@@ -1700,7 +1700,7 @@ export default function AdminDashboard() {
                       setShowPaymentModal(false)
                       setPaymentSuccess('')
                       setPaymentFormData({
-                        payment_status: 'pending',
+                        expected_payment_amount: '',
                         payment_amount: '',
                         payment_method: 'M-Pesa',
                         payment_reference: '',
