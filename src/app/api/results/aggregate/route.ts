@@ -125,27 +125,42 @@ export async function GET(req: NextRequest) {
 
     const whereClause = whereConditions.length > 0 ? `AND ${whereConditions.join(' AND ')}` : ''
 
+    // First, get the total counts for all stations in the area
+    const totalStatsSql = `
+      SELECT
+        COUNT(DISTINCT ps.id) as total_stations,
+        SUM(ps.registered_voters) as total_registered_voters
+      FROM polling_stations ps
+      JOIN wards w ON ps.ward_id = w.id
+      JOIN constituencies const ON w.constituency_id = const.id
+      JOIN counties co ON const.county_id = co.id
+      WHERE 1=1 ${whereClause}
+    `
+
+    const totalStatsResult = await queryMany(totalStatsSql, params.slice(1)) // Skip position param
+    const totalStationsInArea = parseInt(totalStatsResult[0]?.total_stations) || 0
+    const totalRegisteredVotersInArea = parseInt(totalStatsResult[0]?.total_registered_voters) || 0
+
+    // Get candidate results from verified submissions
     const sql = `
       SELECT
         cv.candidate_name,
         cv.party_name,
         SUM(cv.votes) as total_votes,
-        SUM(r.registered_voters) as total_registered_voters,
+        SUM(r.registered_voters) as reported_registered_voters,
         SUM(r.total_votes_cast) as total_votes_cast,
         SUM(r.valid_votes) as total_valid_votes,
         SUM(r.rejected_votes) as total_rejected_votes,
-        COUNT(DISTINCT s.id) as stations_reporting,
-        COUNT(DISTINCT ps.id) as total_stations
-      FROM polling_stations ps
+        COUNT(DISTINCT s.polling_station_id) as stations_reporting
+      FROM submissions s
+      JOIN results r ON s.id = r.submission_id AND r.position = $1
+      JOIN candidate_votes cv ON r.id = cv.result_id
+      JOIN polling_stations ps ON s.polling_station_id = ps.id
       JOIN wards w ON ps.ward_id = w.id
       JOIN constituencies const ON w.constituency_id = const.id
       JOIN counties co ON const.county_id = co.id
-      LEFT JOIN submissions s ON ps.id = s.polling_station_id AND s.status = 'verified' AND s.submission_type = 'primary'
-      LEFT JOIN results r ON s.id = r.submission_id AND r.position = $1
-      LEFT JOIN candidate_votes cv ON r.id = cv.result_id
-      WHERE 1=1 ${whereClause}
+      WHERE s.status = 'verified' AND s.submission_type = 'primary' ${whereClause}
       GROUP BY cv.candidate_name, cv.party_name
-      HAVING cv.candidate_name IS NOT NULL
     `
 
     const rawResults = await queryMany(sql, params)
@@ -157,10 +172,10 @@ export async function GET(req: NextRequest) {
         results: [],
         summary: {
           total_votes_cast: 0,
-          registered_voters: 0,
+          registered_voters: totalRegisteredVotersInArea,
           rejected_votes: 0,
           turnout_percentage: 0,
-          total_stations: 0,
+          total_stations: totalStationsInArea,
           stations_reported: 0,
           reporting_percentage: 0,
         },
@@ -169,12 +184,11 @@ export async function GET(req: NextRequest) {
 
     // Calculate totals from first row (aggregated values are same across all rows)
     const firstRow = rawResults[0]
-    const totalRegisteredVoters = parseInt(firstRow.total_registered_voters) || 0
+    const reportedRegisteredVoters = parseInt(firstRow.reported_registered_voters) || 0
     const totalVotesCast = parseInt(firstRow.total_votes_cast) || 0
     const totalValidVotes = parseInt(firstRow.total_valid_votes) || 0
     const totalRejectedVotes = parseInt(firstRow.total_rejected_votes) || 0
     const stationsReporting = parseInt(firstRow.stations_reporting) || 0
-    const totalStations = parseInt(firstRow.total_stations) || 0
 
     // Map candidate results
     const results = rawResults.map((row) => ({
@@ -185,18 +199,19 @@ export async function GET(req: NextRequest) {
       polling_stations_count: stationsReporting,
     })).sort((a, b) => b.total_votes - a.total_votes)
 
-    const turnoutPercentage = totalRegisteredVoters > 0 ? (totalVotesCast / totalRegisteredVoters) * 100 : 0
-    const reportingPercentage = totalStations > 0 ? (stationsReporting / totalStations) * 100 : 0
+    // Calculate average turnout from reported stations only
+    const averageTurnoutPercentage = reportedRegisteredVoters > 0 ? (totalVotesCast / reportedRegisteredVoters) * 100 : 0
+    const reportingPercentage = totalStationsInArea > 0 ? (stationsReporting / totalStationsInArea) * 100 : 0
 
     return NextResponse.json({
       success: true,
       results,
       summary: {
         total_votes_cast: totalVotesCast,
-        registered_voters: totalRegisteredVoters,
+        registered_voters: totalRegisteredVotersInArea, // Total from ALL stations
         rejected_votes: totalRejectedVotes,
-        turnout_percentage: turnoutPercentage,
-        total_stations: totalStations,
+        turnout_percentage: averageTurnoutPercentage, // Average from reported stations
+        total_stations: totalStationsInArea, // All stations in area
         stations_reported: stationsReporting,
         reporting_percentage: reportingPercentage,
       },

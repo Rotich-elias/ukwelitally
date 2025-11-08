@@ -31,6 +31,33 @@ interface CandidateProfile {
   electoral_area: string
 }
 
+interface PollingStation {
+  id: number
+  code: string
+  name: string
+  registered_voters: number
+  ward_name: string
+  constituency_name: string
+  county_name: string
+  submission_count: number
+  has_verified: number
+  has_pending: number
+  has_flagged: number
+  has_rejected: number
+  last_submitted_at: string | null
+  verified_count: number
+}
+
+interface StationsSummary {
+  total_stations: number
+  submitted_stations: number
+  verified_stations: number
+  pending_stations: number
+  flagged_stations: number
+  not_submitted_stations: number
+  reporting_percentage: number
+}
+
 export default function ResultsPage() {
   const router = useRouter()
   const [results, setResults] = useState<ResultsData[]>([])
@@ -38,6 +65,17 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(false)
   const [candidateProfile, setCandidateProfile] = useState<CandidateProfile | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
+
+  // View toggle state
+  const [viewMode, setViewMode] = useState<'aggregate' | 'stations'>('aggregate')
+
+  // Polling stations state
+  const [pollingStations, setPollingStations] = useState<PollingStation[]>([])
+  const [stationsSummary, setStationsSummary] = useState<StationsSummary | null>(null)
+  const [stationsLoading, setStationsLoading] = useState(false)
+  const [stationStatusFilter, setStationStatusFilter] = useState<'all' | 'submitted' | 'not_submitted'>('all')
+  const [selectedStation, setSelectedStation] = useState<any>(null)
+  const [stationDetailsLoading, setStationDetailsLoading] = useState(false)
 
   // Use individual state variables to avoid object reference issues
   const [countyId, setCountyId] = useState<number | undefined>()
@@ -81,6 +119,61 @@ export default function ResultsPage() {
       console.error('Failed to fetch results:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchPollingStations = async () => {
+    setStationsLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (countyId) params.append('county_id', countyId.toString())
+      if (constituencyId) params.append('constituency_id', constituencyId.toString())
+      if (wardId) params.append('ward_id', wardId.toString())
+      if (stationStatusFilter !== 'all') params.append('status', stationStatusFilter)
+
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/polling-stations/reporting-status?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setPollingStations(data.stations || [])
+        setStationsSummary(data.summary || null)
+      }
+    } catch (error) {
+      console.error('Failed to fetch polling stations:', error)
+    } finally {
+      setStationsLoading(false)
+    }
+  }
+
+  const fetchStationDetails = async (stationId: number) => {
+    setStationDetailsLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/polling-stations/${stationId}/detailed-results`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Station details received:', data)
+        setSelectedStation(data)
+      } else {
+        const errorData = await response.json()
+        console.error('API error response:', errorData)
+        alert(`Error: ${errorData.error || 'Failed to fetch station details'}`)
+      }
+    } catch (error) {
+      console.error('Failed to fetch station details:', error)
+      alert(`Error: ${error instanceof Error ? error.message : 'Network error'}`)
+    } finally {
+      setStationDetailsLoading(false)
     }
   }
 
@@ -133,9 +226,13 @@ export default function ResultsPage() {
 
   // Only re-fetch when location filters actually change
   useEffect(() => {
-    fetchResults()
+    if (viewMode === 'aggregate') {
+      fetchResults()
+    } else {
+      fetchPollingStations()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countyId, constituencyId, wardId, pollingStationId])
+  }, [countyId, constituencyId, wardId, pollingStationId, viewMode, stationStatusFilter])
 
   const handleLocationChange = useCallback((location: any) => {
     // Only update filters that are not locked by candidate position
@@ -225,6 +322,36 @@ export default function ResultsPage() {
     pollingStationId,
   }), [countyId, constituencyId, wardId, pollingStationId])
 
+  // Helper function to get status badge color and text
+  const getStatusBadge = (station: PollingStation) => {
+    if (station.has_verified === 1) {
+      return { text: 'Verified', color: 'bg-green-500/20 text-green-400 border-green-500/50' }
+    } else if (station.has_flagged === 1) {
+      return { text: 'Flagged', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' }
+    } else if (station.has_pending === 1) {
+      return { text: 'Pending', color: 'bg-blue-500/20 text-blue-400 border-blue-500/50' }
+    } else if (station.submission_count === 0) {
+      return { text: 'Not Submitted', color: 'bg-red-500/20 text-red-400 border-red-500/50' }
+    } else {
+      return { text: 'Submitted', color: 'bg-gray-500/20 text-gray-400 border-gray-500/50' }
+    }
+  }
+
+  // Helper function to get status icon
+  const getStatusIcon = (station: PollingStation) => {
+    if (station.has_verified === 1) {
+      return '✓'
+    } else if (station.has_flagged === 1) {
+      return '⚠'
+    } else if (station.has_pending === 1) {
+      return '⏳'
+    } else if (station.submission_count === 0) {
+      return '✗'
+    } else {
+      return '•'
+    }
+  }
+
   return (
     <div className="min-h-screen bg-dark-950">
       <DashboardNav />
@@ -249,6 +376,32 @@ export default function ResultsPage() {
               Review Submissions
             </button>
           )}
+        </div>
+
+        {/* View Toggle Tabs */}
+        <div className="mb-6">
+          <div className="glass-effect rounded-xl p-2 inline-flex gap-2">
+            <button
+              onClick={() => setViewMode('aggregate')}
+              className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                viewMode === 'aggregate'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'text-dark-300 hover:text-white hover:bg-dark-800'
+              }`}
+            >
+              Aggregated Results
+            </button>
+            <button
+              onClick={() => setViewMode('stations')}
+              className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                viewMode === 'stations'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'text-dark-300 hover:text-white hover:bg-dark-800'
+              }`}
+            >
+              Polling Stations
+            </button>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-8">
@@ -281,8 +434,47 @@ export default function ResultsPage() {
                 initialValues={locationInitialValues}
               />
 
-              {/* Summary Stats */}
-              {summary && (
+              {/* Status Filter - Only for Polling Stations View */}
+              {viewMode === 'stations' && (
+                <div className="mt-6 pt-6 border-t border-dark-700">
+                  <h3 className="text-sm font-semibold text-white mb-3">Status Filter</h3>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setStationStatusFilter('all')}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                        stationStatusFilter === 'all'
+                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+                          : 'text-dark-300 hover:bg-dark-800'
+                      }`}
+                    >
+                      All Stations
+                    </button>
+                    <button
+                      onClick={() => setStationStatusFilter('submitted')}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                        stationStatusFilter === 'submitted'
+                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+                          : 'text-dark-300 hover:bg-dark-800'
+                      }`}
+                    >
+                      Submitted
+                    </button>
+                    <button
+                      onClick={() => setStationStatusFilter('not_submitted')}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                        stationStatusFilter === 'not_submitted'
+                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+                          : 'text-dark-300 hover:bg-dark-800'
+                      }`}
+                    >
+                      Not Submitted
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Summary Stats - Aggregate View */}
+              {viewMode === 'aggregate' && summary && (
                 <div className="mt-6 pt-6 border-t border-dark-700">
                   <h3 className="text-sm font-semibold text-white mb-3">Summary</h3>
                   <div className="space-y-3">
@@ -313,15 +505,68 @@ export default function ResultsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Summary Stats - Stations View */}
+              {viewMode === 'stations' && stationsSummary && (
+                <div className="mt-6 pt-6 border-t border-dark-700">
+                  <h3 className="text-sm font-semibold text-white mb-3">Summary</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-dark-400">Total Stations</p>
+                      <p className="text-lg text-white font-bold">
+                        {stationsSummary.total_stations}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-dark-400">Reporting</p>
+                      <p className="text-lg text-white font-bold">
+                        {stationsSummary.submitted_stations} / {stationsSummary.total_stations}
+                      </p>
+                      <p className="text-xs text-emerald-400">
+                        {stationsSummary.reporting_percentage.toFixed(1)}% Complete
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-xs text-green-400">Verified</p>
+                        <p className="text-sm text-white font-bold">
+                          {stationsSummary.verified_stations}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-blue-400">Pending</p>
+                        <p className="text-sm text-white font-bold">
+                          {stationsSummary.pending_stations}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-yellow-400">Flagged</p>
+                        <p className="text-sm text-white font-bold">
+                          {stationsSummary.flagged_stations}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-red-400">Not Submitted</p>
+                        <p className="text-sm text-white font-bold">
+                          {stationsSummary.not_submitted_stations}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Results Table */}
+          {/* Main Content Area */}
           <div className="lg:col-span-3">
-            <div className="glass-effect rounded-xl p-6">
-              <h2 className="text-xl font-semibold text-white mb-6">Results by Candidate</h2>
+            {/* Aggregated Results View */}
+            {viewMode === 'aggregate' && (
+              <>
+                <div className="glass-effect rounded-xl p-6">
+                  <h2 className="text-xl font-semibold text-white mb-6">Results by Candidate</h2>
 
-              {loading ? (
+                  {loading ? (
                 <div className="text-center py-12">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                   <p className="mt-4 text-dark-300">Loading results...</p>
@@ -387,28 +632,358 @@ export default function ResultsPage() {
               )}
             </div>
 
-            {/* Top Performing Locations */}
-            {results.length > 0 && (
-              <div className="glass-effect rounded-xl p-6 mt-6">
-                <h2 className="text-xl font-semibold text-white mb-4">Analysis</h2>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="bg-dark-900/50 rounded-lg p-4 border border-dark-700">
-                    <p className="text-sm text-dark-400 mb-2">Leading Candidate</p>
-                    <p className="text-xl font-bold text-white">{results[0]?.candidate_name}</p>
-                    <p className="text-sm text-emerald-400">
-                      {results[0]?.total_votes.toLocaleString()} votes ({results[0]?.percentage.toFixed(2)}%)
-                    </p>
+                {/* Top Performing Locations */}
+                {results.length > 0 && (
+                  <div className="glass-effect rounded-xl p-6 mt-6">
+                    <h2 className="text-xl font-semibold text-white mb-4">Analysis</h2>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="bg-dark-900/50 rounded-lg p-4 border border-dark-700">
+                        <p className="text-sm text-dark-400 mb-2">Leading Candidate</p>
+                        <p className="text-xl font-bold text-white">{results[0]?.candidate_name}</p>
+                        <p className="text-sm text-emerald-400">
+                          {results[0]?.total_votes.toLocaleString()} votes ({results[0]?.percentage.toFixed(2)}%)
+                        </p>
+                      </div>
+                      <div className="bg-dark-900/50 rounded-lg p-4 border border-dark-700">
+                        <p className="text-sm text-dark-400 mb-2">Total Candidates</p>
+                        <p className="text-xl font-bold text-white">{results.length}</p>
+                        <p className="text-sm text-dark-300">Competing in this race</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-dark-900/50 rounded-lg p-4 border border-dark-700">
-                    <p className="text-sm text-dark-400 mb-2">Total Candidates</p>
-                    <p className="text-xl font-bold text-white">{results.length}</p>
-                    <p className="text-sm text-dark-300">Competing in this race</p>
-                  </div>
+                )}
+              </>
+            )}
+
+            {/* Polling Stations View */}
+            {viewMode === 'stations' && (
+              <>
+                <div className="glass-effect rounded-xl p-6">
+                  <h2 className="text-xl font-semibold text-white mb-6">Polling Stations Reporting Status</h2>
+
+                  {stationsLoading ? (
+                    <div className="text-center py-12">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                      <p className="mt-4 text-dark-300">Loading polling stations...</p>
+                    </div>
+                  ) : pollingStations.length > 0 ? (
+                    <div className="space-y-3">
+                      {pollingStations.map((station) => {
+                        const statusBadge = getStatusBadge(station)
+                        const statusIcon = getStatusIcon(station)
+                        const hasSubmissions = station.submission_count > 0
+
+                        const handleStationClick = () => {
+                          console.log('Station clicked:', station.id, 'submission_count:', station.submission_count)
+                          if (hasSubmissions) {
+                            console.log('Fetching station details for:', station.id)
+                            fetchStationDetails(station.id)
+                          } else {
+                            console.log('No submissions for this station')
+                          }
+                        }
+
+                        return (
+                          <div
+                            key={station.id}
+                            onClick={handleStationClick}
+                            className={`bg-dark-900/50 rounded-lg p-4 border border-dark-700 transition-all ${
+                              hasSubmissions
+                                ? 'hover:border-blue-500 cursor-pointer hover:shadow-lg'
+                                : 'opacity-75'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <span className="text-2xl">{statusIcon}</span>
+                                  <div>
+                                    <h3 className="text-lg font-semibold text-white">
+                                      {station.name}
+                                    </h3>
+                                    <p className="text-sm text-dark-300">Code: {station.code}</p>
+                                  </div>
+                                </div>
+                                <p className="text-xs text-dark-400 mt-2">
+                                  {station.ward_name} • {station.constituency_name} • {station.county_name}
+                                </p>
+                                <p className="text-xs text-dark-400 mt-1">
+                                  Registered Voters: {station.registered_voters.toLocaleString()}
+                                </p>
+                                {station.last_submitted_at && (
+                                  <p className="text-xs text-dark-500 mt-1">
+                                    Last submitted: {new Date(station.last_submitted_at).toLocaleString()}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusBadge.color}`}>
+                                  {statusBadge.text}
+                                </span>
+                                {hasSubmissions && (
+                                  <span className="text-xs text-dark-400">
+                                    {station.submission_count} submission{station.submission_count !== 1 ? 's' : ''}
+                                  </span>
+                                )}
+                                {hasSubmissions && (
+                                  <span className="text-xs text-blue-400 hover:text-blue-300">
+                                    Click to view details →
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <svg
+                        className="w-16 h-16 mx-auto text-dark-600 mb-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                        />
+                      </svg>
+                      <p className="text-dark-300">No polling stations found</p>
+                      <p className="text-sm text-dark-400 mt-2">
+                        Try selecting a different area
+                      </p>
+                    </div>
+                  )}
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
+
+        {/* Station Details Modal */}
+        {selectedStation && (
+          <div
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedStation(null)}
+          >
+            <div
+              className="glass-effect rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {stationDetailsLoading ? (
+                <div className="p-12 text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  <p className="mt-4 text-dark-300">Loading station details...</p>
+                </div>
+              ) : (
+                <div className="p-6">
+                  {/* Modal Header */}
+                  <div className="flex items-start justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-bold text-white mb-2">
+                        {selectedStation.polling_station?.name}
+                      </h2>
+                      <p className="text-dark-300">
+                        Code: {selectedStation.polling_station?.code}
+                      </p>
+                      <p className="text-sm text-dark-400 mt-1">
+                        {selectedStation.polling_station?.ward_name} • {selectedStation.polling_station?.constituency_name} • {selectedStation.polling_station?.county_name}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedStation(null)}
+                      className="text-dark-300 hover:text-white transition-colors"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Summary Card */}
+                  <div className="mb-6 grid md:grid-cols-3 gap-4">
+                    <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                      <p className="text-xs text-blue-300 mb-1">Registered Voters</p>
+                      <p className="text-2xl font-bold text-white">{selectedStation.polling_station?.registered_voters.toLocaleString()}</p>
+                    </div>
+                    <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
+                      <p className="text-xs text-green-300 mb-1">Total Submissions</p>
+                      <p className="text-2xl font-bold text-white">{selectedStation.submission_count}</p>
+                      <p className="text-xs text-green-400 mt-1">{selectedStation.verified_count} verified</p>
+                    </div>
+                    {selectedStation.aggregate_results && (
+                      <div className="p-4 bg-emerald-500/10 rounded-lg border border-emerald-500/30">
+                        <p className="text-xs text-emerald-300 mb-1">Total Votes Cast</p>
+                        <p className="text-2xl font-bold text-white">{selectedStation.aggregate_results.total_votes_cast.toLocaleString()}</p>
+                        <p className="text-xs text-emerald-400 mt-1">{selectedStation.aggregate_results.rejected_votes.toLocaleString()} rejected</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Aggregate Results */}
+                  {selectedStation.aggregate_results && selectedStation.aggregate_results.candidates.length > 0 && (
+                    <div className="mb-6 p-6 bg-gradient-to-br from-blue-500/10 to-emerald-500/10 rounded-xl border border-blue-500/30">
+                      <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Votes Per Candidate (Verified Submissions)
+                      </h3>
+                      <div className="space-y-4">
+                        {selectedStation.aggregate_results.candidates.map((candidate: any, idx: number) => (
+                          <div key={idx} className="bg-dark-900/50 rounded-lg p-4 border border-dark-700">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-2xl font-bold text-emerald-400">#{idx + 1}</span>
+                                  <div>
+                                    <p className="text-lg font-semibold text-white">{candidate.candidate_name}</p>
+                                    <p className="text-sm text-dark-400">{candidate.party_name}</p>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-3xl font-bold text-white">{candidate.total_votes.toLocaleString()}</p>
+                                <p className="text-sm text-emerald-400">{candidate.percentage.toFixed(2)}% of votes</p>
+                              </div>
+                            </div>
+                            {/* Progress bar */}
+                            <div className="w-full bg-dark-800 rounded-full h-3">
+                              <div
+                                className="bg-gradient-to-r from-blue-500 to-emerald-500 h-3 rounded-full transition-all"
+                                style={{ width: `${candidate.percentage}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-dark-700 grid grid-cols-2 gap-4">
+                        <div className="text-center">
+                          <p className="text-sm text-dark-400">Total Votes Cast</p>
+                          <p className="text-xl font-bold text-white">{selectedStation.aggregate_results.total_votes_cast.toLocaleString()}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm text-dark-400">Rejected Votes</p>
+                          <p className="text-xl font-bold text-red-400">{selectedStation.aggregate_results.rejected_votes.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Individual Submissions */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-3">
+                      Individual Submissions ({selectedStation.submission_count})
+                    </h3>
+                    <div className="space-y-4">
+                      {selectedStation.submissions?.map((submission: any) => (
+                        <div key={submission.id} className="p-4 bg-dark-900/30 rounded-lg border border-dark-700">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <p className="text-white font-medium">{submission.candidate_name}</p>
+                              <p className="text-sm text-dark-400">{submission.candidate_party}</p>
+                              <p className="text-xs text-dark-500 mt-1">
+                                Submitted by: {submission.submitter_name} ({submission.submitter_phone})
+                              </p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                              submission.status === 'verified'
+                                ? 'bg-green-500/20 text-green-400 border-green-500/50'
+                                : submission.status === 'pending'
+                                ? 'bg-blue-500/20 text-blue-400 border-blue-500/50'
+                                : submission.status === 'flagged'
+                                ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50'
+                                : 'bg-red-500/20 text-red-400 border-red-500/50'
+                            }`}>
+                              {submission.status}
+                            </span>
+                          </div>
+
+                          {/* Vote Details Grid */}
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 p-3 bg-dark-800/50 rounded-lg">
+                            <div className="text-center">
+                              <p className="text-xs text-dark-400 mb-1">Votes for Candidate</p>
+                              <p className="text-xl text-emerald-400 font-bold">{submission.votes_received?.toLocaleString() || '0'}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-dark-400 mb-1">Total Votes Cast</p>
+                              <p className="text-xl text-white font-bold">{submission.total_votes_cast?.toLocaleString() || 'N/A'}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-dark-400 mb-1">Valid Votes</p>
+                              <p className="text-xl text-blue-400 font-bold">{submission.valid_votes?.toLocaleString() || 'N/A'}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-dark-400 mb-1">Rejected Votes</p>
+                              <p className="text-xl text-red-400 font-bold">{submission.rejected_votes?.toLocaleString() || 'N/A'}</p>
+                            </div>
+                          </div>
+
+                          {/* Registered Voters */}
+                          {submission.registered_voters && (
+                            <div className="mb-3 p-2 bg-blue-500/10 rounded border border-blue-500/30">
+                              <p className="text-xs text-blue-300">
+                                Registered Voters: <span className="font-bold">{submission.registered_voters.toLocaleString()}</span>
+                                {submission.total_votes_cast && (
+                                  <span className="ml-2">
+                                    • Turnout: <span className="font-bold">{((submission.total_votes_cast / submission.registered_voters) * 100).toFixed(2)}%</span>
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Validation Errors */}
+                          {submission.validation_errors && (
+                            <div className="mb-3 p-2 bg-yellow-500/10 rounded border border-yellow-500/30">
+                              <p className="text-xs text-yellow-300">
+                                ⚠ Validation Issues: {submission.validation_errors}
+                              </p>
+                            </div>
+                          )}
+
+                          {submission.photos && Array.isArray(submission.photos) && submission.photos.length > 0 && (
+                            <div className="mt-3">
+                              <p className="text-xs text-dark-400 mb-2">Photos:</p>
+                              <div className="flex gap-2 flex-wrap">
+                                {submission.photos.map((photo: any) => (
+                                  <a
+                                    key={photo.id}
+                                    href={photo.file_path}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 bg-blue-500/10 rounded border border-blue-500/30"
+                                  >
+                                    {photo.photo_type}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {submission.reviews && Array.isArray(submission.reviews) && submission.reviews.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-dark-700">
+                              <p className="text-xs text-dark-400 mb-2">Review History:</p>
+                              {submission.reviews.map((review: any, idx: number) => (
+                                <div key={idx} className="text-xs text-dark-300 mb-1">
+                                  <span className="font-medium">{review.action}</span> by {review.reviewer_name}
+                                  {review.review_notes && `: ${review.review_notes}`}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
