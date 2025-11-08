@@ -169,78 +169,173 @@ export default function CandidateDashboard() {
           )}
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          {/* Total Stations */}
-          <div className="glass-effect rounded-xl p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-dark-400 text-sm">Total Stations</p>
-              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
+        {/* Election Process Overview */}
+        <div className="glass-effect rounded-xl p-6 mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
             </div>
-            <p className="text-3xl font-bold text-white">{summary?.total_stations || 0}</p>
+            <div>
+              <h2 className="text-xl font-bold text-white">Election Process Overview</h2>
+              <p className="text-sm text-dark-300">Complete statistics for {profile?.electoral_area}</p>
+            </div>
           </div>
 
-          {/* Submitted */}
-          <div className="glass-effect rounded-xl p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-dark-400 text-sm">Reporting</p>
-              <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+          {/* Stats Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Total Stations */}
+            <div className="bg-dark-800/50 rounded-lg p-4 border border-dark-700">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs text-dark-400 uppercase tracking-wide">Total Polling Stations</p>
+                  <p className="text-2xl font-bold text-white">{summary?.total_stations.toLocaleString() || 0}</p>
+                </div>
               </div>
             </div>
-            <p className="text-3xl font-bold text-white">{summary?.stations_reported || 0}</p>
-            <p className="text-xs text-emerald-400 mt-1">{getProgressPercentage()}% complete</p>
-          </div>
 
-          {/* Turnout */}
-          <div className="glass-effect rounded-xl p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-dark-400 text-sm">Turnout</p>
-              <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+            {/* Stations Submitted */}
+            <div className="bg-dark-800/50 rounded-lg p-4 border border-dark-700">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs text-dark-400 uppercase tracking-wide">Stations Reported</p>
+                  <p className="text-2xl font-bold text-white">{summary?.stations_reported.toLocaleString() || 0}</p>
+                  <p className="text-xs text-emerald-400 mt-1">{getProgressPercentage()}% of total</p>
+                </div>
               </div>
             </div>
-            <p className="text-3xl font-bold text-white">{summary?.turnout_percentage.toFixed(1) || 0}%</p>
-            <p className="text-xs text-dark-400 mt-1">{summary?.total_votes_cast.toLocaleString() || 0} votes cast</p>
-          </div>
 
+            {/* Pending Stations */}
+            <div className="bg-dark-800/50 rounded-lg p-4 border border-dark-700">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs text-dark-400 uppercase tracking-wide">Pending Submission</p>
+                  <p className="text-2xl font-bold text-white">
+                    {((summary?.total_stations || 0) - (summary?.stations_reported || 0)).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-orange-400 mt-1">Awaiting results</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Reporting Progress */}
+            <div className="bg-dark-800/50 rounded-lg p-4 border border-dark-700">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs text-dark-400 uppercase tracking-wide">Overall Progress</p>
+                  <p className="text-2xl font-bold text-white">{getProgressPercentage()}%</p>
+                  <p className="text-xs text-purple-400 mt-1">Completion rate</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Voter Statistics */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
           {/* Registered Voters */}
           <div className="glass-effect rounded-xl p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-dark-400 text-sm">Registered Voters</p>
-              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-dark-400 font-medium">Total Registered Voters</p>
+              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
             </div>
-            <p className="text-3xl font-bold text-white">{summary?.registered_voters.toLocaleString() || 0}</p>
+            <p className="text-3xl font-bold text-white mb-1">{summary?.registered_voters.toLocaleString() || 0}</p>
+            <p className="text-xs text-dark-400">Across all {summary?.total_stations || 0} stations</p>
+          </div>
+
+          {/* Total Votes Cast */}
+          <div className="glass-effect rounded-xl p-6">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-dark-400 font-medium">Total Votes Cast</p>
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-white mb-1">{summary?.total_votes_cast.toLocaleString() || 0}</p>
+            <p className="text-xs text-dark-400">From {summary?.stations_reported || 0} reporting stations</p>
+          </div>
+
+          {/* Voter Turnout */}
+          <div className="glass-effect rounded-xl p-6">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-dark-400 font-medium">Voter Turnout</p>
+              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-white mb-1">{summary?.turnout_percentage?.toFixed(1) || 0}%</p>
+            <p className="text-xs text-dark-400">
+              {summary?.rejected_votes && summary.rejected_votes > 0 ? `${summary.rejected_votes.toLocaleString()} rejected votes` : 'From reported stations'}
+            </p>
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="glass-effect rounded-xl p-6 mb-8">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-white">Reporting Progress</h3>
-            <span className="text-sm text-dark-300">{getProgressPercentage()}%</span>
+            <div>
+              <h3 className="text-lg font-semibold text-white">Submission Progress</h3>
+              <p className="text-xs text-dark-400 mt-1">
+                Track real-time progress across all polling stations in {profile?.electoral_area}
+              </p>
+            </div>
+            <div className="text-right">
+              <span className="text-3xl font-bold text-white">{getProgressPercentage()}%</span>
+              <p className="text-xs text-dark-400">Complete</p>
+            </div>
           </div>
-          <div className="w-full bg-dark-800 rounded-full h-3">
+          <div className="w-full bg-dark-800 rounded-full h-4 relative overflow-hidden">
             <div
-              className="bg-gradient-to-r from-blue-500 to-emerald-500 h-3 rounded-full transition-all duration-500"
+              className="bg-gradient-to-r from-blue-500 via-emerald-500 to-purple-500 h-4 rounded-full transition-all duration-500 relative"
               style={{ width: `${getProgressPercentage()}%` }}
-            ></div>
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+            </div>
           </div>
-          <div className="flex justify-between mt-2 text-sm text-dark-400">
-            <span>{summary?.stations_reported || 0} stations reporting</span>
-            <span>{summary?.total_stations || 0} total stations</span>
+          <div className="grid grid-cols-3 gap-4 mt-4">
+            <div className="text-center">
+              <p className="text-xs text-dark-400">Completed</p>
+              <p className="text-lg font-bold text-emerald-400">{summary?.stations_reported || 0}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-dark-400">Pending</p>
+              <p className="text-lg font-bold text-orange-400">
+                {((summary?.total_stations || 0) - (summary?.stations_reported || 0))}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-dark-400">Total</p>
+              <p className="text-lg font-bold text-blue-400">{summary?.total_stations || 0}</p>
+            </div>
           </div>
         </div>
 

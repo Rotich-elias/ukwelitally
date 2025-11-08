@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
       switch (candidateRestrictions.position) {
         case 'mca':
           // MCA can only see their ward
-          actualWardId = candidateRestrictions.ward_id?.toString() || null
+          actualWardId = candidateRestrictions.ward_id ? String(candidateRestrictions.ward_id) : null
           actualConstituencyId = null
           actualCountyId = null
           actualPollingStationId = null
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
 
         case 'mp':
           // MP can only see their constituency
-          actualConstituencyId = candidateRestrictions.constituency_id?.toString() || null
+          actualConstituencyId = candidateRestrictions.constituency_id ? String(candidateRestrictions.constituency_id) : null
           actualCountyId = null
           actualWardId = null
           actualPollingStationId = null
@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
         case 'governor':
         case 'senator':
           // Governor/Senator can only see their county
-          actualCountyId = candidateRestrictions.county_id?.toString() || null
+          actualCountyId = candidateRestrictions.county_id ? String(candidateRestrictions.county_id) : null
           actualConstituencyId = null
           actualWardId = null
           actualPollingStationId = null
@@ -107,23 +107,41 @@ export async function GET(req: NextRequest) {
 
     // Build query with flexible filtering
     const params: any[] = [position]
+    const locationParams: any[] = []
     const whereConditions: string[] = []
 
     if (actualPollingStationId) {
-      whereConditions.push(`ps.id = $${params.length + 1}`)
-      params.push(actualPollingStationId)
+      whereConditions.push(`ps.id = $${locationParams.length + 1}`)
+      const id = parseInt(actualPollingStationId)
+      locationParams.push(id)
+      params.push(id)
     } else if (actualWardId) {
-      whereConditions.push(`w.id = $${params.length + 1}`)
-      params.push(actualWardId)
+      whereConditions.push(`w.id = $${locationParams.length + 1}`)
+      const id = parseInt(actualWardId)
+      locationParams.push(id)
+      params.push(id)
     } else if (actualConstituencyId) {
-      whereConditions.push(`const.id = $${params.length + 1}`)
-      params.push(actualConstituencyId)
+      whereConditions.push(`const.id = $${locationParams.length + 1}`)
+      const id = parseInt(actualConstituencyId)
+      locationParams.push(id)
+      params.push(id)
     } else if (actualCountyId) {
-      whereConditions.push(`co.id = $${params.length + 1}`)
-      params.push(actualCountyId)
+      whereConditions.push(`co.id = $${locationParams.length + 1}`)
+      const id = parseInt(actualCountyId)
+      locationParams.push(id)
+      params.push(id)
     }
 
     const whereClause = whereConditions.length > 0 ? `AND ${whereConditions.join(' AND ')}` : ''
+
+    // Debug logging
+    console.log('=== AGGREGATE API DEBUG ===')
+    console.log('Position:', position)
+    console.log('actualConstituencyId:', actualConstituencyId, 'type:', typeof actualConstituencyId)
+    console.log('locationParams:', locationParams, 'types:', locationParams.map(p => typeof p))
+    console.log('params:', params, 'types:', params.map(p => typeof p))
+    console.log('whereClause:', whereClause)
+    console.log('=========================')
 
     // First, get the total counts for all stations in the area
     const totalStatsSql = `
@@ -137,7 +155,7 @@ export async function GET(req: NextRequest) {
       WHERE 1=1 ${whereClause}
     `
 
-    const totalStatsResult = await queryMany(totalStatsSql, params.slice(1)) // Skip position param
+    const totalStatsResult = await queryMany(totalStatsSql, locationParams) // Use location params only
     const totalStationsInArea = parseInt(totalStatsResult[0]?.total_stations) || 0
     const totalRegisteredVotersInArea = parseInt(totalStatsResult[0]?.total_registered_voters) || 0
 

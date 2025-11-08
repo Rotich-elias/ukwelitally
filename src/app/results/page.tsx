@@ -564,7 +564,12 @@ export default function ResultsPage() {
             {viewMode === 'aggregate' && (
               <>
                 <div className="glass-effect rounded-xl p-6">
-                  <h2 className="text-xl font-semibold text-white mb-6">Results by Candidate</h2>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-white">Aggregate Results - Votes Per Candidate</h2>
+                    {results.length > 0 && (
+                      <span className="text-sm text-dark-400">{results.length} candidate{results.length !== 1 ? 's' : ''}</span>
+                    )}
+                  </div>
 
                   {loading ? (
                 <div className="text-center py-12">
@@ -572,42 +577,115 @@ export default function ResultsPage() {
                   <p className="mt-4 text-dark-300">Loading results...</p>
                 </div>
               ) : results.length > 0 ? (
-                <div className="space-y-4">
-                  {results.map((result, index) => (
-                    <div
-                      key={index}
-                      className="bg-dark-900/50 rounded-lg p-4 border border-dark-700 hover:border-blue-500 transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">
-                            {result.candidate_name}
-                          </h3>
-                          <p className="text-sm text-dark-300">{result.party_name}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-white">
-                            {result.total_votes.toLocaleString()}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-dark-700">
+                        <th className="text-left py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide">Rank</th>
+                        <th className="text-left py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide">Candidate Name</th>
+                        <th className="text-left py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide">Party</th>
+                        <th className="text-right py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide">Total Votes</th>
+                        <th className="text-right py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide">Percentage</th>
+                        <th className="text-left py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide min-w-[200px]">Vote Share</th>
+                        <th className="text-center py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide">Stations</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {results.map((result, index) => (
+                        <tr
+                          key={index}
+                          className="border-b border-dark-800 hover:bg-dark-800/30 transition-colors"
+                        >
+                          {/* Rank */}
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-2xl font-bold ${
+                                index === 0 ? 'text-yellow-400' :
+                                index === 1 ? 'text-gray-300' :
+                                index === 2 ? 'text-orange-400' :
+                                'text-dark-400'
+                              }`}>
+                                #{index + 1}
+                              </span>
+                              {index === 0 && (
+                                <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Candidate Name */}
+                          <td className="py-4 px-4">
+                            <p className="text-base font-semibold text-white">
+                              {result.candidate_name}
+                            </p>
+                          </td>
+
+                          {/* Party */}
+                          <td className="py-4 px-4">
+                            <span className="inline-flex px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30">
+                              {result.party_name}
+                            </span>
+                          </td>
+
+                          {/* Total Votes */}
+                          <td className="py-4 px-4 text-right">
+                            <p className="text-2xl font-bold text-white">
+                              {result.total_votes.toLocaleString()}
+                            </p>
+                          </td>
+
+                          {/* Percentage */}
+                          <td className="py-4 px-4 text-right">
+                            <p className="text-xl font-bold text-emerald-400">
+                              {result.percentage.toFixed(2)}%
+                            </p>
+                          </td>
+
+                          {/* Visual Progress Bar */}
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 bg-dark-800 rounded-full h-3 overflow-hidden">
+                                <div
+                                  className="bg-gradient-to-r from-blue-500 to-emerald-500 h-3 rounded-full transition-all duration-500"
+                                  style={{ width: `${result.percentage}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Polling Stations Count */}
+                          <td className="py-4 px-4 text-center">
+                            <div className="inline-flex items-center gap-1 px-3 py-1 bg-purple-500/10 rounded-lg border border-purple-500/30">
+                              <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                              </svg>
+                              <span className="text-sm font-medium text-purple-300">
+                                {result.polling_stations_count}
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="border-t-2 border-dark-700">
+                      <tr className="bg-dark-800/50">
+                        <td colSpan={3} className="py-4 px-4 text-sm font-semibold text-white uppercase">
+                          Total
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <p className="text-xl font-bold text-white">
+                            {results.reduce((sum, r) => sum + r.total_votes, 0).toLocaleString()}
                           </p>
-                          <p className="text-sm text-emerald-400">{result.percentage.toFixed(2)}%</p>
-                        </div>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="mt-3">
-                        <div className="w-full bg-dark-800 rounded-full h-2">
-                          <div
-                            className="bg-gradient-to-r from-blue-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${result.percentage}%` }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-dark-400 mt-2">
-                        From {result.polling_stations_count} polling station{result.polling_stations_count !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  ))}
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <p className="text-lg font-bold text-emerald-400">100%</p>
+                        </td>
+                        <td colSpan={2}></td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
               ) : (
                 <div className="text-center py-12">
