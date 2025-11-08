@@ -50,6 +50,26 @@ async function handlePost(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
+    // Validate that position matches candidate's actual position
+    const candidatePosition = await queryOne<{ position: string }>(
+      'SELECT c.position FROM candidates c WHERE c.id = $1',
+      [submission.candidate_id]
+    )
+
+    if (!candidatePosition) {
+      return NextResponse.json({ error: 'Candidate not found' }, { status: 404 })
+    }
+
+    // Only admins can create results for positions other than the candidate's position
+    if (user.role !== 'admin' && candidatePosition.position !== position) {
+      return NextResponse.json(
+        {
+          error: `Position mismatch: This candidate is running for ${candidatePosition.position}, but you're trying to submit results for ${position}. Please select the correct position.`,
+        },
+        { status: 400 }
+      )
+    }
+
     // Validate vote counts
     const validation = validateVoteCounts({
       registered_voters,

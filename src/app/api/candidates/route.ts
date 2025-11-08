@@ -27,7 +27,7 @@ async function handleGet(req: NextRequest) {
       LEFT JOIN counties co ON c.county_id = co.id
       LEFT JOIN constituencies con ON c.constituency_id = con.id
       LEFT JOIN wards w ON c.ward_id = w.id
-      WHERE (c.is_system_user = true AND u.active = true) OR c.is_system_user = false
+      WHERE c.is_system_user = false
     `
     const params: any[] = []
     let paramIndex = 1
@@ -53,7 +53,7 @@ async function handleGet(req: NextRequest) {
       paramIndex++
     }
 
-    sql += ' ORDER BY c.position, u.full_name'
+    sql += ' ORDER BY c.position, c.full_name'
 
     const candidates = await queryMany(sql, params)
 

@@ -1,0 +1,4 @@
+full_name,email,phone,id_number,candidate_id,polling_station_id,is_primary,password
+John Doe,john.doe@example.com,+254712345678,12345678,1,1,true,Agent123!
+Jane Smith,jane.smith@example.com,+254723456789,23456789,1,2,true,Agent123!
+Peter Kamau,peter.kamau@example.com,+254734567890,34567890,2,1,false,Agent123!
