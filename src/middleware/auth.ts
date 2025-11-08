@@ -13,9 +13,9 @@ export interface AuthenticatedRequest extends NextRequest {
 
 // Authentication middleware
 export function withAuth(
-  handler: (req: AuthenticatedRequest) => Promise<NextResponse>
+  handler: (req: AuthenticatedRequest, context?: any) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest) => {
+  return async (req: NextRequest, context?: any) => {
     // Extract token from Authorization header
     const authHeader = req.headers.get('authorization')
     const token = extractTokenFromHeader(authHeader)
@@ -40,17 +40,17 @@ export function withAuth(
     const authReq = req as AuthenticatedRequest
     authReq.user = payload
 
-    // Call the handler
-    return handler(authReq)
+    // Call the handler with context (for route params)
+    return handler(authReq, context)
   }
 }
 
 // Role-based authorization middleware
 export function withRole(
   requiredRoles: UserRole[],
-  handler: (req: AuthenticatedRequest) => Promise<NextResponse>
+  handler: (req: AuthenticatedRequest, context?: any) => Promise<NextResponse>
 ) {
-  return withAuth(async (req: AuthenticatedRequest) => {
+  return withAuth(async (req: AuthenticatedRequest, context?: any) => {
     if (!req.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -66,27 +66,27 @@ export function withRole(
       )
     }
 
-    return handler(req)
+    return handler(req, context)
   })
 }
 
 // Admin-only middleware
 export function withAdmin(
-  handler: (req: AuthenticatedRequest) => Promise<NextResponse>
+  handler: (req: AuthenticatedRequest, context?: any) => Promise<NextResponse>
 ) {
   return withRole(['admin'], handler)
 }
 
 // Candidate or admin middleware
 export function withCandidateOrAdmin(
-  handler: (req: AuthenticatedRequest) => Promise<NextResponse>
+  handler: (req: AuthenticatedRequest, context?: any) => Promise<NextResponse>
 ) {
   return withRole(['candidate', 'admin'], handler)
 }
 
 // Agent, candidate, or admin middleware
 export function withAgentAccess(
-  handler: (req: AuthenticatedRequest) => Promise<NextResponse>
+  handler: (req: AuthenticatedRequest, context?: any) => Promise<NextResponse>
 ) {
   return withRole(['agent', 'candidate', 'admin'], handler)
 }

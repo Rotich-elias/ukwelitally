@@ -68,6 +68,16 @@ async function handlePost(req: NextRequest) {
       candidate_votes,
     })
 
+    // Check if user is a primary agent for auto-verification
+    let isPrimaryAgent = false
+    if (user.role === 'agent') {
+      const agentCheck = await queryOne<{ is_primary: boolean }>(
+        'SELECT is_primary FROM agents WHERE user_id = $1',
+        [user.userId]
+      )
+      isPrimaryAgent = agentCheck?.is_primary || false
+    }
+
     // Create result in transaction
     const result = await transaction(async (client) => {
       // Insert result
@@ -116,6 +126,16 @@ async function handlePost(req: NextRequest) {
         await client.query(
           'UPDATE submissions SET has_discrepancy = TRUE, flagged_reason = $1 WHERE id = $2',
           [anomalyCheck.flags.join('; '), submission_id]
+        )
+      }
+
+      // Auto-verify submission for primary agents with valid data
+      if (isPrimaryAgent && validation.valid && !anomalyCheck.hasAnomalies && submission.submission_type === 'primary') {
+        await client.query(
+          `UPDATE submissions
+           SET status = 'verified', verified_at = CURRENT_TIMESTAMP
+           WHERE id = $1 AND status = 'pending'`,
+          [submission_id]
         )
       }
 

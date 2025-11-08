@@ -150,18 +150,58 @@ async function handlePost(req: NextRequest) {
       distance = verification.distance
     }
 
-    // Check for duplicate submission (same user, station, candidate)
-    const existingSubmission = await queryOne(
-      `SELECT id FROM submissions
+    // Check for duplicate submission and handle revisions
+    const existingSubmission = await queryOne<{ id: number; status: string }>(
+      `SELECT id, status FROM submissions
        WHERE user_id = $1 AND polling_station_id = $2 AND candidate_id = $3 AND submission_type = $4`,
       [user.userId, pollingStationId, candidateId, submissionType]
     )
 
     if (existingSubmission) {
-      return NextResponse.json(
-        { error: 'Submission already exists for this polling station' },
-        { status: 409 }
+      const status = existingSubmission.status
+
+      // If submission is flagged or rejected, allow revision by deleting the old one
+      if (status === 'flagged' || status === 'rejected') {
+        console.log('[Submission] Allowing revision - deleting existing submission:', existingSubmission.id, 'with status:', status)
+
+        // Delete old submission and its files
+        const { deleteSubmission } = await import('@/lib/submissionHelpers')
+        await deleteSubmission(existingSubmission.id)
+
+        // Log revision in audit
+        await query(
+          `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, old_values)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [
+            user.userId,
+            'submission_revised',
+            'submission',
+            existingSubmission.id,
+            JSON.stringify({ old_status: status, polling_station_id: pollingStationId }),
+          ]
+        )
+
+        console.log('[Submission] Old submission deleted, proceeding with new submission')
+      } else {
+        // Submission exists and is pending or verified - block duplicate
+        return NextResponse.json(
+          {
+            error: 'Submission already exists for this polling station',
+            details: `Your ${status} submission for this polling station cannot be replaced. Contact admin if you need to make changes.`,
+          },
+          { status: 409 }
+        )
+      }
+    }
+
+    // Check if user is a primary agent for auto-verification
+    let isPrimaryAgent = false
+    if (user.role === 'agent') {
+      const agentCheck = await queryOne<Agent>(
+        'SELECT is_primary FROM agents WHERE user_id = $1 AND candidate_id = $2',
+        [user.userId, candidateId]
       )
+      isPrimaryAgent = agentCheck?.is_primary || false
     }
 
     // Process within transaction
@@ -250,13 +290,30 @@ async function handlePost(req: NextRequest) {
         historicalMatch: false, // Would need historical data
       })
 
-      // Update submission with confidence score
-      await client.query('UPDATE submissions SET confidence_score = $1 WHERE id = $2', [
-        confidenceScore,
-        submission.id,
-      ])
+      // Auto-verify primary agents with good confidence scores
+      let status = 'pending'
+      let verifiedAt = null
 
-      return { submission: { ...submission, confidence_score: confidenceScore }, uploadedPhotos }
+      if (isPrimaryAgent && submissionType === 'primary' && confidenceScore >= 60) {
+        status = 'verified'
+        verifiedAt = new Date()
+      }
+
+      // Update submission with confidence score and auto-verification
+      await client.query(
+        'UPDATE submissions SET confidence_score = $1, status = $2, verified_at = $3 WHERE id = $4',
+        [confidenceScore, status, verifiedAt, submission.id]
+      )
+
+      return {
+        submission: {
+          ...submission,
+          confidence_score: confidenceScore,
+          status,
+          verified_at: verifiedAt
+        },
+        uploadedPhotos
+      }
     })
 
     // Audit log
@@ -272,11 +329,17 @@ async function handlePost(req: NextRequest) {
       ]
     )
 
+    // Transform photo paths to include API route
+    const photosWithApiPath = result.uploadedPhotos.map((photo: any) => ({
+      ...photo,
+      filePath: `/api/uploads${photo.filePath}`,
+    }))
+
     return NextResponse.json(
       {
         message: 'Submission created successfully',
         submission: result.submission,
-        photos: result.uploadedPhotos,
+        photos: photosWithApiPath,
       },
       { status: 201 }
     )

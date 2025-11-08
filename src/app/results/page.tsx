@@ -37,6 +37,7 @@ export default function ResultsPage() {
   const [summary, setSummary] = useState<Summary | null>(null)
   const [loading, setLoading] = useState(false)
   const [candidateProfile, setCandidateProfile] = useState<CandidateProfile | null>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
 
   // Use individual state variables to avoid object reference issues
   const [countyId, setCountyId] = useState<number | undefined>()
@@ -53,6 +54,8 @@ export default function ResultsPage() {
     }
 
     const user = JSON.parse(userStr)
+    setUserRole(user.role)
+
     if (user.role === 'agent') {
       router.push('/dashboard/agent')
       return
@@ -228,9 +231,24 @@ export default function ResultsPage() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Election Results</h1>
-          <p className="text-dark-300">Real-time results aggregation by location</p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Election Results</h1>
+            <p className="text-dark-300">Real-time results aggregation by location</p>
+          </div>
+
+          {/* Review Submissions Button - Only for Admin and Candidates */}
+          {(userRole === 'admin' || userRole === 'candidate') && (
+            <button
+              onClick={() => router.push('/dashboard/admin/review-submissions')}
+              className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Review Submissions
+            </button>
+          )}
         </div>
 
         <div className="grid lg:grid-cols-4 gap-8">

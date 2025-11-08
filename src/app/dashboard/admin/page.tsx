@@ -489,6 +489,15 @@ export default function AdminDashboard() {
             <p className="text-dark-300">Manage system users and ballot candidates</p>
           </div>
           <div className="flex gap-3">
+            <button
+              onClick={() => router.push('/dashboard/admin/review-submissions')}
+              className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Review Submissions
+            </button>
             {viewMode === 'users' ? (
               <button
                 onClick={() => {

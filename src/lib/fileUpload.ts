@@ -197,6 +197,6 @@ export async function saveCandidatePhoto(file: File): Promise<string> {
   // Save file
   await writeFile(filePath, compressedBuffer)
 
-  // Return relative path for database storage
+  // Return relative path for database storage (consistent with submission photos)
   return `/candidate-photos/${filename}`
 }
