@@ -92,7 +92,8 @@ export async function GET(req: NextRequest) {
 
         case 'governor':
         case 'senator':
-          // Governor/Senator can only see their county
+        case 'women_rep':
+          // Governor/Senator/Women Rep can only see their county
           actualCountyId = candidateRestrictions.county_id ? String(candidateRestrictions.county_id) : null
           actualConstituencyId = null
           actualWardId = null
@@ -106,41 +107,42 @@ export async function GET(req: NextRequest) {
     }
 
     // Build query with flexible filtering
-    const params: any[] = [position]
+    const whereConditionsForStats: string[] = []
+    const whereConditionsForResults: string[] = []
     const locationParams: any[] = []
-    const whereConditions: string[] = []
 
     if (actualPollingStationId) {
-      whereConditions.push(`ps.id = $${locationParams.length + 1}`)
-      const id = parseInt(actualPollingStationId)
-      locationParams.push(id)
-      params.push(id)
+      whereConditionsForStats.push(`ps.id = $1`)
+      whereConditionsForResults.push(`ps.id = $2`) // $1 is position in results query
+      locationParams.push(parseInt(actualPollingStationId))
     } else if (actualWardId) {
-      whereConditions.push(`w.id = $${locationParams.length + 1}`)
-      const id = parseInt(actualWardId)
-      locationParams.push(id)
-      params.push(id)
+      whereConditionsForStats.push(`w.id = $1`)
+      whereConditionsForResults.push(`w.id = $2`) // $1 is position in results query
+      locationParams.push(parseInt(actualWardId))
     } else if (actualConstituencyId) {
-      whereConditions.push(`const.id = $${locationParams.length + 1}`)
-      const id = parseInt(actualConstituencyId)
-      locationParams.push(id)
-      params.push(id)
+      whereConditionsForStats.push(`const.id = $1`)
+      whereConditionsForResults.push(`const.id = $2`) // $1 is position in results query
+      locationParams.push(parseInt(actualConstituencyId))
     } else if (actualCountyId) {
-      whereConditions.push(`co.id = $${locationParams.length + 1}`)
-      const id = parseInt(actualCountyId)
-      locationParams.push(id)
-      params.push(id)
+      whereConditionsForStats.push(`co.id = $1`)
+      whereConditionsForResults.push(`co.id = $2`) // $1 is position in results query
+      locationParams.push(parseInt(actualCountyId))
     }
 
-    const whereClause = whereConditions.length > 0 ? `AND ${whereConditions.join(' AND ')}` : ''
+    const whereClauseForStats = whereConditionsForStats.length > 0 ? `AND ${whereConditionsForStats.join(' AND ')}` : ''
+    const whereClauseForResults = whereConditionsForResults.length > 0 ? `AND ${whereConditionsForResults.join(' AND ')}` : ''
+
+    // For results query, we need both position and location params
+    const resultsParams: any[] = [position, ...locationParams]
 
     // Debug logging
     console.log('=== AGGREGATE API DEBUG ===')
     console.log('Position:', position)
     console.log('actualConstituencyId:', actualConstituencyId, 'type:', typeof actualConstituencyId)
     console.log('locationParams:', locationParams, 'types:', locationParams.map(p => typeof p))
-    console.log('params:', params, 'types:', params.map(p => typeof p))
-    console.log('whereClause:', whereClause)
+    console.log('resultsParams:', resultsParams, 'types:', resultsParams.map(p => typeof p))
+    console.log('whereClauseForStats:', whereClauseForStats)
+    console.log('whereClauseForResults:', whereClauseForResults)
     console.log('=========================')
 
     // First, get the total counts for all stations in the area
@@ -152,7 +154,7 @@ export async function GET(req: NextRequest) {
       JOIN wards w ON ps.ward_id = w.id
       JOIN constituencies const ON w.constituency_id = const.id
       JOIN counties co ON const.county_id = co.id
-      WHERE 1=1 ${whereClause}
+      WHERE 1=1 ${whereClauseForStats}
     `
 
     const totalStatsResult = await queryMany(totalStatsSql, locationParams) // Use location params only
@@ -169,7 +171,14 @@ export async function GET(req: NextRequest) {
         SUM(r.total_votes_cast) as total_votes_cast,
         SUM(r.valid_votes) as total_valid_votes,
         SUM(r.rejected_votes) as total_rejected_votes,
-        COUNT(DISTINCT s.polling_station_id) as stations_reporting
+        COUNT(DISTINCT s.polling_station_id) as stations_reporting,
+        c.profile_photo,
+        c.candidate_number,
+        c.position as candidate_position,
+        c.full_name as official_name,
+        co_cand.name as candidate_county,
+        const_cand.name as candidate_constituency,
+        w_cand.name as candidate_ward
       FROM submissions s
       JOIN results r ON s.id = r.submission_id AND r.position = $1
       JOIN candidate_votes cv ON r.id = cv.result_id
@@ -177,11 +186,15 @@ export async function GET(req: NextRequest) {
       JOIN wards w ON ps.ward_id = w.id
       JOIN constituencies const ON w.constituency_id = const.id
       JOIN counties co ON const.county_id = co.id
-      WHERE s.status = 'verified' AND s.submission_type = 'primary' ${whereClause}
-      GROUP BY cv.candidate_name, cv.party_name
+      LEFT JOIN candidates c ON cv.candidate_name = c.full_name AND c.position = $1
+      LEFT JOIN counties co_cand ON c.county_id = co_cand.id
+      LEFT JOIN constituencies const_cand ON c.constituency_id = const_cand.id
+      LEFT JOIN wards w_cand ON c.ward_id = w_cand.id
+      WHERE s.status = 'verified' AND s.submission_type = 'primary' ${whereClauseForResults}
+      GROUP BY cv.candidate_name, cv.party_name, c.profile_photo, c.candidate_number, c.position, c.full_name, co_cand.name, const_cand.name, w_cand.name
     `
 
-    const rawResults = await queryMany(sql, params)
+    const rawResults = await queryMany(sql, resultsParams)
 
     // Process and structure results
     if (rawResults.length === 0) {
@@ -215,6 +228,11 @@ export async function GET(req: NextRequest) {
       total_votes: parseInt(row.total_votes) || 0,
       percentage: totalValidVotes > 0 ? ((parseInt(row.total_votes) || 0) / totalValidVotes) * 100 : 0,
       polling_stations_count: stationsReporting,
+      profile_photo: row.profile_photo,
+      candidate_number: row.candidate_number,
+      position: row.candidate_position,
+      official_name: row.official_name,
+      electoral_area: row.candidate_ward || row.candidate_constituency || row.candidate_county || 'National',
     })).sort((a, b) => b.total_votes - a.total_votes)
 
     // Calculate average turnout from reported stations only

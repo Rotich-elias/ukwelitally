@@ -3,6 +3,29 @@ import { query, queryMany, queryOne } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import { parseFormData, saveCandidatePhoto } from '@/lib/fileUpload'
 
+// Generate unique candidate number
+async function generateCandidateNumber(): Promise<string> {
+  const year = new Date().getFullYear()
+  const prefix = `CAND-${year}-`
+
+  // Get the highest number for this year
+  const result = await queryOne(
+    `SELECT candidate_number FROM candidates
+     WHERE candidate_number LIKE $1
+     ORDER BY candidate_number DESC
+     LIMIT 1`,
+    [`${prefix}%`]
+  )
+
+  let nextNumber = 1
+  if (result && result.candidate_number) {
+    const lastNumber = parseInt(result.candidate_number.split('-')[2])
+    nextNumber = lastNumber + 1
+  }
+
+  return `${prefix}${String(nextNumber).padStart(5, '0')}`
+}
+
 // GET /api/ballot-candidates - List all ballot candidates
 async function handleGet(req: NextRequest) {
   try {
@@ -19,6 +42,7 @@ async function handleGet(req: NextRequest) {
     let sql = `
       SELECT
         c.id,
+        c.candidate_number,
         c.full_name as candidate_name,
         c.position,
         c.party_name,
@@ -27,6 +51,9 @@ async function handleGet(req: NextRequest) {
         co.name as county_name,
         con.name as constituency_name,
         w.name as ward_name,
+        c.county_id,
+        c.constituency_id,
+        c.ward_id,
         c.created_at
       FROM candidates c
       LEFT JOIN counties co ON c.county_id = co.id
@@ -135,12 +162,15 @@ async function handlePost(req: NextRequest) {
       )
     }
 
+    // Generate unique candidate number
+    const candidate_number = await generateCandidateNumber()
+
     // Insert ballot candidate
     const result = await query(
       `INSERT INTO candidates (
         full_name, position, party_name, party_abbreviation,
-        county_id, constituency_id, ward_id, profile_photo, is_system_user
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false)
+        county_id, constituency_id, ward_id, profile_photo, is_system_user, candidate_number
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false, $9)
       RETURNING *`,
       [
         full_name,
@@ -151,6 +181,7 @@ async function handlePost(req: NextRequest) {
         constituency_id,
         ward_id,
         profile_photo,
+        candidate_number,
       ]
     )
 

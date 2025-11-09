@@ -1,7 +1,7 @@
 import { queryOne } from '@/lib/db'
 
 export interface CandidateRestrictions {
-  position: 'president' | 'governor' | 'senator' | 'mp' | 'mca'
+  position: 'president' | 'governor' | 'senator' | 'women_rep' | 'mp' | 'mca'
   county_id?: number
   constituency_id?: number
   ward_id?: number
@@ -73,7 +73,8 @@ export function buildLocationFilter(restrictions: CandidateRestrictions): {
 
     case 'governor':
     case 'senator':
-      // Governor/Senator can only see their county
+    case 'women_rep':
+      // Governor/Senator/Women Rep can only see their county
       if (restrictions.county_id) {
         conditions.push(`cou.id = $${paramIndex}`)
         params.push(restrictions.county_id)
@@ -110,6 +111,7 @@ export function canAccessLocation(
 
     case 'governor':
     case 'senator':
+    case 'women_rep':
       return location.county_id === restrictions.county_id
 
     case 'mp':

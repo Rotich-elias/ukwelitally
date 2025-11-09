@@ -11,6 +11,11 @@ interface ResultsData {
   total_votes: number
   percentage: number
   polling_stations_count: number
+  profile_photo?: string
+  candidate_number?: string
+  position?: string
+  official_name?: string
+  electoral_area?: string
 }
 
 interface Summary {
@@ -82,6 +87,7 @@ export default function ResultsPage() {
   const [constituencyId, setConstituencyId] = useState<number | undefined>()
   const [wardId, setWardId] = useState<number | undefined>()
   const [pollingStationId, setPollingStationId] = useState<number | undefined>()
+  const [selectedPosition, setSelectedPosition] = useState<string>('president')
 
   // Check authorization - block agents from viewing results
   useEffect(() => {
@@ -104,6 +110,7 @@ export default function ResultsPage() {
     setLoading(true)
     try {
       const params = new URLSearchParams()
+      params.append('position', selectedPosition)
       if (countyId) params.append('county_id', countyId.toString())
       if (constituencyId) params.append('constituency_id', constituencyId.toString())
       if (wardId) params.append('ward_id', wardId.toString())
@@ -232,7 +239,7 @@ export default function ResultsPage() {
       fetchPollingStations()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countyId, constituencyId, wardId, pollingStationId, viewMode, stationStatusFilter])
+  }, [countyId, constituencyId, wardId, pollingStationId, viewMode, stationStatusFilter, selectedPosition])
 
   const handleLocationChange = useCallback((location: any) => {
     // Only update filters that are not locked by candidate position
@@ -379,7 +386,7 @@ export default function ResultsPage() {
         </div>
 
         {/* View Toggle Tabs */}
-        <div className="mb-6">
+        <div className="mb-6 flex gap-4 flex-wrap items-center">
           <div className="glass-effect rounded-xl p-2 inline-flex gap-2">
             <button
               onClick={() => setViewMode('aggregate')}
@@ -402,6 +409,25 @@ export default function ResultsPage() {
               Polling Stations
             </button>
           </div>
+
+          {/* Position Selector - Only for Aggregate View */}
+          {viewMode === 'aggregate' && (
+            <div className="glass-effect rounded-xl p-2 inline-flex items-center gap-2">
+              <span className="text-sm text-dark-400 px-2">Position:</span>
+              <select
+                value={selectedPosition}
+                onChange={(e) => setSelectedPosition(e.target.value)}
+                className="px-4 py-2 bg-dark-800 text-white rounded-lg border border-dark-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-medium uppercase text-sm"
+              >
+                <option value="president">President</option>
+                <option value="governor">Governor</option>
+                <option value="senator">Senator</option>
+                <option value="women_rep">Women Representative</option>
+                <option value="mp">Member of Parliament</option>
+                <option value="mca">Member of County Assembly</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="grid lg:grid-cols-4 gap-8">
@@ -577,115 +603,148 @@ export default function ResultsPage() {
                   <p className="mt-4 text-dark-300">Loading results...</p>
                 </div>
               ) : results.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b-2 border-dark-700">
-                        <th className="text-left py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide">Rank</th>
-                        <th className="text-left py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide">Candidate Name</th>
-                        <th className="text-left py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide">Party</th>
-                        <th className="text-right py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide">Total Votes</th>
-                        <th className="text-right py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide">Percentage</th>
-                        <th className="text-left py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide min-w-[200px]">Vote Share</th>
-                        <th className="text-center py-4 px-4 text-sm font-semibold text-dark-300 uppercase tracking-wide">Stations</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {results.map((result, index) => (
-                        <tr
-                          key={index}
-                          className="border-b border-dark-800 hover:bg-dark-800/30 transition-colors"
-                        >
-                          {/* Rank */}
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-2">
-                              <span className={`text-2xl font-bold ${
+                <div className="space-y-4">
+                  {results.map((result, index) => (
+                    <div
+                      key={index}
+                      className={`glass-effect rounded-xl p-6 border-2 transition-all hover:border-blue-500/50 ${
+                        index === 0 ? 'border-yellow-400/50 bg-yellow-400/5' :
+                        index === 1 ? 'border-gray-400/50 bg-gray-400/5' :
+                        index === 2 ? 'border-orange-400/50 bg-orange-400/5' :
+                        'border-dark-700'
+                      }`}
+                    >
+                      <div className="flex gap-6">
+                        {/* Rank Badge */}
+                        <div className="flex-shrink-0">
+                          <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                            index === 0 ? 'bg-yellow-400/20 border-2 border-yellow-400' :
+                            index === 1 ? 'bg-gray-400/20 border-2 border-gray-400' :
+                            index === 2 ? 'bg-orange-400/20 border-2 border-orange-400' :
+                            'bg-dark-800 border-2 border-dark-600'
+                          }`}>
+                            <div className="text-center">
+                              <div className={`text-3xl font-bold ${
                                 index === 0 ? 'text-yellow-400' :
                                 index === 1 ? 'text-gray-300' :
                                 index === 2 ? 'text-orange-400' :
                                 'text-dark-400'
                               }`}>
                                 #{index + 1}
-                              </span>
+                              </div>
                               {index === 0 && (
-                                <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="w-5 h-5 text-yellow-400 mx-auto mt-1" fill="currentColor" viewBox="0 0 20 20">
                                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
                               )}
                             </div>
-                          </td>
+                          </div>
+                        </div>
 
-                          {/* Candidate Name */}
-                          <td className="py-4 px-4">
-                            <p className="text-base font-semibold text-white">
-                              {result.candidate_name}
-                            </p>
-                          </td>
+                        {/* Photo */}
+                        <div className="flex-shrink-0">
+                          {result.profile_photo ? (
+                            <img
+                              src={result.profile_photo}
+                              alt={result.candidate_name}
+                              className="w-24 h-24 rounded-lg object-cover border-2 border-dark-700"
+                            />
+                          ) : (
+                            <div className="w-24 h-24 rounded-lg bg-dark-800 border-2 border-dark-700 flex items-center justify-center">
+                              <svg className="w-12 h-12 text-dark-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
 
-                          {/* Party */}
-                          <td className="py-4 px-4">
-                            <span className="inline-flex px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30">
-                              {result.party_name}
-                            </span>
-                          </td>
+                        {/* Candidate Details */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="text-2xl font-bold text-white">{result.candidate_name}</h3>
+                                {result.candidate_number && (
+                                  <span className="px-2 py-1 rounded text-xs font-mono bg-dark-800 text-blue-400 border border-dark-700">
+                                    {result.candidate_number}
+                                  </span>
+                                )}
+                              </div>
 
-                          {/* Total Votes */}
-                          <td className="py-4 px-4 text-right">
-                            <p className="text-2xl font-bold text-white">
-                              {result.total_votes.toLocaleString()}
-                            </p>
-                          </td>
-
-                          {/* Percentage */}
-                          <td className="py-4 px-4 text-right">
-                            <p className="text-xl font-bold text-emerald-400">
-                              {result.percentage.toFixed(2)}%
-                            </p>
-                          </td>
-
-                          {/* Visual Progress Bar */}
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 bg-dark-800 rounded-full h-3 overflow-hidden">
-                                <div
-                                  className="bg-gradient-to-r from-blue-500 to-emerald-500 h-3 rounded-full transition-all duration-500"
-                                  style={{ width: `${result.percentage}%` }}
-                                ></div>
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                <span className="inline-flex px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30">
+                                  {result.party_name}
+                                </span>
+                                {result.position && (
+                                  <span className="inline-flex px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium border border-purple-500/30 uppercase">
+                                    {result.position.replace('_', ' ')}
+                                  </span>
+                                )}
+                                {result.electoral_area && (
+                                  <span className="inline-flex px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-medium border border-emerald-500/30">
+                                    {result.electoral_area}
+                                  </span>
+                                )}
                               </div>
                             </div>
-                          </td>
 
-                          {/* Polling Stations Count */}
-                          <td className="py-4 px-4 text-center">
-                            <div className="inline-flex items-center gap-1 px-3 py-1 bg-purple-500/10 rounded-lg border border-purple-500/30">
-                              <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                              </svg>
-                              <span className="text-sm font-medium text-purple-300">
-                                {result.polling_stations_count}
-                              </span>
+                            {/* Vote Stats */}
+                            <div className="text-right ml-4">
+                              <div className="text-4xl font-bold text-white mb-1">
+                                {result.total_votes.toLocaleString()}
+                              </div>
+                              <div className="text-2xl font-bold text-emerald-400 mb-1">
+                                {result.percentage.toFixed(2)}%
+                              </div>
+                              <div className="inline-flex items-center gap-1 px-2 py-1 bg-purple-500/10 rounded-lg border border-purple-500/30">
+                                <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                                <span className="text-xs font-medium text-purple-300">
+                                  {result.polling_stations_count} stations
+                                </span>
+                              </div>
                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot className="border-t-2 border-dark-700">
-                      <tr className="bg-dark-800/50">
-                        <td colSpan={3} className="py-4 px-4 text-sm font-semibold text-white uppercase">
-                          Total
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <p className="text-xl font-bold text-white">
-                            {results.reduce((sum, r) => sum + r.total_votes, 0).toLocaleString()}
-                          </p>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <p className="text-lg font-bold text-emerald-400">100%</p>
-                        </td>
-                        <td colSpan={2}></td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                          </div>
+
+                          {/* Vote Share Progress Bar */}
+                          <div className="mt-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-dark-400 uppercase font-semibold">Vote Share</span>
+                              <span className="text-xs text-dark-400">{result.percentage.toFixed(2)}%</span>
+                            </div>
+                            <div className="bg-dark-800 rounded-full h-4 overflow-hidden border border-dark-700">
+                              <div
+                                className={`h-4 rounded-full transition-all duration-700 ${
+                                  index === 0 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
+                                  index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
+                                  index === 2 ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
+                                  'bg-gradient-to-r from-blue-500 to-emerald-500'
+                                }`}
+                                style={{ width: `${result.percentage}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Total Summary */}
+                  <div className="glass-effect rounded-xl p-6 border-2 border-emerald-500/50 bg-emerald-500/5 mt-6">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white mb-1">Total Valid Votes</h3>
+                        <p className="text-sm text-dark-300">{results.length} candidates competing</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-4xl font-bold text-white">
+                          {results.reduce((sum, r) => sum + r.total_votes, 0).toLocaleString()}
+                        </div>
+                        <div className="text-lg font-bold text-emerald-400">100%</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-12">

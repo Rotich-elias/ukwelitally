@@ -27,6 +27,7 @@ export default function ManageAgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     phone: '',
@@ -38,6 +39,9 @@ export default function ManageAgentsPage() {
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [importLoading, setImportLoading] = useState(false)
+  const [importResult, setImportResult] = useState<any>(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -126,6 +130,52 @@ export default function ManageAgentsPage() {
     setFormData({ ...formData, polling_station_id: location.pollingStationId })
   }
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0])
+      setImportResult(null)
+    }
+  }
+
+  const handleImportCSV = async () => {
+    if (!selectedFile) {
+      setError('Please select a CSV file')
+      return
+    }
+
+    setImportLoading(true)
+    setError('')
+    setImportResult(null)
+
+    try {
+      const token = localStorage.getItem('token')
+      const formData = new FormData()
+      formData.append('file', selectedFile)
+
+      const response = await fetch('/api/agents/import', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to import agents')
+      }
+
+      setImportResult(data)
+      setSelectedFile(null)
+      fetchAgents() // Refresh agents list
+    } catch (err: any) {
+      setError(err.message || 'Failed to import CSV')
+    } finally {
+      setImportLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-dark-950">
       <DashboardNav />
@@ -137,16 +187,29 @@ export default function ManageAgentsPage() {
             <h1 className="text-3xl font-bold text-white mb-2">Manage Agents</h1>
             <p className="text-dark-300">Create and manage your polling station agents</p>
           </div>
-          <button
-            onClick={() => {
-              setShowCreateModal(true)
-              setError('')
-              setSuccess('')
-            }}
-            className="btn-primary"
-          >
-            + Create Agent
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setShowImportModal(true)
+                setError('')
+                setImportResult(null)
+                setSelectedFile(null)
+              }}
+              className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors font-medium"
+            >
+              📄 Bulk Import CSV
+            </button>
+            <button
+              onClick={() => {
+                setShowCreateModal(true)
+                setError('')
+                setSuccess('')
+              }}
+              className="btn-primary"
+            >
+              + Create Agent
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -384,6 +447,126 @@ export default function ManageAgentsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CSV Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-effect rounded-xl max-w-2xl w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Bulk Import Agents from CSV</h2>
+                <button
+                  onClick={() => setShowImportModal(false)}
+                  className="text-dark-400 hover:text-white transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Instructions */}
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
+                <h3 className="text-blue-400 font-semibold mb-2">📋 Instructions:</h3>
+                <ol className="text-dark-300 text-sm space-y-1 list-decimal list-inside">
+                  <li>Download the CSV template below</li>
+                  <li>Fill in your agent data (one agent per row)</li>
+                  <li>Upload the completed CSV file</li>
+                </ol>
+                <a
+                  href="/templates/agents-import-template.csv"
+                  download
+                  className="inline-block mt-3 text-blue-400 hover:text-blue-300 text-sm font-medium underline"
+                >
+                  ⬇️ Download CSV Template
+                </a>
+              </div>
+
+              {/* File Upload */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-dark-200 mb-2">
+                  Select CSV File
+                </label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileSelect}
+                  className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-dark-700 file:text-white hover:file:bg-dark-600"
+                />
+                {selectedFile && (
+                  <p className="mt-2 text-sm text-emerald-400">
+                    ✓ Selected: {selectedFile.name}
+                  </p>
+                )}
+              </div>
+
+              {/* Error Display */}
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm mb-4">
+                  {error}
+                </div>
+              )}
+
+              {/* Import Results */}
+              {importResult && (
+                <div className="space-y-4 mb-6">
+                  <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 px-4 py-3 rounded-lg">
+                    <p className="font-semibold">✓ Import Complete!</p>
+                    <div className="mt-2 space-y-1 text-sm">
+                      <p>• Successfully imported: {importResult.imported} agents</p>
+                      {importResult.skipped > 0 && (
+                        <p>• Skipped: {importResult.skipped} agents</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Skipped Items */}
+                  {importResult.skippedList && importResult.skippedList.length > 0 && (
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                      <p className="text-yellow-400 font-semibold mb-2">⚠️ Skipped Agents:</p>
+                      <ul className="text-dark-300 text-sm space-y-1">
+                        {importResult.skippedList.map((item: string, idx: number) => (
+                          <li key={idx} className="text-xs">• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Parse Errors */}
+                  {importResult.errors && importResult.errors.length > 0 && (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                      <p className="text-red-400 font-semibold mb-2">❌ Validation Errors:</p>
+                      <ul className="text-dark-300 text-sm space-y-1">
+                        {importResult.errors.map((err: string, idx: number) => (
+                          <li key={idx} className="text-xs">• {err}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-4">
+                <button
+                  onClick={handleImportCSV}
+                  disabled={!selectedFile || importLoading}
+                  className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {importLoading ? 'Importing...' : 'Import Agents'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowImportModal(false)}
+                  className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

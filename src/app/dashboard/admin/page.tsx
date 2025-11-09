@@ -257,25 +257,27 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleImportCSV = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
+  const [importResult, setImportResult] = useState<any>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [importLoading, setImportLoading] = useState(false)
 
-    const fileInput = document.getElementById('csv-file') as HTMLInputElement
-    const file = fileInput?.files?.[0]
-
-    if (!file) {
+  const handleImportCSV = async () => {
+    if (!selectedFile) {
       setError('Please select a CSV file')
       return
     }
 
+    setImportLoading(true)
+    setError('')
+    setSuccess('')
+    setImportResult(null)
+
     try {
       const token = localStorage.getItem('token')
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', selectedFile)
 
-      const response = await fetch('/api/ballot-candidates/import', {
+      const response = await fetch('/api/candidates/import', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -289,11 +291,13 @@ export default function AdminDashboard() {
         throw new Error(data.error || 'Import failed')
       }
 
-      setSuccess(`Import successful! Imported: ${data.imported}, Skipped: ${data.skipped}`)
-      setShowImportModal(false)
+      setImportResult(data)
+      setSelectedFile(null)
       fetchBallotCandidates()
     } catch (err: any) {
       setError(err.message || 'Failed to import candidates')
+    } finally {
+      setImportLoading(false)
     }
   }
 
@@ -780,6 +784,7 @@ export default function AdminDashboard() {
               <table className="w-full">
                 <thead className="bg-dark-800/50 border-b border-dark-700">
                   <tr>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Candidate #</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Name</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Position</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Party</th>
@@ -791,19 +796,24 @@ export default function AdminDashboard() {
                 <tbody className="divide-y divide-dark-700">
                   {loadingBallot ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-dark-400">
+                      <td colSpan={7} className="px-6 py-8 text-center text-dark-400">
                         Loading ballot candidates...
                       </td>
                     </tr>
                   ) : ballotCandidates.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-dark-400">
+                      <td colSpan={7} className="px-6 py-8 text-center text-dark-400">
                         No ballot candidates found. Click &quot;Add Ballot Candidate&quot; or &quot;Import CSV&quot; to add candidates.
                       </td>
                     </tr>
                   ) : (
                     ballotCandidates.map((candidate) => (
                       <tr key={candidate.id} className="hover:bg-dark-800/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className="px-2 py-1 rounded text-xs font-mono bg-dark-800 text-blue-400 border border-dark-700">
+                            {candidate.candidate_number || 'N/A'}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 text-white font-medium">{candidate.candidate_name}</td>
                         <td className="px-6 py-4">
                           <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400 uppercase">
@@ -1039,9 +1049,14 @@ export default function AdminDashboard() {
           <div className="glass-effect rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Import Ballot Candidates from CSV</h2>
+                <h2 className="text-2xl font-bold text-white">Bulk Import Ballot Candidates from CSV</h2>
                 <button
-                  onClick={() => setShowImportModal(false)}
+                  onClick={() => {
+                    setShowImportModal(false)
+                    setSelectedFile(null)
+                    setImportResult(null)
+                    setError('')
+                  }}
                   className="text-dark-400 hover:text-white transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1050,50 +1065,124 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              <div className="mb-6 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-blue-400 mb-2">CSV Format Requirements:</h3>
-                <ul className="text-sm text-blue-300 space-y-1">
-                  <li>• <strong>Required columns:</strong> full_name, position</li>
-                  <li>• <strong>Optional columns:</strong> party_name, party_abbreviation, county_id, constituency_id, ward_id</li>
-                  <li>• <strong>Valid positions:</strong> president, governor, senator, mp, mca</li>
-                  <li>• First row must be the header row</li>
-                </ul>
-                <div className="mt-3 p-2 bg-dark-900/50 rounded font-mono text-xs text-dark-300">
-                  Example:<br/>
-                  full_name,position,party_name,party_abbreviation<br/>
-                  John Doe,president,Democratic Party,DP<br/>
-                  Jane Smith,governor,Republican Party,RP
+              {/* Instructions */}
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
+                <h3 className="text-blue-400 font-semibold mb-2">📋 Instructions:</h3>
+                <ol className="text-dark-300 text-sm space-y-1 list-decimal list-inside">
+                  <li>Download the CSV template below</li>
+                  <li>Fill in your candidate data (one candidate per row)</li>
+                  <li>Upload the completed CSV file</li>
+                </ol>
+                <a
+                  href="/templates/candidates-import-template.csv"
+                  download
+                  className="inline-block mt-3 text-blue-400 hover:text-blue-300 text-sm font-medium underline"
+                >
+                  ⬇️ Download CSV Template
+                </a>
+                <div className="mt-4 text-xs text-dark-400">
+                  <p className="font-semibold text-blue-300 mb-1">Position Requirements:</p>
+                  <ul className="space-y-1">
+                    <li>• <strong>President:</strong> No location required</li>
+                    <li>• <strong>Governor/Senator/Women Rep:</strong> Requires county_id</li>
+                    <li>• <strong>MP:</strong> Requires constituency_id</li>
+                    <li>• <strong>MCA:</strong> Requires ward_id</li>
+                  </ul>
                 </div>
               </div>
 
-              <form onSubmit={handleImportCSV} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-dark-200 mb-2">CSV File *</label>
-                  <input
-                    type="file"
-                    id="csv-file"
-                    accept=".csv"
-                    required
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
-                  />
-                </div>
+              {/* File Upload */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-dark-200 mb-2">
+                  Select CSV File
+                </label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setSelectedFile(e.target.files[0])
+                      setImportResult(null)
+                      setError('')
+                    }
+                  }}
+                  className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-dark-700 file:text-white hover:file:bg-dark-600"
+                />
+                {selectedFile && (
+                  <p className="mt-2 text-sm text-emerald-400">
+                    ✓ Selected: {selectedFile.name}
+                  </p>
+                )}
+              </div>
 
-                <div className="flex gap-4 pt-4">
-                  <button
-                    type="submit"
-                    className="flex-1 btn-primary"
-                  >
-                    Import Candidates
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowImportModal(false)}
-                    className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
+              {/* Error Display */}
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm mb-4">
+                  {error}
                 </div>
-              </form>
+              )}
+
+              {/* Import Results */}
+              {importResult && (
+                <div className="space-y-4 mb-6">
+                  <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 px-4 py-3 rounded-lg">
+                    <p className="font-semibold">✓ Import Complete!</p>
+                    <div className="mt-2 space-y-1 text-sm">
+                      <p>• Successfully imported: {importResult.imported} candidates</p>
+                      {importResult.skipped > 0 && (
+                        <p>• Skipped: {importResult.skipped} candidates</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Skipped Items */}
+                  {importResult.skippedList && importResult.skippedList.length > 0 && (
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                      <p className="text-yellow-400 font-semibold mb-2">⚠️ Skipped Candidates:</p>
+                      <ul className="text-dark-300 text-sm space-y-1">
+                        {importResult.skippedList.map((item: string, idx: number) => (
+                          <li key={idx} className="text-xs">• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Parse Errors */}
+                  {importResult.errors && importResult.errors.length > 0 && (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                      <p className="text-red-400 font-semibold mb-2">❌ Validation Errors:</p>
+                      <ul className="text-dark-300 text-sm space-y-1">
+                        {importResult.errors.map((err: string, idx: number) => (
+                          <li key={idx} className="text-xs">• {err}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-4">
+                <button
+                  onClick={handleImportCSV}
+                  disabled={!selectedFile || importLoading}
+                  className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {importLoading ? 'Importing...' : 'Import Candidates'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowImportModal(false)
+                    setSelectedFile(null)
+                    setImportResult(null)
+                    setError('')
+                  }}
+                  className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
