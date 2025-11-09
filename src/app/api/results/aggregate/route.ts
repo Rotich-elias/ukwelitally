@@ -135,16 +135,6 @@ export async function GET(req: NextRequest) {
     // For results query, we need both position and location params
     const resultsParams: any[] = [position, ...locationParams]
 
-    // Debug logging
-    console.log('=== AGGREGATE API DEBUG ===')
-    console.log('Position:', position)
-    console.log('actualConstituencyId:', actualConstituencyId, 'type:', typeof actualConstituencyId)
-    console.log('locationParams:', locationParams, 'types:', locationParams.map(p => typeof p))
-    console.log('resultsParams:', resultsParams, 'types:', resultsParams.map(p => typeof p))
-    console.log('whereClauseForStats:', whereClauseForStats)
-    console.log('whereClauseForResults:', whereClauseForResults)
-    console.log('=========================')
-
     // First, get the total counts for all stations in the area
     const totalStatsSql = `
       SELECT
@@ -160,6 +150,33 @@ export async function GET(req: NextRequest) {
     const totalStatsResult = await queryMany(totalStatsSql, locationParams) // Use location params only
     const totalStationsInArea = parseInt(totalStatsResult[0]?.total_stations) || 0
     const totalRegisteredVotersInArea = parseInt(totalStatsResult[0]?.total_registered_voters) || 0
+
+    // Get count of stations with ANY submissions (not just verified)
+    // This matches the logic from polling-stations/reporting-status API
+    const submittedCountSql = `
+      SELECT COUNT(*) as total
+      FROM (
+        SELECT ps.id
+        FROM polling_stations ps
+        JOIN wards w ON ps.ward_id = w.id
+        JOIN constituencies const ON w.constituency_id = const.id
+        JOIN counties co ON const.county_id = co.id
+        LEFT JOIN submissions s ON ps.id = s.polling_station_id
+        WHERE 1=1 ${whereClauseForStats}
+        GROUP BY ps.id
+        HAVING COUNT(s.id) > 0
+      ) as stations_with_submissions
+    `
+
+    const submittedStationsResult = await queryMany(submittedCountSql, locationParams)
+    const stationsWithSubmissions = parseInt(submittedStationsResult[0]?.total) || 0
+
+    console.log('=== AGGREGATE API SUMMARY ===')
+    console.log('Position:', position)
+    console.log('Total stations in area:', totalStationsInArea)
+    console.log('Stations with submissions (any status):', stationsWithSubmissions)
+    console.log('Reporting percentage:', ((stationsWithSubmissions / totalStationsInArea) * 100).toFixed(1) + '%')
+    console.log('============================')
 
     // Get candidate results from verified submissions
     const sql = `
@@ -198,6 +215,9 @@ export async function GET(req: NextRequest) {
 
     // Process and structure results
     if (rawResults.length === 0) {
+      // Calculate reporting percentage based on submitted stations (not just verified)
+      const reportingPercentage = totalStationsInArea > 0 ? (stationsWithSubmissions / totalStationsInArea) * 100 : 0
+
       return NextResponse.json({
         success: true,
         results: [],
@@ -207,8 +227,8 @@ export async function GET(req: NextRequest) {
           rejected_votes: 0,
           turnout_percentage: 0,
           total_stations: totalStationsInArea,
-          stations_reported: 0,
-          reporting_percentage: 0,
+          stations_reported: stationsWithSubmissions,
+          reporting_percentage: reportingPercentage,
         },
       })
     }
@@ -237,7 +257,8 @@ export async function GET(req: NextRequest) {
 
     // Calculate average turnout from reported stations only
     const averageTurnoutPercentage = reportedRegisteredVoters > 0 ? (totalVotesCast / reportedRegisteredVoters) * 100 : 0
-    const reportingPercentage = totalStationsInArea > 0 ? (stationsReporting / totalStationsInArea) * 100 : 0
+    // Use stationsWithSubmissions (any submission) for reporting percentage to match polling stations view
+    const reportingPercentage = totalStationsInArea > 0 ? (stationsWithSubmissions / totalStationsInArea) * 100 : 0
 
     return NextResponse.json({
       success: true,
@@ -248,7 +269,7 @@ export async function GET(req: NextRequest) {
         rejected_votes: totalRejectedVotes,
         turnout_percentage: averageTurnoutPercentage, // Average from reported stations
         total_stations: totalStationsInArea, // All stations in area
-        stations_reported: stationsReporting,
+        stations_reported: stationsWithSubmissions, // Stations with ANY submission (matches polling stations view)
         reporting_percentage: reportingPercentage,
       },
     })

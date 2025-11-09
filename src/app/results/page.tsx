@@ -202,6 +202,9 @@ export default function ResultsPage() {
           const profile = data.data as CandidateProfile
           setCandidateProfile(profile)
 
+          // Auto-set position to match candidate's position
+          setSelectedPosition(profile.position)
+
           // Auto-set location filters based on candidate position
           if (profile.position === 'mca' && profile.ward_id) {
             // MCA: Lock to their ward
@@ -417,7 +420,10 @@ export default function ResultsPage() {
               <select
                 value={selectedPosition}
                 onChange={(e) => setSelectedPosition(e.target.value)}
-                className="px-4 py-2 bg-dark-800 text-white rounded-lg border border-dark-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-medium uppercase text-sm"
+                disabled={!!candidateProfile}
+                className={`px-4 py-2 bg-dark-800 text-white rounded-lg border border-dark-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-medium uppercase text-sm ${
+                  candidateProfile ? 'opacity-60 cursor-not-allowed' : ''
+                }`}
               >
                 <option value="president">President</option>
                 <option value="governor">Governor</option>
@@ -426,6 +432,9 @@ export default function ResultsPage() {
                 <option value="mp">Member of Parliament</option>
                 <option value="mca">Member of County Assembly</option>
               </select>
+              {candidateProfile && (
+                <span className="text-xs text-blue-400 px-2">Locked to your position</span>
+              )}
             </div>
           )}
         </div>
