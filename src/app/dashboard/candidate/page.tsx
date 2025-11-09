@@ -19,6 +19,12 @@ interface CandidateResult {
   party_name: string
   total_votes: number
   percentage: number
+  polling_stations_count?: number
+  profile_photo?: string
+  candidate_number?: string
+  position?: string
+  official_name?: string
+  electoral_area?: string
 }
 
 interface ResultsSummary {
@@ -136,6 +142,460 @@ export default function CandidateDashboard() {
   const getProgressPercentage = () => {
     if (!summary || summary.total_stations === 0) return 0
     return Math.round(summary.reporting_percentage)
+  }
+
+  const downloadReport = () => {
+    if (!profile || !summary) {
+      alert('No data available to download')
+      return
+    }
+
+    // Generate report content
+    const reportDate = new Date().toLocaleString('en-KE', {
+      dateStyle: 'full',
+      timeStyle: 'long',
+      timeZone: 'Africa/Nairobi'
+    })
+
+    const totalValidVotes = results.reduce((sum, r) => sum + r.total_votes, 0)
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Election Results Report - ${profile.position.toUpperCase()}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #1f2937;
+      background: #f9fafb;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .header .subtitle {
+      font-size: 18px;
+      opacity: 0.95;
+    }
+
+    .meta-info {
+      background: #f3f4f6;
+      padding: 20px 40px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .meta-info .date {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .content {
+      padding: 40px;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1f2937;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #3b82f6;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .info-card {
+      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .info-card .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #6b7280;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+
+    .info-card .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1f2937;
+    }
+
+    .info-card .sub-value {
+      font-size: 14px;
+      color: #6b7280;
+      margin-top: 5px;
+    }
+
+    .candidate-info {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      border: 2px solid #3b82f6;
+    }
+
+    .candidate-info h3 {
+      font-size: 28px;
+      color: #1e40af;
+      margin-bottom: 15px;
+    }
+
+    .candidate-info .detail {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    .candidate-info .detail strong {
+      min-width: 150px;
+      color: #1e40af;
+    }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .results-table thead {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+    }
+
+    .results-table th {
+      padding: 16px;
+      text-align: left;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .results-table th:last-child,
+    .results-table td:last-child {
+      text-align: right;
+    }
+
+    .results-table tbody tr {
+      border-bottom: 1px solid #e5e7eb;
+      transition: background-color 0.2s;
+    }
+
+    .results-table tbody tr:hover {
+      background-color: #f9fafb;
+    }
+
+    .results-table tbody tr:nth-child(even) {
+      background-color: #f9fafb;
+    }
+
+    .results-table td {
+      padding: 16px;
+      font-size: 14px;
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .rank-1 {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      color: white;
+      box-shadow: 0 2px 4px rgba(251, 191, 36, 0.4);
+    }
+
+    .rank-2 {
+      background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+      color: white;
+      box-shadow: 0 2px 4px rgba(156, 163, 175, 0.4);
+    }
+
+    .rank-3 {
+      background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+      color: white;
+      box-shadow: 0 2px 4px rgba(251, 146, 60, 0.4);
+    }
+
+    .rank-other {
+      background: #e5e7eb;
+      color: #6b7280;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .party-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #dbeafe;
+      color: #1e40af;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .footer {
+      background: #f3f4f6;
+      padding: 30px 40px;
+      text-align: center;
+      border-top: 2px solid #e5e7eb;
+    }
+
+    .footer .logo {
+      font-size: 24px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+
+    .footer .disclaimer {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.8;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .stats-highlight {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border-left: 4px solid #10b981;
+    }
+
+    .stats-highlight .value {
+      color: #047857;
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+
+      .container {
+        box-shadow: none;
+        border-radius: 0;
+      }
+
+      .results-table tbody tr:hover {
+        background-color: transparent;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🗳️ ELECTION RESULTS REPORT</h1>
+      <div class="subtitle">${profile.position.toUpperCase()} - ${profile.electoral_area}</div>
+    </div>
+
+    <!-- Meta Information -->
+    <div class="meta-info">
+      <div class="date">📅 Generated: ${reportDate}</div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Candidate Information Section -->
+      <div class="section">
+        <h2 class="section-title">Candidate Information</h2>
+        <div class="candidate-info">
+          <h3>${profile.full_name}</h3>
+          <div class="detail"><strong>Position:</strong> ${profile.position.toUpperCase()}</div>
+          <div class="detail"><strong>Political Party:</strong> ${profile.party_name}</div>
+          <div class="detail"><strong>Electoral Area:</strong> ${profile.electoral_area}</div>
+        </div>
+      </div>
+
+      <!-- Summary Statistics Section -->
+      <div class="section">
+        <h2 class="section-title">Summary Statistics</h2>
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="label">Total Polling Stations</div>
+            <div class="value">${summary.total_stations.toLocaleString()}</div>
+          </div>
+
+          <div class="info-card stats-highlight">
+            <div class="label">Stations Reported</div>
+            <div class="value">${summary.stations_reported.toLocaleString()}</div>
+            <div class="sub-value">${getProgressPercentage()}% reporting</div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${getProgressPercentage()}%"></div>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <div class="label">Pending Stations</div>
+            <div class="value">${(summary.total_stations - summary.stations_reported).toLocaleString()}</div>
+            <div class="sub-value">Awaiting results</div>
+          </div>
+
+          <div class="info-card">
+            <div class="label">Registered Voters</div>
+            <div class="value">${summary.registered_voters.toLocaleString()}</div>
+          </div>
+
+          <div class="info-card stats-highlight">
+            <div class="label">Total Votes Cast</div>
+            <div class="value">${summary.total_votes_cast.toLocaleString()}</div>
+          </div>
+
+          <div class="info-card">
+            <div class="label">Voter Turnout</div>
+            <div class="value">${summary.turnout_percentage.toFixed(1)}%</div>
+          </div>
+
+          <div class="info-card">
+            <div class="label">Valid Votes</div>
+            <div class="value">${totalValidVotes.toLocaleString()}</div>
+          </div>
+
+          <div class="info-card">
+            <div class="label">Rejected Votes</div>
+            <div class="value">${summary.rejected_votes.toLocaleString()}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Results Section -->
+      <div class="section">
+        <h2 class="section-title">Detailed Results - ${profile.position.toUpperCase()} Position</h2>
+        ${results.length > 0 ? `
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Candidate Name</th>
+              <th>Party</th>
+              <th>Votes</th>
+              <th>Percentage</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${results.map((result, index) => `
+            <tr>
+              <td>
+                <span class="rank-badge ${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : 'rank-other'}">
+                  ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                </span>
+              </td>
+              <td><strong>${result.candidate_name}</strong></td>
+              <td><span class="party-badge">${result.party_name}</span></td>
+              <td><strong>${result.total_votes.toLocaleString()}</strong></td>
+              <td>
+                <strong>${result.percentage.toFixed(2)}%</strong>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: ${result.percentage}%"></div>
+                </div>
+              </td>
+            </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        ` : `
+        <p style="text-align: center; color: #6b7280; padding: 40px;">No results available yet. Results will appear as polling stations submit their data.</p>
+        `}
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="logo">UkweliTally</div>
+      <div class="disclaimer">
+        <strong>⚠️ Official Use Only</strong><br>
+        This report was generated from the UkweliTally Election Results System.<br>
+        Please verify all data before making public announcements.<br>
+        For inquiries, contact: elgeiy8@gmail.com | WhatsApp: 0721 237 811
+      </div>
+    </div>
+  </div>
+</body>
+</html>`
+
+    // Create and download file
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+
+    const fileName = `Election_Report_${profile.position}_${profile.electoral_area.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`
+    link.download = fileName
+
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
   }
 
   return (
@@ -355,45 +815,139 @@ export default function CandidateDashboard() {
                   <p className="text-dark-400 mt-4">Loading results...</p>
                 </div>
               ) : results.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-dark-700">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-dark-300">Candidate</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-dark-300">Party</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-dark-300">Votes</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-dark-300">Percentage</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {results.map((result, index) => (
-                        <tr key={index} className="border-b border-dark-800 hover:bg-dark-800/30 transition-colors">
-                          <td className="py-3 px-4 text-white font-medium">{result.candidate_name}</td>
-                          <td className="py-3 px-4">
-                            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">
-                              {result.party_name}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-right text-white font-semibold">
-                            {result.total_votes.toLocaleString()}
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <div className="w-16 bg-dark-800 rounded-full h-2">
-                                <div
-                                  className="bg-gradient-to-r from-blue-500 to-emerald-500 h-2 rounded-full"
-                                  style={{ width: `${result.percentage}%` }}
-                                ></div>
+                <div className="space-y-4">
+                  {results.map((result, index) => {
+                    const isLeader = index === 0
+                    const isSecond = index === 1
+                    const isThird = index === 2
+
+                    return (
+                      <div
+                        key={index}
+                        className={`glass-effect rounded-xl p-6 border-2 transition-all duration-300 hover:shadow-xl ${
+                          isLeader
+                            ? 'border-yellow-400/50 bg-yellow-400/5'
+                            : isSecond
+                            ? 'border-gray-400/50 bg-gray-400/5'
+                            : isThird
+                            ? 'border-orange-400/50 bg-orange-400/5'
+                            : 'border-dark-700 hover:border-dark-600'
+                        }`}
+                      >
+                        <div className="flex items-start gap-6">
+                          {/* Rank Badge */}
+                          <div className="flex-shrink-0">
+                            {isLeader ? (
+                              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg">
+                                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
                               </div>
-                              <span className="text-white font-medium w-12 text-right">
-                                {result.percentage.toFixed(1)}%
-                              </span>
+                            ) : isSecond ? (
+                              <div className="w-12 h-12 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center shadow-lg">
+                                <span className="text-white font-bold text-lg">2</span>
+                              </div>
+                            ) : isThird ? (
+                              <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
+                                <span className="text-white font-bold text-lg">3</span>
+                              </div>
+                            ) : (
+                              <div className="w-12 h-12 bg-dark-700 rounded-full flex items-center justify-center">
+                                <span className="text-dark-400 font-bold text-lg">{index + 1}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Candidate Photo */}
+                          <div className="flex-shrink-0">
+                            {result.profile_photo ? (
+                              <img
+                                src={result.profile_photo}
+                                alt={result.candidate_name}
+                                className="w-24 h-24 rounded-xl object-cover border-2 border-dark-600"
+                              />
+                            ) : (
+                              <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 border-dark-600 flex items-center justify-center">
+                                <svg className="w-12 h-12 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Candidate Details */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-4 mb-3">
+                              <div className="min-w-0 flex-1">
+                                <h3 className="text-xl font-bold text-white mb-1 truncate">
+                                  {result.official_name || result.candidate_name}
+                                </h3>
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                  {result.candidate_number && (
+                                    <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs font-mono">
+                                      {result.candidate_number}
+                                    </span>
+                                  )}
+                                  <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-medium">
+                                    {result.party_name}
+                                  </span>
+                                  {result.position && (
+                                    <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded text-xs uppercase">
+                                      {result.position}
+                                    </span>
+                                  )}
+                                </div>
+                                {result.electoral_area && (
+                                  <p className="text-sm text-dark-400 flex items-center gap-1">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    {result.electoral_area}
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* Vote Stats */}
+                              <div className="text-right flex-shrink-0">
+                                <p className="text-4xl font-bold text-white mb-1">
+                                  {result.total_votes.toLocaleString()}
+                                </p>
+                                <p className="text-lg font-semibold text-emerald-400">
+                                  {result.percentage.toFixed(1)}%
+                                </p>
+                                {result.polling_stations_count && (
+                                  <p className="text-xs text-dark-400 mt-1">
+                                    From {result.polling_stations_count.toLocaleString()} stations
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+
+                            {/* Progress Bar */}
+                            <div className="relative">
+                              <div className="w-full bg-dark-800 rounded-full h-3 overflow-hidden">
+                                <div
+                                  className={`h-3 rounded-full transition-all duration-1000 ease-out ${
+                                    isLeader
+                                      ? 'bg-gradient-to-r from-yellow-400 to-yellow-600'
+                                      : isSecond
+                                      ? 'bg-gradient-to-r from-gray-400 to-gray-600'
+                                      : isThird
+                                      ? 'bg-gradient-to-r from-orange-400 to-orange-600'
+                                      : 'bg-gradient-to-r from-blue-500 to-purple-500'
+                                  }`}
+                                  style={{ width: `${result.percentage}%` }}
+                                >
+                                  <div className="h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-12">
@@ -419,7 +973,10 @@ export default function CandidateDashboard() {
                 >
                   Manage Agents
                 </button>
-                <button className="w-full btn-secondary text-sm py-2">
+                <button
+                  onClick={downloadReport}
+                  className="w-full btn-secondary text-sm py-2"
+                >
                   Download Report
                 </button>
                 <button className="w-full btn-secondary text-sm py-2">
