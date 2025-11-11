@@ -299,7 +299,7 @@ export default function Home() {
               <h4 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
                 UkweliTally
               </h4>
-              <p className="text-dark-200">&copy; 2025 UkweliTally. Built for Kenya 2027 Elections.</p>
+              <p className="text-dark-200">&copy; 2025 UkweliTally. Built for Kenyan Elections.</p>
               <p className="text-sm mt-1 text-dark-400">
                 Independent platform - Not affiliated with IEBC
               </p>
