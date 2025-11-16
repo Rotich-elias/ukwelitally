@@ -41,6 +41,7 @@ async function handlePut(req: NextRequest, { params }: { params: { id: string } 
     }
 
     let userAccount = null
+    let observerAssignment = null
 
     // If status is being changed to approved, create user account and assign polling station
     if (status === 'approved' && volunteer.status !== 'approved') {
@@ -85,20 +86,26 @@ async function handlePut(req: NextRequest, { params }: { params: { id: string } 
         ]
       )
 
-      // Create observer assignment for presidential results
-      const observerAssignment = await queryOne(
-        `INSERT INTO observer_assignments
-         (user_id, polling_station_id, volunteer_registration_id, assignment_type, assigned_by)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING *`,
-        [
-          userAccount.id,
-          volunteer.polling_station_id,
-          volunteerId,
-          'presidential',
-          user.userId
-        ]
-      )
+      try {
+        // Create observer assignment for presidential results
+        observerAssignment = await queryOne(
+          `INSERT INTO observer_assignments
+           (user_id, polling_station_id, volunteer_registration_id, assignment_type, assigned_by)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING *`,
+          [
+            userAccount.id,
+            volunteer.polling_station_id,
+            volunteerId,
+            'presidential',
+            user.userId
+          ]
+        )
+      } catch (error) {
+        console.error('Error creating observer assignment:', error)
+        // If observer_assignments table doesn't exist, continue without it
+        // This is a fallback for systems that haven't run migration 008
+      }
 
       // Log the account creation and assignment
       await query(
@@ -114,7 +121,7 @@ async function handlePut(req: NextRequest, { params }: { params: { id: string } 
             email: volunteer.email,
             role: 'observer',
             polling_station_id: volunteer.polling_station_id,
-            observer_assignment_id: observerAssignment.id
+            observer_assignment_id: observerAssignment?.id || null
           })
         ]
       )
@@ -160,8 +167,22 @@ async function handlePut(req: NextRequest, { params }: { params: { id: string } 
       volunteer: updatedVolunteer,
       account_created: status === 'approved' && volunteer.status !== 'approved'
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating volunteer status:', error)
+    
+    // Provide more specific error messages
+    if (error.code === '23505') { // Unique constraint violation
+      return NextResponse.json(
+        { error: 'A user with this email or phone already exists' },
+        { status: 409 }
+      )
+    } else if (error.code === '23503') { // Foreign key violation
+      return NextResponse.json(
+        { error: 'Invalid polling station or related data' },
+        { status: 400 }
+      )
+    }
+    
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
