@@ -41,11 +41,14 @@ interface UserDetails extends User {
 export default function AdminDashboard() {
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
   const [loading, setLoading] = useState(true)
+  const [bulkActionLoading, setBulkActionLoading] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserDetails | null>(null)
   const [paymentFormData, setPaymentFormData] = useState({
@@ -65,6 +68,9 @@ export default function AdminDashboard() {
   const [showBallotModal, setShowBallotModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [editingBallot, setEditingBallot] = useState<any | null>(null)
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<number[]>([])
+  const [bulkCandidateActionLoading, setBulkCandidateActionLoading] = useState(false)
+  const [showBulkCandidateDeleteModal, setShowBulkCandidateDeleteModal] = useState(false)
   const [ballotFormData, setBallotFormData] = useState({
     full_name: '',
     position: 'president',
@@ -464,6 +470,102 @@ export default function AdminDashboard() {
     }
   }
 
+  // Bulk action handlers for users
+  const handleSelectAllUsers = (checked: boolean) => {
+    if (checked) {
+      setSelectedUserIds(users.map(user => user.id))
+    } else {
+      setSelectedUserIds([])
+    }
+  }
+
+  const handleSelectUser = (userId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedUserIds(prev => [...prev, userId])
+    } else {
+      setSelectedUserIds(prev => prev.filter(id => id !== userId))
+    }
+  }
+
+  const handleBulkUserAction = async (action: 'activate' | 'deactivate' | 'delete') => {
+    if (selectedUserIds.length === 0) return
+
+    if (action === 'delete') {
+      setShowBulkDeleteModal(true)
+      return
+    }
+
+    setBulkActionLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/admin/users/bulk-update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userIds: selectedUserIds,
+          action,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || `Failed to ${action} users`)
+      }
+
+      setSuccess(`Successfully ${action}d ${data.data.updated.length} users`)
+      if (data.data.errors && data.data.errors.length > 0) {
+        setError(`Some users could not be processed: ${data.data.errors.join(', ')}`)
+      }
+      setSelectedUserIds([])
+      fetchUsers()
+    } catch (err: any) {
+      setError(err.message || `Failed to ${action} users`)
+    } finally {
+      setBulkActionLoading(false)
+    }
+  }
+
+  const confirmBulkDelete = async () => {
+    if (selectedUserIds.length === 0) return
+
+    setBulkActionLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/admin/users/bulk-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userIds: selectedUserIds,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete users')
+      }
+
+      setSuccess(`Successfully deleted ${data.data.deleted.length} users`)
+      if (data.data.errors && data.data.errors.length > 0) {
+        setError(`Some users could not be deleted: ${data.data.errors.join(', ')}`)
+      }
+      setSelectedUserIds([])
+      setShowBulkDeleteModal(false)
+      fetchUsers()
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete users')
+    } finally {
+      setBulkActionLoading(false)
+    }
+  }
+
   const getRequiredLocation = () => {
     switch (formData.position) {
       case 'president':
@@ -478,6 +580,102 @@ export default function AdminDashboard() {
         return 'ward'
       default:
         return null
+    }
+  }
+
+  // Bulk action handlers for ballot candidates
+  const handleSelectAllCandidates = (checked: boolean) => {
+    if (checked) {
+      setSelectedCandidateIds(ballotCandidates.map(candidate => candidate.id))
+    } else {
+      setSelectedCandidateIds([])
+    }
+  }
+
+  const handleSelectCandidate = (candidateId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedCandidateIds(prev => [...prev, candidateId])
+    } else {
+      setSelectedCandidateIds(prev => prev.filter(id => id !== candidateId))
+    }
+  }
+
+  const handleBulkCandidateAction = async (action: 'archive' | 'restore' | 'delete') => {
+    if (selectedCandidateIds.length === 0) return
+
+    if (action === 'delete') {
+      setShowBulkCandidateDeleteModal(true)
+      return
+    }
+
+    setBulkCandidateActionLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/ballot-candidates/bulk-update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          candidateIds: selectedCandidateIds,
+          action,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || `Failed to ${action} candidates`)
+      }
+
+      setSuccess(`Successfully ${action}d ${data.data.updated.length} candidates`)
+      if (data.data.errors && data.data.errors.length > 0) {
+        setError(`Some candidates could not be processed: ${data.data.errors.join(', ')}`)
+      }
+      setSelectedCandidateIds([])
+      fetchBallotCandidates()
+    } catch (err: any) {
+      setError(err.message || `Failed to ${action} candidates`)
+    } finally {
+      setBulkCandidateActionLoading(false)
+    }
+  }
+
+  const confirmBulkCandidateDelete = async () => {
+    if (selectedCandidateIds.length === 0) return
+
+    setBulkCandidateActionLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/ballot-candidates/bulk-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          candidateIds: selectedCandidateIds,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete candidates')
+      }
+
+      setSuccess(`Successfully deleted ${data.data.deleted.length} candidates`)
+      if (data.data.errors && data.data.errors.length > 0) {
+        setError(`Some candidates could not be deleted: ${data.data.errors.join(', ')}`)
+      }
+      setSelectedCandidateIds([])
+      setShowBulkCandidateDeleteModal(false)
+      fetchBallotCandidates()
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete candidates')
+    } finally {
+      setBulkCandidateActionLoading(false)
     }
   }
 
@@ -620,10 +818,58 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Bulk Action Bar */}
+            {selectedUserIds.length > 0 && (
+              <div className="bg-blue-500/10 border-b border-blue-500/30 p-4 mx-6 mt-6 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-blue-300 font-medium">
+                      {selectedUserIds.length} user{selectedUserIds.length !== 1 ? 's' : ''} selected
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleBulkUserAction('activate')}
+                      disabled={bulkActionLoading}
+                      className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      {bulkActionLoading ? 'Activating...' : 'Activate'}
+                    </button>
+                    <button
+                      onClick={() => handleBulkUserAction('deactivate')}
+                      disabled={bulkActionLoading}
+                      className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      {bulkActionLoading ? 'Deactivating...' : 'Deactivate'}
+                    </button>
+                    <button
+                      onClick={() => handleBulkUserAction('delete')}
+                      disabled={bulkActionLoading}
+                      className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      {bulkActionLoading ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-dark-800/50 border-b border-dark-700">
                   <tr>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase w-12">
+                      <input
+                        type="checkbox"
+                        checked={selectedUserIds.length === users.length && users.length > 0}
+                        onChange={(e) => handleSelectAllUsers(e.target.checked)}
+                        className="w-4 h-4 text-blue-500 bg-dark-800 border-dark-600 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                    </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Name</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Email</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Phone</th>
@@ -638,20 +884,28 @@ export default function AdminDashboard() {
                 <tbody className="divide-y divide-dark-700">
                   {loading ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-8 text-center text-dark-400">
+                      <td colSpan={10} className="px-6 py-8 text-center text-dark-400">
                         Loading...
                       </td>
                     </tr>
                   ) : users.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-8 text-center text-dark-400">
+                      <td colSpan={10} className="px-6 py-8 text-center text-dark-400">
                         No users found
                       </td>
                     </tr>
                   ) : (
                     users.map((user) => (
                       <tr key={user.id} className="hover:bg-dark-800/30 transition-colors">
-                      <td className="px-6 py-4 text-white font-medium">{user.full_name}</td>
+                        <td className="px-6 py-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedUserIds.includes(user.id)}
+                            onChange={(e) => handleSelectUser(user.id, e.target.checked)}
+                            className="w-4 h-4 text-blue-500 bg-dark-800 border-dark-600 rounded focus:ring-blue-500 focus:ring-2"
+                          />
+                        </td>
+                        <td className="px-6 py-4 text-white font-medium">{user.full_name}</td>
                       <td className="px-6 py-4 text-dark-300">{user.email}</td>
                       <td className="px-6 py-4 text-dark-300">{user.phone}</td>
                       <td className="px-6 py-4">
@@ -789,10 +1043,57 @@ export default function AdminDashboard() {
                 {ballotError}
               </div>
             )}
+            {/* Bulk Action Bar for Ballot Candidates */}
+            {selectedCandidateIds.length > 0 && (
+              <div className="bg-blue-500/10 border-b border-blue-500/30 p-4 mx-6 mt-6 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-blue-300 font-medium">
+                      {selectedCandidateIds.length} candidate{selectedCandidateIds.length !== 1 ? 's' : ''} selected
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleBulkCandidateAction('archive')}
+                      disabled={bulkCandidateActionLoading}
+                      className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      {bulkCandidateActionLoading ? 'Archiving...' : 'Archive'}
+                    </button>
+                    <button
+                      onClick={() => handleBulkCandidateAction('restore')}
+                      disabled={bulkCandidateActionLoading}
+                      className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      {bulkCandidateActionLoading ? 'Restoring...' : 'Restore'}
+                    </button>
+                    <button
+                      onClick={() => handleBulkCandidateAction('delete')}
+                      disabled={bulkCandidateActionLoading}
+                      className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      {bulkCandidateActionLoading ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-dark-800/50 border-b border-dark-700">
                   <tr>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase w-12">
+                      <input
+                        type="checkbox"
+                        checked={selectedCandidateIds.length === ballotCandidates.length && ballotCandidates.length > 0}
+                        onChange={(e) => handleSelectAllCandidates(e.target.checked)}
+                        className="w-4 h-4 text-blue-500 bg-dark-800 border-dark-600 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                    </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Candidate #</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Name</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Position</th>
@@ -818,6 +1119,14 @@ export default function AdminDashboard() {
                   ) : (
                     ballotCandidates.map((candidate) => (
                       <tr key={candidate.id} className="hover:bg-dark-800/30 transition-colors">
+                        <td className="px-6 py-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedCandidateIds.includes(candidate.id)}
+                            onChange={(e) => handleSelectCandidate(candidate.id, e.target.checked)}
+                            className="w-4 h-4 text-blue-500 bg-dark-800 border-dark-600 rounded focus:ring-blue-500 focus:ring-2"
+                          />
+                        </td>
                         <td className="px-6 py-4">
                           <span className="px-2 py-1 rounded text-xs font-mono bg-dark-800 text-blue-400 border border-dark-700">
                             {candidate.candidate_number || 'N/A'}
@@ -1689,6 +1998,104 @@ export default function AdminDashboard() {
                     setSelectedUser(null)
                   }}
                   className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-effect rounded-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Delete {selectedUserIds.length} Users</h3>
+                  <p className="text-sm text-dark-300">This action cannot be undone</p>
+                </div>
+              </div>
+
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+                <p className="text-white mb-2">
+                  Are you sure you want to delete <strong>{selectedUserIds.length} users</strong>?
+                </p>
+                <ul className="text-sm text-dark-300 space-y-1">
+                  <li>• All selected users will be permanently deleted</li>
+                  <li>• All associated data will be removed</li>
+                  <li>• This action cannot be reversed</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={confirmBulkDelete}
+                  disabled={bulkActionLoading}
+                  className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg font-medium transition-colors"
+                >
+                  {bulkActionLoading ? 'Deleting...' : `Delete ${selectedUserIds.length} Users`}
+                </button>
+                <button
+                  onClick={() => setShowBulkDeleteModal(false)}
+                  disabled={bulkActionLoading}
+                  className="px-6 py-3 bg-dark-700 hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Candidate Delete Confirmation Modal */}
+      {showBulkCandidateDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-effect rounded-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Delete {selectedCandidateIds.length} Candidates</h3>
+                  <p className="text-sm text-dark-300">This action cannot be undone</p>
+                </div>
+              </div>
+
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+                <p className="text-white mb-2">
+                  Are you sure you want to delete <strong>{selectedCandidateIds.length} candidates</strong>?
+                </p>
+                <ul className="text-sm text-dark-300 space-y-1">
+                  <li>• All selected candidates will be permanently deleted</li>
+                  <li>• All associated data will be removed</li>
+                  <li>• This action cannot be reversed</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={confirmBulkCandidateDelete}
+                  disabled={bulkCandidateActionLoading}
+                  className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg font-medium transition-colors"
+                >
+                  {bulkCandidateActionLoading ? 'Deleting...' : `Delete ${selectedCandidateIds.length} Candidates`}
+                </button>
+                <button
+                  onClick={() => setShowBulkCandidateDeleteModal(false)}
+                  disabled={bulkCandidateActionLoading}
+                  className="px-6 py-3 bg-dark-700 hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                 >
                   Cancel
                 </button>

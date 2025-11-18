@@ -14,7 +14,7 @@ interface Volunteer {
   constituency_id?: number
   ward_id?: number
   polling_station_id?: number
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'pending' | 'approved' | 'rejected' | 'assigned'
   notes?: string
   created_at: string
   updated_at: string
@@ -35,6 +35,13 @@ export default function VolunteerManagement() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedVolunteers, setSelectedVolunteers] = useState<number[]>([])
+  const [bulkActionLoading, setBulkActionLoading] = useState(false)
+  const [showBulkNotesModal, setShowBulkNotesModal] = useState(false)
+  const [bulkActionType, setBulkActionType] = useState<'approve' | 'reject' | 'delete' | null>(null)
+  const [bulkNotes, setBulkNotes] = useState('')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [volunteerToDelete, setVolunteerToDelete] = useState<Volunteer | null>(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -116,6 +123,7 @@ export default function VolunteerManagement() {
       pending: { color: 'bg-yellow-500/20 text-yellow-400', label: 'Pending' },
       approved: { color: 'bg-blue-500/20 text-blue-400', label: 'Approved' },
       rejected: { color: 'bg-red-500/20 text-red-400', label: 'Rejected' },
+      assigned: { color: 'bg-green-500/20 text-green-400', label: 'Assigned' },
     }
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
@@ -140,6 +148,131 @@ export default function VolunteerManagement() {
       return volunteer.county_name
     }
     return 'Not specified'
+  }
+
+  const handleSelectVolunteer = (volunteerId: number) => {
+    setSelectedVolunteers(prev =>
+      prev.includes(volunteerId)
+        ? prev.filter(id => id !== volunteerId)
+        : [...prev, volunteerId]
+    )
+  }
+
+  const handleSelectAll = () => {
+    if (selectedVolunteers.length === filteredVolunteers.length) {
+      setSelectedVolunteers([])
+    } else {
+      setSelectedVolunteers(filteredVolunteers.map(v => v.id))
+    }
+  }
+
+  const handleBulkAction = async (action: 'approve' | 'reject' | 'delete') => {
+    if (selectedVolunteers.length === 0) return
+    
+    if (action === 'delete') {
+      setBulkActionType('delete')
+      setShowBulkNotesModal(true)
+    } else {
+      setBulkActionType(action)
+      setShowBulkNotesModal(true)
+    }
+  }
+
+  const handleDeleteVolunteer = (volunteer: Volunteer) => {
+    setVolunteerToDelete(volunteer)
+    setShowDeleteModal(true)
+  }
+
+  const confirmBulkAction = async () => {
+    if (!bulkActionType || selectedVolunteers.length === 0) return
+
+    setBulkActionLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      
+      if (bulkActionType === 'delete') {
+        const response = await fetch('/api/admin/volunteers/bulk-delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            volunteer_ids: selectedVolunteers
+          }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to perform bulk delete')
+        }
+
+        setSuccess(`Successfully deleted ${selectedVolunteers.length} volunteer(s)`)
+      } else {
+        const response = await fetch('/api/admin/volunteers/bulk-update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            volunteer_ids: selectedVolunteers,
+            status: bulkActionType === 'approve' ? 'approved' : 'rejected',
+            notes: bulkNotes
+          }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to perform bulk action')
+        }
+
+        setSuccess(`Successfully ${bulkActionType}d ${selectedVolunteers.length} volunteer(s)`)
+      }
+
+      setSelectedVolunteers([])
+      setBulkNotes('')
+      setShowBulkNotesModal(false)
+      setBulkActionType(null)
+      fetchVolunteers()
+    } catch (err: any) {
+      setError(err.message || 'Failed to perform bulk action')
+    } finally {
+      setBulkActionLoading(false)
+    }
+  }
+
+  const confirmDeleteVolunteer = async () => {
+    if (!volunteerToDelete) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/admin/volunteers/${volunteerToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete volunteer')
+      }
+
+      setSuccess(`Volunteer "${volunteerToDelete.full_name}" deleted successfully`)
+      setShowDeleteModal(false)
+      setVolunteerToDelete(null)
+      fetchVolunteers()
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete volunteer')
+    }
+  }
+
+  const clearSelection = () => {
+    setSelectedVolunteers([])
   }
 
   return (
@@ -247,14 +380,73 @@ export default function VolunteerManagement() {
             </div>
           </div>
         </div>
-
+  
+        {/* Bulk Actions Bar */}
+        {selectedVolunteers.length > 0 && (
+          <div className="glass-effect rounded-xl p-4 mb-6 border-2 border-blue-500/50">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-white font-medium">{selectedVolunteers.length} volunteer(s) selected</p>
+                  <p className="text-dark-300 text-sm">Choose an action to perform on all selected volunteers</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <button
+                  onClick={clearSelection}
+                  className="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  Clear Selection
+                </button>
+                <button
+                  onClick={() => handleBulkAction('approve')}
+                  disabled={bulkActionLoading}
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {bulkActionLoading ? 'Processing...' : 'Approve Selected'}
+                </button>
+                <button
+                  onClick={() => handleBulkAction('reject')}
+                  disabled={bulkActionLoading}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {bulkActionLoading ? 'Processing...' : 'Reject Selected'}
+                </button>
+                <button
+                  onClick={() => handleBulkAction('delete')}
+                  disabled={bulkActionLoading}
+                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {bulkActionLoading ? 'Processing...' : 'Delete Selected'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+  
         {/* Volunteers Table */}
         <div className="glass-effect rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-dark-800/50 border-b border-dark-700">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Volunteer</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedVolunteers.length > 0 && selectedVolunteers.length === filteredVolunteers.length}
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 text-blue-600 bg-dark-700 border-dark-600 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                      Volunteer
+                    </div>
+                  </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Contact</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Location</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Status</th>
@@ -279,9 +471,17 @@ export default function VolunteerManagement() {
                   filteredVolunteers.map((volunteer) => (
                     <tr key={volunteer.id} className="hover:bg-dark-800/30 transition-colors">
                       <td className="px-6 py-4">
-                        <div>
-                          <p className="text-white font-medium">{volunteer.full_name}</p>
-                          <p className="text-dark-400 text-sm">ID: {volunteer.id_number}</p>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedVolunteers.includes(volunteer.id)}
+                            onChange={() => handleSelectVolunteer(volunteer.id)}
+                            className="w-4 h-4 text-blue-600 bg-dark-700 border-dark-600 rounded focus:ring-blue-500 focus:ring-2"
+                          />
+                          <div>
+                            <p className="text-white font-medium">{volunteer.full_name}</p>
+                            <p className="text-dark-400 text-sm">ID: {volunteer.id_number}</p>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -338,6 +538,19 @@ export default function VolunteerManagement() {
                                 </svg>
                               </button>
                             </>
+                          )}
+
+                          {/* Delete Action - Available for all volunteers except assigned ones */}
+                          {volunteer.status !== 'assigned' && (
+                            <button
+                              onClick={() => handleDeleteVolunteer(volunteer)}
+                              className="p-2 hover:bg-orange-500/20 text-orange-400 rounded-lg transition-colors"
+                              title="Delete"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
                           )}
                         </div>
                       </td>
@@ -460,6 +673,157 @@ export default function VolunteerManagement() {
                   className="flex-1 btn-secondary"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Action Notes Modal */}
+      {showBulkNotesModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-effect rounded-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">
+                  {bulkActionType === 'approve' ? 'Approve Volunteers' :
+                   bulkActionType === 'reject' ? 'Reject Volunteers' : 'Delete Volunteers'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowBulkNotesModal(false)
+                    setBulkActionType(null)
+                    setBulkNotes('')
+                  }}
+                  className="text-dark-400 hover:text-white transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-white mb-2">
+                    You are about to {bulkActionType} {selectedVolunteers.length} volunteer(s).
+                    This action cannot be undone.
+                  </p>
+                  <p className="text-dark-300 text-sm mb-4">
+                    {bulkActionType === 'approve'
+                      ? 'Approved volunteers will receive observer accounts and be assigned to their preferred polling stations.'
+                      : bulkActionType === 'reject'
+                      ? 'Rejected volunteers will be removed from the pending list.'
+                      : 'Deleted volunteers will be permanently removed from the system. This action cannot be undone.'
+                    }
+                  </p>
+                </div>
+
+                {bulkActionType !== 'delete' && (
+                  <div>
+                    <label className="block text-sm font-medium text-dark-400 mb-2">
+                      Optional Notes (will be added to all selected volunteers)
+                    </label>
+                    <textarea
+                      value={bulkNotes}
+                      onChange={(e) => setBulkNotes(e.target.value)}
+                      placeholder="Add any notes about this bulk action..."
+                      rows={4}
+                      className="w-full px-4 py-2 bg-dark-900/50 border border-dark-700 rounded-lg text-white placeholder-dark-400 focus:outline-none focus:border-blue-500 resize-none"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-4 mt-6 pt-4 border-t border-dark-700">
+                <button
+                  onClick={() => {
+                    setShowBulkNotesModal(false)
+                    setBulkActionType(null)
+                    setBulkNotes('')
+                  }}
+                  className="flex-1 btn-secondary"
+                  disabled={bulkActionLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBulkAction}
+                  disabled={bulkActionLoading}
+                  className={`flex-1 px-4 py-2 rounded-lg text-white font-medium transition-colors ${
+                    bulkActionType === 'approve'
+                      ? 'bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50'
+                      : bulkActionType === 'reject'
+                      ? 'bg-red-500 hover:bg-red-600 disabled:bg-red-500/50'
+                      : 'bg-orange-500 hover:bg-orange-600 disabled:bg-orange-500/50'
+                  } disabled:cursor-not-allowed`}
+                >
+                  {bulkActionLoading ? 'Processing...' :
+                   `Confirm ${bulkActionType === 'approve' ? 'Approve' :
+                           bulkActionType === 'reject' ? 'Reject' : 'Delete'}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Individual Delete Confirmation Modal */}
+      {showDeleteModal && volunteerToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-effect rounded-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Delete Volunteer</h2>
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false)
+                    setVolunteerToDelete(null)
+                  }}
+                  className="text-dark-400 hover:text-white transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-white mb-2">
+                    Are you sure you want to delete volunteer <strong>{volunteerToDelete.full_name}</strong>?
+                  </p>
+                  <p className="text-dark-300 text-sm">
+                    This action cannot be undone. The volunteer will be permanently removed from the system.
+                  </p>
+                </div>
+
+                <div className="bg-dark-800/50 rounded-lg p-4">
+                  <p className="text-dark-300 text-sm">
+                    <strong>Email:</strong> {volunteerToDelete.email}<br />
+                    <strong>Phone:</strong> {volunteerToDelete.phone}<br />
+                    <strong>ID Number:</strong> {volunteerToDelete.id_number}<br />
+                    <strong>Status:</strong> {volunteerToDelete.status}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 mt-6 pt-4 border-t border-dark-700">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false)
+                    setVolunteerToDelete(null)
+                  }}
+                  className="flex-1 btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteVolunteer}
+                  className="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Confirm Delete
                 </button>
               </div>
             </div>
