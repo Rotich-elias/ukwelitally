@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import DashboardNav from '@/components/DashboardNav'
 import LocationSelector from '@/components/LocationSelector'
 
 export default function VolunteerRegistrationPage() {
@@ -80,7 +79,33 @@ export default function VolunteerRegistrationPage() {
 
   return (
     <div className="min-h-screen bg-dark-950">
-      <DashboardNav />
+      {/* Public Navigation Header */}
+      <nav className="glass-effect border-b border-dark-700/50 sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <a href="/" className="cursor-pointer">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              UkweliTally
+            </h1>
+          </a>
+          <div className="space-x-4">
+            <a href="/" className="text-dark-300 hover:text-blue-400 transition-colors">
+              Home
+            </a>
+            <a 
+              href="/presidential-results" 
+              className="text-dark-300 hover:text-blue-400 transition-colors"
+            >
+              Results
+            </a>
+            <a 
+              href="/login" 
+              className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-lg hover:from-blue-500 hover:to-blue-400 transition-all hover:shadow-glow"
+            >
+              Login
+            </a>
+          </div>
+        </div>
+      </nav>
 
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
@@ -280,6 +305,37 @@ export default function VolunteerRegistrationPage() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="glass-effect border-t border-dark-700/50 py-12 mt-20">
+        <div className="container mx-auto px-4 text-center">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="text-center md:text-left">
+              <h4 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
+                UkweliTally
+              </h4>
+              <p className="text-dark-200">&copy; 2025 UkweliTally. Built for Kenyan Elections.</p>
+              <p className="text-sm mt-1 text-dark-400">
+                Independent platform - Not affiliated with IEBC
+              </p>
+            </div>
+            <div className="text-center md:text-right">
+              <h4 className="text-lg font-semibold text-white mb-4">Get in Touch</h4>
+              <div className="flex justify-center md:justify-end items-center gap-6">
+                <a href="mailto:elgeiy8@gmail.com" title="Email" className="text-dark-300 hover:text-blue-400 transition-colors">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </a>
+                <a href="https://wa.me/254721237811" target="_blank" rel="noopener noreferrer" title="WhatsApp" className="text-dark-300 hover:text-green-400 transition-colors">
+                  <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.267.655 4.395 1.906 6.215l-1.036 3.793 3.863-1.025z"></path></svg>
+                </a>
+                <a href="tel:+254721237811" title="Call" className="text-dark-300 hover:text-purple-400 transition-colors">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
