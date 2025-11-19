@@ -89,7 +89,7 @@ export default function ResultsPage() {
   const [pollingStationId, setPollingStationId] = useState<number | undefined>()
   const [selectedPosition, setSelectedPosition] = useState<string>('president')
 
-  // Check authorization - block agents from viewing results
+  // Check authorization - block agents from viewing results, restrict volunteers to president
   useEffect(() => {
     const userStr = localStorage.getItem('user')
     if (!userStr) {
@@ -103,6 +103,11 @@ export default function ResultsPage() {
     if (user.role === 'agent') {
       router.push('/dashboard/agent')
       return
+    }
+
+    // Force volunteers to only view presidential results
+    if (user.role === 'observer') {
+      setSelectedPosition('president')
     }
   }, [router])
 
@@ -420,9 +425,9 @@ export default function ResultsPage() {
               <select
                 value={selectedPosition}
                 onChange={(e) => setSelectedPosition(e.target.value)}
-                disabled={!!candidateProfile}
+                disabled={!!candidateProfile || userRole === 'observer'}
                 className={`px-4 py-2 bg-dark-800 text-white rounded-lg border border-dark-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-medium uppercase text-sm ${
-                  candidateProfile ? 'opacity-60 cursor-not-allowed' : ''
+                  candidateProfile || userRole === 'observer' ? 'opacity-60 cursor-not-allowed' : ''
                 }`}
               >
                 <option value="president">President</option>
@@ -434,6 +439,9 @@ export default function ResultsPage() {
               </select>
               {candidateProfile && (
                 <span className="text-xs text-blue-400 px-2">Locked to your position</span>
+              )}
+              {userRole === 'observer' && (
+                <span className="text-xs text-blue-400 px-2">Volunteers can only view presidential results</span>
               )}
             </div>
           )}

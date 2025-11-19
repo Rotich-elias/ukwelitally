@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const position = searchParams.get('position') || 'president'
+    let position = searchParams.get('position') || 'president'
 
     // Check if user is authenticated and get their role
     let userRole = 'public'
@@ -27,6 +27,11 @@ export async function GET(req: NextRequest) {
         const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
         userRole = decoded.role
         userId = decoded.userId
+
+        // Force volunteers (observers) to only view presidential results
+        if (userRole === 'observer') {
+          position = 'president'
+        }
 
         // If user is a candidate, get their location restrictions
         if (userRole === 'candidate') {
