@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
 import LocationSelector from '@/components/LocationSelector'
@@ -105,29 +105,7 @@ export default function AdminDashboard() {
   const [paymentError, setPaymentError] = useState('')
   const [paymentSuccess, setPaymentSuccess] = useState('')
 
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    const user = localStorage.getItem('user')
-
-    if (!token || !user) {
-      router.push('/login')
-      return
-    }
-
-    const userData = JSON.parse(user)
-    if (userData.role !== 'admin') {
-      router.push('/login')
-      return
-    }
-
-    fetchUsers()
-
-    if (viewMode === 'ballot_candidates') {
-      fetchBallotCandidates()
-    }
-  }, [router, filterRole, viewMode])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
@@ -150,7 +128,29 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filterRole])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const user = localStorage.getItem('user')
+
+    if (!token || !user) {
+      router.push('/login')
+      return
+    }
+
+    const userData = JSON.parse(user)
+    if (userData.role !== 'admin') {
+      router.push('/login')
+      return
+    }
+
+    fetchUsers()
+
+    if (viewMode === 'ballot_candidates') {
+      fetchBallotCandidates()
+    }
+  }, [router, viewMode, fetchUsers])
 
   const fetchBallotCandidates = async () => {
     setLoadingBallot(true)

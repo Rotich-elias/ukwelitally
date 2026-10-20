@@ -226,7 +226,7 @@ export default function VolunteerRegistrationPage() {
 
               <p className="text-center text-sm text-dark-400">
                 By registering, you agree to our terms of service and privacy policy.
-                You'll be contacted for verification and training.
+                You&apos;ll be contacted for verification and training.
               </p>
             </form>
           </div>

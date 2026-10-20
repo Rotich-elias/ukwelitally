@@ -1,9 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
+import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
+
+export const dynamic = 'force-dynamic'
 
 // POST /api/volunteers - Register a new volunteer from landing page
 export async function POST(req: NextRequest) {
   try {
+    // This endpoint is public, so throttle submissions per client to prevent
+    // spam from flooding the volunteer review queue.
+    const ip = getClientIp(req)
+    const limit = checkRateLimit(
+      rateLimitKey('volunteer_register', ip),
+      RATE_LIMITS.volunteerRegister.limit,
+      RATE_LIMITS.volunteerRegister.windowMs
+    )
+
+    if (!limit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Too many registration attempts. Please try again later.',
+          retryAfterSeconds: limit.retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(limit.retryAfterSeconds) },
+        }
+      )
+    }
+
     const body = await req.json()
     const { 
       full_name, 

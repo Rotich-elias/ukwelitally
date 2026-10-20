@@ -70,13 +70,33 @@ async function handlePost(req: NextRequest) {
       )
     }
 
+    // Merge duplicate candidate entries so a candidate can only be counted
+    // once per result. This keeps the vote total intact while satisfying the
+    // candidate_votes unique constraint.
+    const mergedVotes = new Map<string, { candidate_name: string; party_name?: string; votes: number }>()
+    for (const cv of candidate_votes) {
+      const key = cv.candidate_name.trim()
+      const existing = mergedVotes.get(key)
+      if (existing) {
+        existing.votes += cv.votes
+        if (!existing.party_name && cv.party_name) existing.party_name = cv.party_name
+      } else {
+        mergedVotes.set(key, {
+          candidate_name: key,
+          party_name: cv.party_name,
+          votes: cv.votes,
+        })
+      }
+    }
+    const normalizedCandidateVotes = Array.from(mergedVotes.values())
+
     // Validate vote counts
     const validation = validateVoteCounts({
       registered_voters,
       total_votes_cast,
       valid_votes,
       rejected_votes,
-      candidate_votes,
+      candidate_votes: normalizedCandidateVotes,
     })
 
     // Detect anomalies
@@ -85,7 +105,7 @@ async function handlePost(req: NextRequest) {
       registered_voters,
       valid_votes,
       rejected_votes,
-      candidate_votes,
+      candidate_votes: normalizedCandidateVotes,
     })
 
     // Check if user is a primary agent for auto-verification
@@ -96,6 +116,24 @@ async function handlePost(req: NextRequest) {
         [user.userId]
       )
       isPrimaryAgent = agentCheck?.is_primary || false
+    }
+
+    // Reject a duplicate result for the same submission and position up front
+    // so the user gets a clear conflict message instead of a database error.
+    const existingResult = await queryOne<{ id: number }>(
+      'SELECT id FROM results WHERE submission_id = $1 AND position = $2',
+      [submission_id, position]
+    )
+
+    if (existingResult) {
+      return NextResponse.json(
+        {
+          error:
+            'Results already exist for this submission. Delete the existing result before submitting again.',
+          result_id: existingResult.id,
+        },
+        { status: 409 }
+      )
     }
 
     // Create result in transaction
@@ -125,10 +163,12 @@ async function handlePost(req: NextRequest) {
       const resultRecord = resultData.rows[0]
 
       // Insert candidate votes
-      for (const cv of candidate_votes) {
+      for (const cv of normalizedCandidateVotes) {
         await client.query(
           `INSERT INTO candidate_votes (result_id, candidate_name, party_name, votes)
-           VALUES ($1, $2, $3, $4)`,
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (result_id, candidate_name)
+           DO UPDATE SET votes = candidate_votes.votes + EXCLUDED.votes`,
           [resultRecord.id, cv.candidate_name, cv.party_name || null, cv.votes]
         )
       }
@@ -184,8 +224,21 @@ async function handlePost(req: NextRequest) {
       },
       { status: 201 }
     )
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating result:', error)
+
+    // Unique violation on (submission_id, position): a concurrent request
+    // inserted the same result. Surface it as a conflict, not a server error.
+    if (error?.code === '23505') {
+      return NextResponse.json(
+        {
+          error:
+            'Results already exist for this submission. Delete the existing result before submitting again.',
+        },
+        { status: 409 }
+      )
+    }
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }

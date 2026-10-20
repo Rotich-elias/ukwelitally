@@ -11,66 +11,16 @@ UkweliTally is a web-based platform that enables candidates and their agents to 
 - GPS verification and photo evidence
 - Real-time aggregation and analytics
 - Offline-first PWA support
-- OCR form scanning
+- Vote variance detection between primary and backup submissions
 
 ## Tech Stack
-That’s a great initiative — a result-tallying platform can really help candidates and agents maintain transparency and verify official counts. Here’s a breakdown of how you can design and build such a system for the 2027 elections (likely referring to Kenya’s general elections):
 
-⚙️ 1. Core Features
-
-User Registration and Authentication
-
-Roles: Candidate, Agent, Observer, Admin.
-
-Use OTP or ID verification for authenticity.
-
-Role-based dashboards.
-
-Polling Station Data Input
-
-Agents can submit results per station (e.g., Form 34A uploads).
-
-Automatic image-to-data extraction using OCR (e.g., Google Vision or Tesseract).
-
-Results Tallying
-
-Aggregate votes per polling station, ward, constituency, and county.
-
-Real-time graphs/charts (e.g., Chart.js, Recharts, or D3.js).
-
-Verification & Validation
-
-Compare submitted data against other agents' entries to flag inconsistencies.
-
-Audit logs of all edits/submissions.
-
-Analytics Dashboard
-
-Candidate-specific summary.
-
-Heatmaps for regional performance.
-
-Historical comparison and projections.
-
-Offline Functionality
-
-Mobile-first approach with data syncing when internet is available.
-
-Could use Progressive Web App (PWA) design.
-
-Security
-
-HTTPS, JWT authentication, and encrypted uploads.
-
-Secure cloud storage (e.g., AWS S3, Google Cloud Storage).
-
-Role-based data access and audit trail.
-- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes
 - **Database**: PostgreSQL
-- **Authentication**: JWT + bcrypt
+- **Authentication**: JWT (httpOnly session cookie + bearer token), bcrypt
 - **File Storage**: Local filesystem (configurable for S3)
-- **OCR**: Google Vision API (optional)
+- **Testing**: Vitest
 
 ## Getting Started
 
@@ -102,22 +52,19 @@ Role-based data access and audit trail.
    - `JWT_SECRET`: Generate with `openssl rand -base64 32`
    - Other optional configurations
 
-4. **Create the database**
+4. **Create the database and run migrations**
    ```bash
-   createdb ukwelitally
+   npm run db:setup      # creates the database, user and runs all migrations
+   # or, against an existing database:
+   npm run db:migrate
    ```
 
-5. **Run migrations**
-   ```bash
-   psql -d ukwelitally -f src/db/migrations/001_initial_schema.sql
-   ```
-
-6. **Start the development server**
+5. **Start the development server**
    ```bash
    npm run dev
    ```
 
-7. **Open your browser**
+6. **Open your browser**
    ```
    http://localhost:3000
    ```
@@ -129,22 +76,27 @@ ukwelitally/
 ├── src/
 │   ├── app/                 # Next.js app router
 │   │   ├── api/            # API routes
-│   │   ├── (auth)/         # Auth pages (login, register)
-│   │   ├── dashboard/      # Dashboard pages
+│   │   ├── dashboard/      # Role dashboards (admin, candidate, agent, observer)
 │   │   ├── layout.tsx      # Root layout
+│   │   ├── middleware.ts   # Route protection for dashboard pages
 │   │   └── page.tsx        # Landing page
 │   ├── components/          # React components
+│   ├── db/migrations/       # SQL migrations (applied in filename order)
 │   ├── lib/                 # Utility functions
-│   │   ├── db.ts           # Database connection
-│   │   ├── auth.ts         # Authentication utilities
-│   │   └── validation.ts   # Validation functions
-│   ├── types/               # TypeScript types
-│   │   └── database.ts     # Database schema types
-│   └── db/                  # Database files
-│       └── migrations/     # SQL migration files
-├── public/                  # Static assets
-├── DATABASE_SCHEMA.md      # Database documentation
-└── README.md               # This file
+│   │   ├── aggregation.ts   # Result aggregation math (pure, unit tested)
+│   │   ├── auth.ts          # Password hashing, JWT helpers
+│   │   ├── candidate-restrictions.ts  # Candidate location scoping
+│   │   ├── db.ts            # Database connection pool
+│   │   ├── jwt-edge.ts      # Edge-runtime JWT verification
+│   │   ├── notifications.ts # In-app notification helpers
+│   │   ├── observer.ts      # Observer assignment helpers
+│   │   ├── rateLimit.ts     # Request rate limiting
+│   │   ├── validation.ts    # Vote count validation, anomaly detection
+│   │   └── verification.ts  # Primary/backup and IEBC comparison
+│   └── types/               # TypeScript types
+├── scripts/                 # Maintenance scripts (migrations, data imports)
+├── tests/                   # Vitest unit tests
+└── public/                  # Static assets, manifest, service worker
 ```
 
 ## Key Features
@@ -156,24 +108,31 @@ ukwelitally/
 - **Observer**: Can submit backup forms for verification
 - **Admin**: System management and oversight
 
+Account creation is admin-only. Public self-registration is disabled, and
+`POST /api/auth/register` requires an admin bearer token.
+
 ### 2. Submission Flow
 
 1. Agent photographs Form 34A at polling station
 2. GPS coordinates captured automatically
 3. Multiple photos uploaded (full form, signatures, stamps)
-4. OCR extracts data (with manual verification)
-5. Math validation ensures vote counts add up
-6. Confidence score calculated (0-100%)
-7. Results aggregated in real-time
+4. Math validation ensures vote counts add up
+5. Confidence score calculated (0-100%)
+6. Results aggregated in real-time
 
 ### 3. Verification Mechanisms
 
 - **GPS Verification**: Submission location must be within 500m of polling station
-- **Photo Deduplication**: Hash checking prevents duplicate submissions
+- **Photo Deduplication**: SHA-256 hash checking prevents duplicate submissions
 - **Math Validation**: Total votes = valid + rejected; candidate votes sum = valid votes
-- **Backup Comparison**: Optional backup submissions flagged if variance > 5%
-- **IEBC Comparison**: Auto-compare with official results when available
+- **Backup Comparison**: Backup submissions are compared against the primary
+  submission for the same station. A variance above 5% creates a record in the
+  `discrepancies` table and flags both submissions for review.
+- **IEBC Comparison**: When official IEBC results have been imported, submitted
+  results are compared against them and discrepancies are recorded.
 - **Anomaly Detection**: Flags statistical outliers (>95% turnout, >90% single candidate, etc.)
+- **Vote Integrity**: A UNIQUE constraint on `candidate_votes (result_id, candidate_name)`
+  prevents a candidate being counted twice for the same result.
 
 ### 4. Confidence Scoring
 
@@ -183,6 +142,13 @@ Each submission receives a confidence score (0-100%) based on:
 - Math validation (20%)
 - Timely submission (15%)
 - Historical pattern match (15%)
+
+### 5. Aggregation
+
+Vote totals are computed over the set of distinct verified primary results for
+the requested area. Every candidate's percentage is measured against the same
+denominator (total valid votes in scope), so percentages are directly
+comparable and sum to 100%.
 
 ## Database Schema
 
@@ -196,48 +162,99 @@ See [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) for complete schema documentation
 - `results`, `candidate_votes` - Vote tallies
 - `discrepancies` - Flagged inconsistencies
 - `iebc_results` - Official results for comparison
+- `notifications` - In-app notification feed
 - `audit_logs` - Complete audit trail
+- `schema_migrations` - Applied migration tracking
 
-## API Routes (Coming)
+## Migrations
 
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/polling-stations` - List polling stations
-- `POST /api/submissions` - Submit results
-- `GET /api/results/:level/:id` - Get aggregated results
-- `GET /api/discrepancies` - List discrepancies
+Migrations live in `src/db/migrations/` and are applied in filename order. Each
+runs in its own transaction and is recorded in `schema_migrations`.
+
+```bash
+npm run db:migrate          # apply pending migrations
+npm run db:migrate:status   # show applied/pending without applying
+```
+
+## API Routes
+
+### Authentication
+- `POST /api/auth/login` - Log in (sets an httpOnly session cookie and returns a bearer token)
+- `POST /api/auth/logout` - Clear the session cookie
+- `POST /api/auth/register` - Create a user (admin only)
+
+### Submissions
+- `GET /api/submissions` - List submissions (scoped by role)
+- `POST /api/submissions` - Create a submission with photos
+- `GET /api/submissions/review-queue` - Submissions awaiting review
+- `POST /api/submissions/:id/review` - Approve, reject or request revision
+- `GET /api/submissions/:id/reviews` - Review history
+
+### Results
+- `POST /api/results` - Record a result for a submission
+- `GET /api/results/aggregate` - Aggregated results for an area
+- `GET /api/polling-stations/reporting-status` - Per-station reporting status
+- `GET /api/polling-stations/:id/detailed-results` - All submissions for a station
+
+### Administration
+- `GET/POST /api/admin/users` - List and create users
+- `PUT /api/admin/users/:id` - Update a user
+- `POST /api/admin/users/:id/payment` - Record a candidate payment
+- `GET/POST /api/admin/volunteers` - Volunteer registrations
+- `GET/POST/PUT/DELETE /api/ballot-candidates` - Ballot candidate management
+- `GET /api/candidates` - List candidates by position
+- `GET /api/agents`, `GET /api/agents/me` - Agent records
+- `GET /api/observers/me` - Observer assignment and station
+- `GET /api/notifications` - In-app notifications
+- `POST /api/volunteers` - Public volunteer registration
+
+## Security Considerations
+
+- Passwords hashed with bcrypt (10 rounds)
+- JWT tokens with 7-day expiration
+- Session cookie is httpOnly and sameSite=lax
+- SQL injection prevention via parameterized queries
+- Role-based access control (RBAC) on every API route
+- Dashboard pages protected by route middleware in addition to API checks
+- Complete audit trail
+- GPS and photo verification
+- Rate limiting on login, registration and volunteer signup
+- Placeholder candidates used internally for observer submissions are excluded
+  from every ballot candidate list and from result aggregation
 
 ## Development Roadmap
 
 - [x] Project initialization
 - [x] Database schema design
 - [x] Core utilities (auth, validation, db)
-- [ ] Authentication API
-- [ ] Agent registration module
-- [ ] Form submission workflow
-- [ ] Results tallying system
-- [ ] Dashboard with charts
-- [ ] PWA offline support
+- [x] Authentication API
+- [x] Agent registration module
+- [x] Form submission workflow
+- [x] Results tallying system
+- [x] Dashboard with charts
+- [x] PWA offline support
+- [x] Backup vs primary discrepancy detection
+- [x] Notification feed
 - [ ] OCR integration
 - [ ] SMS fallback
 - [ ] WhatsApp bot
 
-## Security Considerations
+## Testing
 
-- Passwords hashed with bcrypt (10 rounds)
-- JWT tokens with 7-day expiration
-- SQL injection prevention via parameterized queries
-- Role-based access control (RBAC)
-- Complete audit trail
-- GPS and photo verification
-- Rate limiting (to be implemented)
+```bash
+npm test          # run the unit test suite
+npm run test:watch
+npm run typecheck
+npm run lint
+```
 
 ## Contributing
 
 1. Create a feature branch
 2. Make your changes
-3. Test thoroughly
-4. Submit a pull request
+3. Add tests for new behaviour
+4. Test thoroughly
+5. Submit a pull request
 
 ## Legal Disclaimer
 

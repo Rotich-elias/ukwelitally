@@ -2,10 +2,34 @@ import { NextRequest, NextResponse } from 'next/server'
 import { queryOne, query } from '@/lib/db'
 import { verifyPassword, generateToken, sanitizeUser } from '@/lib/auth'
 import { loginSchema } from '@/lib/validation'
+import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
 import { User } from '@/types/database'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    // Throttle repeated login attempts per client to slow brute force attacks.
+    const ip = getClientIp(request)
+    const limit = checkRateLimit(
+      rateLimitKey('login', ip),
+      RATE_LIMITS.login.limit,
+      RATE_LIMITS.login.windowMs
+    )
+
+    if (!limit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Too many login attempts. Please try again later.',
+          retryAfterSeconds: limit.retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(limit.retryAfterSeconds) },
+        }
+      )
+    }
+
     // Parse request body
     const body = await request.json()
 
@@ -73,11 +97,23 @@ export async function POST(request: NextRequest) {
       ]
     )
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: 'Login successful',
       user: sanitizeUser(user),
       token,
     })
+
+    // Also set an httpOnly session cookie so route middleware can verify the
+    // session before serving a protected page.
+    response.cookies.set('ukwelitally_session', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 days, matching the JWT expiry
+    })
+
+    return response
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(

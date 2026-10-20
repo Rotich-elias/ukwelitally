@@ -3,10 +3,67 @@ import { z } from 'zod'
 import { query, queryOne } from '@/lib/db'
 import { hashPassword, normalizePhoneNumber, sanitizeUser, generateToken } from '@/lib/auth'
 import { registerUserSchema } from '@/lib/validation'
+import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
 import { User } from '@/types/database'
 
+export const dynamic = 'force-dynamic'
+
+/**
+ * POST /api/auth/register - Create a user account.
+ *
+ * Public self registration is disabled: the /register page redirects to
+ * /login and directs users to contact an administrator. This endpoint is
+ * therefore restricted to authenticated admins, which prevents anyone from
+ * minting an account with the admin role (or any other role) for themselves.
+ */
 export async function POST(request: NextRequest) {
   try {
+    // Verify the caller is an authenticated admin.
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Authentication required. Only administrators can create accounts.' },
+        { status: 401 }
+      )
+    }
+
+    const { verifyToken } = await import('@/lib/auth')
+    const payload = verifyToken(authHeader.substring(7))
+    if (!payload) {
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { status: 401 }
+      )
+    }
+
+    if (payload.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden. Only administrators can create accounts.' },
+        { status: 403 }
+      )
+    }
+
+    // Throttle account creation per client.
+    const ip = getClientIp(request)
+    const limit = checkRateLimit(
+      rateLimitKey('register', ip),
+      RATE_LIMITS.register.limit,
+      RATE_LIMITS.register.windowMs
+    )
+
+    if (!limit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Too many registration attempts. Please try again later.',
+          retryAfterSeconds: limit.retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(limit.retryAfterSeconds) },
+        }
+      )
+    }
+
     // Parse request body
     const body = await request.json()
 

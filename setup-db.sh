@@ -47,7 +47,7 @@ echo ""
 
 # Run migrations
 echo "🔧 Running database migrations..."
-PGPASSWORD=dev_password_123 psql -U ukwelitally -d ukwelitally -f src/db/migrations/001_initial_schema.sql
+npm run db:migrate
 
 if [ $? -eq 0 ]; then
     echo ""

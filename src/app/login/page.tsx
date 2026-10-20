@@ -155,7 +155,7 @@ export default function LoginPage() {
           {/* Contact Admin */}
           <div className="mt-6 text-center">
             <p className="text-dark-300 text-sm">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <span className="text-dark-400">Contact your administrator</span>
             </p>
           </div>

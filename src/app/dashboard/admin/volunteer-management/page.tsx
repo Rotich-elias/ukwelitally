@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
 
@@ -43,25 +43,7 @@ export default function VolunteerManagement() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [volunteerToDelete, setVolunteerToDelete] = useState<Volunteer | null>(null)
 
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    const user = localStorage.getItem('user')
-
-    if (!token || !user) {
-      router.push('/login')
-      return
-    }
-
-    const userData = JSON.parse(user)
-    if (userData.role !== 'admin') {
-      router.push('/login')
-      return
-    }
-
-    fetchVolunteers()
-  }, [router, filterStatus])
-
-  const fetchVolunteers = async () => {
+  const fetchVolunteers = useCallback(async () => {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
@@ -84,7 +66,25 @@ export default function VolunteerManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filterStatus])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const user = localStorage.getItem('user')
+
+    if (!token || !user) {
+      router.push('/login')
+      return
+    }
+
+    const userData = JSON.parse(user)
+    if (userData.role !== 'admin') {
+      router.push('/login')
+      return
+    }
+
+    fetchVolunteers()
+  }, [router, fetchVolunteers])
 
   const handleStatusUpdate = async (volunteerId: number, status: string, notes?: string) => {
     try {

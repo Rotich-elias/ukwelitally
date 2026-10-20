@@ -22,11 +22,11 @@ export default function OfflinePage() {
         </div>
 
         {/* Title */}
-        <h1 className="text-3xl font-bold text-white mb-4">You're Offline</h1>
+        <h1 className="text-3xl font-bold text-white mb-4">You&apos;re Offline</h1>
 
         {/* Message */}
         <p className="text-dark-300 mb-6">
-          It looks like you've lost your internet connection. UkweliTally needs an
+          It looks like you&apos;ve lost your internet connection. UkweliTally needs an
           active connection to load new data.
         </p>
 

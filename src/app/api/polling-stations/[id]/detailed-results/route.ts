@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryMany, queryOne } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
+import { buildCandidateBreakdown } from '@/lib/aggregation'
 
 // GET /api/polling-stations/[id]/detailed-results - Get detailed results for a specific polling station
 async function handleGet(req: NextRequest, context?: any) {
@@ -138,34 +139,56 @@ async function handleGet(req: NextRequest, context?: any) {
 
     let aggregateResults = null
     if (verifiedSubmissions.length > 0) {
-      // Get all candidate votes from verified submissions
-      const resultIds = verifiedSubmissions.map((s: any) => s.id).join(',')
+      // Get all candidate votes from verified submissions.
+      // The submission ids are bound as parameters rather than interpolated.
+      const submissionIds = verifiedSubmissions.map((s: any) => s.id)
 
       const candidateVotesSql = `
         SELECT
           cv.candidate_name,
-          cv.party_name,
+          MAX(cv.party_name) as party_name,
           SUM(cv.votes) as total_votes
         FROM candidate_votes cv
         JOIN results r ON cv.result_id = r.id
-        WHERE r.submission_id IN (${resultIds})
-        GROUP BY cv.candidate_name, cv.party_name
+        WHERE r.submission_id = ANY($1::int[])
+        GROUP BY cv.candidate_name
         ORDER BY total_votes DESC
       `
 
-      const candidateVotesData = await queryMany<{ candidate_name: string; party_name: string; total_votes: number }>(candidateVotesSql, [])
+      const candidateVotesData = await queryMany<{ candidate_name: string; party_name: string; total_votes: number }>(candidateVotesSql, [submissionIds])
 
       const totalVotesCast = verifiedSubmissions.reduce((sum: number, sub: any) => sum + (sub.total_votes_cast || 0), 0)
+      const totalValidVotes = verifiedSubmissions.reduce((sum: number, sub: any) => sum + (sub.valid_votes || 0), 0)
       const rejectedVotes = verifiedSubmissions.reduce((sum: number, sub: any) => sum + (sub.rejected_votes || 0), 0)
 
+      // Every candidate is scored against the same denominator (total valid
+      // votes) so percentages are comparable and sum to 100%.
       aggregateResults = {
         total_votes_cast: totalVotesCast,
+        total_valid_votes: totalValidVotes,
         rejected_votes: rejectedVotes,
-        candidates: candidateVotesData.map((cv) => ({
+        candidates: buildCandidateBreakdown(
+          candidateVotesData.map((cv) => ({
+            candidate_name: cv.candidate_name,
+            party_name: cv.party_name,
+            total_votes: Number(cv.total_votes),
+            stations_reporting: verifiedSubmissions.length,
+          })),
+          {
+            total_votes_cast: totalVotesCast,
+            total_valid_votes: totalValidVotes,
+            total_rejected_votes: rejectedVotes,
+            reported_registered_voters: verifiedSubmissions.reduce(
+              (sum: number, sub: any) => sum + (sub.registered_voters || 0),
+              0
+            ),
+            stations_reporting: verifiedSubmissions.length,
+          }
+        ).map((cv) => ({
           candidate_name: cv.candidate_name,
           party_name: cv.party_name,
-          total_votes: Number(cv.total_votes),
-          percentage: totalVotesCast > 0 ? (Number(cv.total_votes) / totalVotesCast) * 100 : 0,
+          total_votes: cv.total_votes,
+          percentage: cv.percentage,
         })),
       }
     }

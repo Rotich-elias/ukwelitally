@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
 
@@ -61,7 +61,7 @@ export default function ReviewSubmissionsPage() {
     }
   }, [router])
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = useCallback(async () => {
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
@@ -80,11 +80,11 @@ export default function ReviewSubmissionsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filter])
 
   useEffect(() => {
     fetchSubmissions()
-  }, [filter])
+  }, [fetchSubmissions])
 
   const handleReviewAction = async (submissionId: number, action: 'approve' | 'reject' | 'request_revision') => {
     setActionLoading(true)

@@ -3,6 +3,7 @@ import { query, queryOne, queryMany, transaction } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import { parseFormData, saveUploadedFile } from '@/lib/fileUpload'
 import { verifyLocation, calculateConfidenceScore } from '@/lib/validation'
+import { getObserverAssignment, getPlaceholderCandidateId } from '@/lib/observer'
 import { Submission, PollingStation, Agent, Candidate } from '@/types/database'
 
 // GET /api/submissions - List submissions
@@ -85,18 +86,56 @@ async function handlePost(req: NextRequest) {
 
     // Validate required fields
     const pollingStationId = parseInt(fields.polling_station_id)
-    const candidateId = parseInt(fields.candidate_id)
     const submissionType = fields.submission_type || 'primary'
     const submittedLat = fields.submitted_lat ? parseFloat(fields.submitted_lat) : null
     const submittedLng = fields.submitted_lng ? parseFloat(fields.submitted_lng) : null
     const deviceId = fields.device_id || null
     const deviceType = fields.device_type || null
 
-    if (!pollingStationId || !candidateId) {
+    if (!pollingStationId) {
       return NextResponse.json(
-        { error: 'polling_station_id and candidate_id are required' },
+        { error: 'polling_station_id is required' },
         { status: 400 }
       )
+    }
+
+    // Observers tally results for a position rather than a candidate, so the
+    // candidate is resolved server side from their assignment. Everyone else
+    // must supply the candidate explicitly.
+    let candidateId: number
+    if (user.role === 'observer') {
+      const assignment = await getObserverAssignment(user.userId)
+      if (!assignment) {
+        return NextResponse.json(
+          { error: 'No active observer assignment found' },
+          { status: 403 }
+        )
+      }
+
+      if (assignment.polling_station_id !== pollingStationId) {
+        return NextResponse.json(
+          { error: 'Observer is not assigned to this polling station' },
+          { status: 403 }
+        )
+      }
+
+      const position = fields.position || 'president'
+      const placeholderId = await getPlaceholderCandidateId(position)
+      if (!placeholderId) {
+        return NextResponse.json(
+          { error: `No observer submission target configured for position: ${position}` },
+          { status: 500 }
+        )
+      }
+      candidateId = placeholderId
+    } else {
+      candidateId = parseInt(fields.candidate_id)
+      if (!candidateId) {
+        return NextResponse.json(
+          { error: 'polling_station_id and candidate_id are required' },
+          { status: 400 }
+        )
+      }
     }
 
     // Get polling station details
@@ -132,6 +171,19 @@ async function handlePost(req: NextRequest) {
       )
       if (!candidate) {
         return NextResponse.json({ error: 'Unauthorized for this candidate' }, { status: 403 })
+      }
+    } else if (user.role === 'observer') {
+      // Observers submit against the position placeholder candidate and are
+      // already validated against their assignment above.
+      const placeholder = await queryOne<{ position: string }>(
+        'SELECT position FROM candidates WHERE id = $1 AND is_placeholder = TRUE',
+        [candidateId]
+      )
+      if (!placeholder) {
+        return NextResponse.json(
+          { error: 'Invalid observer submission target' },
+          { status: 400 }
+        )
       }
     }
 

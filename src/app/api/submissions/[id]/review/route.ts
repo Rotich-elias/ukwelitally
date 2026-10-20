@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
+import { compareWithIebcResults, compareWithPrimarySubmission } from '@/lib/verification'
+import { notifyAdmins, notifySubmissionOwner } from '@/lib/notifications'
 import { Submission } from '@/types/database'
 
 // POST /api/submissions/[id]/review - Admin review action
@@ -112,6 +114,73 @@ async function handlePost(
       ]
     )
 
+    // Notify the submitter of the outcome.
+    const outcomeMessages: Record<string, { title: string; message: string; type: 'info' | 'warning' | 'error' | 'success' }> = {
+      approve: {
+        title: 'Submission approved',
+        message: 'Your submission was verified and is now included in the published results.',
+        type: 'success',
+      },
+      reject: {
+        title: 'Submission rejected',
+        message: 'Your submission was rejected. Please contact an administrator for details.',
+        type: 'error',
+      },
+      request_revision: {
+        title: 'Revision requested',
+        message: 'Your submission needs revision. Please resubmit with corrected figures.',
+        type: 'warning',
+      },
+    }
+
+    const outcome = outcomeMessages[action]
+    if (outcome) {
+      await notifySubmissionOwner(submissionId, outcome)
+    }
+
+    // When a submission is verified, run the verification checks against the
+    // primary submission for the same station and against official IEBC data.
+    let discrepancy = null
+    if (newStatus === 'verified') {
+      const resultRow = await queryOne<{ position: string }>(
+        'SELECT position FROM results WHERE submission_id = $1 LIMIT 1',
+        [submissionId]
+      )
+
+      if (resultRow?.position) {
+        try {
+          if (submission.submission_type === 'backup') {
+            discrepancy = await compareWithPrimarySubmission(
+              submissionId,
+              submission.polling_station_id,
+              resultRow.position
+            )
+          }
+
+          if (!discrepancy) {
+            discrepancy = await compareWithIebcResults(
+              submissionId,
+              submission.polling_station_id,
+              resultRow.position
+            )
+          }
+
+          if (discrepancy) {
+            await notifyAdmins({
+              title: 'Discrepancy detected',
+              message: `A ${discrepancy.variance_percentage.toFixed(2)}% vote variance was detected at a polling station and needs review.`,
+              type: 'warning',
+              relatedEntityType: 'discrepancy',
+              relatedEntityId: discrepancy.id,
+            })
+          }
+        } catch (verificationError) {
+          // Verification failures must not block the review itself.
+          console.error('[Review] Verification check failed:', verificationError)
+        }
+      }
+    }
+
     console.log('[Review] Successfully completed review for submission:', submissionId)
 
     return NextResponse.json({
@@ -121,6 +190,7 @@ async function handlePost(
         status: newStatus,
         verified_at: verifiedAt,
       },
+      discrepancy_detected: !!discrepancy,
     })
   } catch (error) {
     console.error('Error reviewing submission:', error)
