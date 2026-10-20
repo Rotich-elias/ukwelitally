@@ -64,6 +64,7 @@ function resolveConnectionString() {
     process.env.DATABASE_URL_DIRECT,
     process.env.DIRECT_DATABASE_URL,
     process.env.POSTGRES_URL_NON_POOLING,
+    process.env.PG_URL_DIRECT,
     process.env.DATABASE_URL,
     process.env.POSTGRES_URL,
     process.env.PG_URL,
@@ -113,10 +114,12 @@ async function seedGeography(pool) {
 
   console.log('   Loading Kenya electoral geography...')
   // The geography seeder is a standalone script that uses the same
-  // connection string from the environment.
+  // connection string from the environment. It only deletes existing data
+  // when --wipe is passed, and it is only reached here when the database
+  // holds no counties at all, so the deletion is a no-op.
   await new Promise((resolve, reject) => {
     const { spawn } = require('child_process')
-    const child = spawn('node', [path.join(__dirname, 'seed-iebc-geography.js')], {
+    const child = spawn('node', [path.join(__dirname, 'seed-iebc-geography.js'), '--wipe'], {
       stdio: 'inherit',
       env: process.env,
     })

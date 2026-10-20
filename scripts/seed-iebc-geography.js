@@ -12,15 +12,154 @@
  * - Polling stations (user will add as needed)
  * - Users, candidates, agents (user will create their own)
  *
+ * DESTRUCTIVE: this script DELETES existing election data before seeding.
+ * The deletion only runs when --wipe is passed explicitly.
+ *
  * Usage:
- *   node scripts/seed-iebc-geography.js
+ *   node scripts/seed-iebc-geography.js --wipe
  */
 
 const { Pool } = require('pg');
+const fs = require('fs');
+const path = require('path');
+
+/**
+ * Load .env into process.env.
+ *
+ * Values already present in the environment win, so a shell export always
+ * overrides the file. This is the same loader the other scripts use.
+ */
+function loadDotEnv() {
+  const envPath = path.join(__dirname, '..', '.env');
+  if (!fs.existsSync(envPath)) return;
+
+  const contents = fs.readFileSync(envPath, 'utf8');
+  for (const rawLine of contents.split('\n')) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+
+    const eq = line.indexOf('=');
+    if (eq === -1) continue;
+
+    const key = line.slice(0, eq).trim();
+    let value = line.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (process.env[key] === undefined) process.env[key] = value;
+  }
+}
+
+loadDotEnv();
+
+/**
+ * Resolve the connection string.
+ *
+ * There is deliberately NO hard-coded fallback. A missing connection string
+ * must fail loudly rather than silently retarget a different database.
+ */
+function resolveConnectionString() {
+  const candidates = [
+    process.env.DATABASE_URL_DIRECT,
+    process.env.DIRECT_DATABASE_URL,
+    process.env.POSTGRES_URL_NON_POOLING,
+    process.env.PG_URL_DIRECT,
+    process.env.DATABASE_URL,
+    process.env.POSTGRES_URL,
+    process.env.PG_URL,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate && candidate.trim()) return candidate.trim();
+  }
+
+  return null;
+}
+
+/**
+ * Describe the target without revealing any secret: host, port and database
+ * name only. The user, the password and the query string are dropped.
+ */
+function describeTarget(connectionString) {
+  let url;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    return null;
+  }
+
+  if (url.protocol !== 'postgres:' && url.protocol !== 'postgresql:') {
+    return null;
+  }
+
+  let database = '';
+  try {
+    database = decodeURIComponent(url.pathname.replace(/^\//, ''));
+  } catch {
+    database = url.pathname.replace(/^\//, '');
+  }
+
+  return {
+    host: url.hostname || '(unix socket)',
+    port: url.port || '5432',
+    database: database || '(default)',
+  };
+}
+
+const connectionString = resolveConnectionString();
+
+if (!connectionString) {
+  console.error(
+    '\n❌ No database connection string found.\n' +
+      '   Set DATABASE_URL (or DATABASE_URL_DIRECT) in your environment.\n'
+  );
+  process.exit(1);
+}
+
+const target = describeTarget(connectionString);
+
+if (!target) {
+  console.error(
+    '\n❌ The connection string could not be parsed, so the target database\n' +
+      '   cannot be verified. Refusing to continue.\n'
+  );
+  process.exit(1);
+}
+
+const WIPE = process.argv.includes('--wipe');
+
+if (!WIPE) {
+  console.error(
+    '\n❌ Refusing to run: this script DELETES existing election data\n' +
+      '   (candidate votes, results, submissions, agents, candidates,\n' +
+      '   non-admin users, polling stations, wards, constituencies, counties)\n' +
+      '   before seeding the IEBC geography.\n\n' +
+      `   Target: host=${target.host} port=${target.port} database=${target.database}\n\n` +
+      '   Re-run with --wipe if that is the database you want to overwrite:\n' +
+      '     node scripts/seed-iebc-geography.js --wipe\n'
+  );
+  process.exit(1);
+}
+
+console.log(`\n🎯 Target: host=${target.host} port=${target.port} database=${target.database}`);
+console.log('   ⚠️  --wipe was supplied: existing election data will be deleted.\n');
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://ukwelitally:dev_password_123@localhost:5432/ukwelitally',
+  connectionString,
 });
+
+/**
+ * The database handle used by the seeding functions.
+ *
+ * It is a dedicated client inside a single transaction, so the wipe and the
+ * seed either both succeed or both roll back. Using the pool here would let
+ * each statement run in its own transaction, which is what allowed a failed
+ * wipe to leave the database half emptied.
+ */
+let db;
 
 // All 47 Official Kenya Counties with IEBC codes
 const counties = [
@@ -374,19 +513,56 @@ const constituencies = constituenciesData.split('\n').map(line => {
   };
 });
 
-async function clearData() {
+/**
+ * Tables that hold election data, in a foreign-key-safe order.
+ *
+ * Child rows come first. Several of these foreign keys have no ON DELETE
+ * CASCADE, so deleting the parent first would raise a foreign key violation
+ * and, because the statements used to run outside a transaction, leave the
+ * database half wiped.
+ *
+ * audit_logs and notifications are intentionally left alone: audit_logs
+ * references users with ON DELETE SET NULL and notifications with ON DELETE
+ * CASCADE, so both survive correctly on their own.
+ */
+const TABLES_TO_CLEAR = [
+  'candidate_votes',
+  'results',
+  'submission_photos',
+  'submission_reviews',
+  'candidate_payments',
+  'discrepancies',
+  'iebc_results',
+  'observer_assignments',
+  'volunteer_registrations',
+  'submissions',
+  'agents',
+  'candidates',
+  'polling_stations',
+  'wards',
+  'constituencies',
+  'counties',
+];
+
+async function clearData(client) {
+  // Defence in depth: the --wipe check already ran at start-up, but the
+  // deletion must never be reachable without it.
+  if (!WIPE) {
+    throw new Error(
+      'Refusing to delete data: --wipe was not supplied.'
+    );
+  }
+
   console.log('🗑️  Clearing existing data (keeping admin users)...');
-  await pool.query('DELETE FROM candidate_votes');
-  await pool.query('DELETE FROM results');
-  await pool.query('DELETE FROM submission_photos');
-  await pool.query('DELETE FROM submissions');
-  await pool.query('DELETE FROM agents');
-  await pool.query('DELETE FROM candidates');
-  await pool.query('DELETE FROM users WHERE role != \'admin\'');
-  await pool.query('DELETE FROM polling_stations');
-  await pool.query('DELETE FROM wards');
-  await pool.query('DELETE FROM constituencies');
-  await pool.query('DELETE FROM counties');
+
+  for (const table of TABLES_TO_CLEAR) {
+    await client.query(`DELETE FROM ${table}`);
+  }
+
+  // Non-admin users last: the tables above reference them, and admin
+  // accounts are preserved.
+  await client.query("DELETE FROM users WHERE role != 'admin'");
+
   console.log('✅ Data cleared (admin users preserved)\n');
 }
 
@@ -394,7 +570,7 @@ async function seedCounties() {
   console.log(`📍 Seeding ${counties.length} official IEBC counties...`);
 
   for (const county of counties) {
-    const result = await pool.query(
+    const result = await db.query(
       'INSERT INTO counties (code, name, registered_voters) VALUES ($1, $2, $3) RETURNING id',
       [county.code, county.name, 0]
     );
@@ -411,7 +587,7 @@ async function seedConstituencies(countiesMap) {
   for (const constituency of constituencies) {
     const countyId = countiesMap[constituency.county_code];
     if (countyId) {
-      const result = await pool.query(
+      const result = await db.query(
         'INSERT INTO constituencies (code, name, county_id, registered_voters) VALUES ($1, $2, $3, $4) RETURNING id',
         [String(constituency.id).padStart(3, '0'), constituency.name, countyId, 0]
       );
@@ -441,7 +617,7 @@ async function generatePlaceholderWards(constituenciesData) {
       const wardName = `${constituency.name} Ward ${i}`;
 
       // Get county_id for this ward
-      const result = await pool.query(
+      const result = await db.query(
         'INSERT INTO wards (code, name, constituency_id, county_id, registered_voters) VALUES ($1, $2, $3, $4, $5) RETURNING id',
         [`W${String(wardCount).padStart(4, '0')}`, wardName, constituency.db_id, constituency.county_id, 0]
       );
@@ -507,7 +683,7 @@ async function generatePlaceholderPollingStations(wards) {
       // Random registered voters between 300-1200 per polling station
       const registeredVoters = Math.floor(Math.random() * 900) + 300;
 
-      await pool.query(
+      await db.query(
         `INSERT INTO polling_stations
          (code, name, ward_id, constituency_id, county_id, latitude, longitude, registered_voters, location_radius)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 500)`,
@@ -534,7 +710,7 @@ async function generatePlaceholderPollingStations(wards) {
 }
 
 async function displaySummary() {
-  const stats = await pool.query(`
+  const stats = await db.query(`
     SELECT
       (SELECT COUNT(*) FROM counties) as counties,
       (SELECT COUNT(*) FROM constituencies) as constituencies,
@@ -555,6 +731,7 @@ async function displaySummary() {
   console.log('='.repeat(60));
   console.log('\n💡 Next Steps:');
   console.log('   1. Create admin user: node scripts/seed-admin.js');
+  console.log('      (it asks for the email, phone, ID number and password)');
   console.log('   2. Register candidates through the UI');
   console.log('   3. Create agents and assign to polling stations');
   console.log('   4. Agents can submit forms with results\n');
@@ -562,12 +739,23 @@ async function displaySummary() {
 
 async function main() {
   const startTime = Date.now();
+  let client;
 
   try {
     console.log('\n🚀 IEBC GEOGRAPHIC DATA SEEDING');
     console.log('='.repeat(60) + '\n');
 
-    await clearData();
+    // Connecting is inside the try, so a bad password, a TLS failure or an
+    // unreachable host is reported with the same clear message as any other
+    // error instead of an unhandled rejection.
+    client = await pool.connect();
+
+    // The wipe and the seed run in one transaction. If anything fails the
+    // database is left exactly as it was instead of half emptied.
+    await client.query('BEGIN');
+    db = client;
+
+    await clearData(client);
 
     // Seed counties
     const seededCounties = await seedCounties();
@@ -590,14 +778,31 @@ async function main() {
     // Display summary
     await displaySummary();
 
+    await client.query('COMMIT');
+
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(`⏱️  Completed in ${elapsed}s\n`);
 
   } catch (error) {
     console.error('\n❌ ERROR:', error);
     console.error(error.stack);
-    process.exit(1);
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+        console.error('↩️  Rolled back - the database was not modified.\n');
+      } catch (rollbackError) {
+        console.error('⚠️  ROLLBACK failed:', rollbackError.message);
+      }
+    } else {
+      console.error('↩️  The database was never reached, so it was not modified.\n');
+    }
+    // Set the exit code instead of calling process.exit(), so the finally
+    // block still releases the client and closes the pool.
+    process.exitCode = 1;
+    return;
   } finally {
+    db = null;
+    if (client) client.release();
     await pool.end();
   }
 }
