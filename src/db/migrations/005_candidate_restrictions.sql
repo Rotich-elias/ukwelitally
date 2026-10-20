@@ -27,8 +27,8 @@ COMMENT ON COLUMN candidates.county_id IS 'County restriction for Governor/Senat
 COMMENT ON COLUMN candidates.constituency_id IS 'Constituency restriction for MP position';
 COMMENT ON COLUMN candidates.ward_id IS 'Ward restriction for MCA position';
 
--- Update existing candidates to set county/constituency/ward based on position
--- This is a safe operation since we don't have real data yet
-UPDATE candidates SET county_id = 1 WHERE position IN ('governor', 'senator') AND county_id IS NULL;
-UPDATE candidates SET constituency_id = 1 WHERE position = 'mp' AND constituency_id IS NULL;
-UPDATE candidates SET ward_id = 1 WHERE position = 'mca' AND ward_id IS NULL;
+-- The location constraint above is validated as it is created, so a row that
+-- was missing its location could never be repaired afterwards: the ADD
+-- CONSTRAINT would already have failed. There is therefore nothing left for
+-- an UPDATE to fix, and backfilling a hard-coded id would only risk a foreign
+-- key violation against a county, constituency or ward that does not exist.

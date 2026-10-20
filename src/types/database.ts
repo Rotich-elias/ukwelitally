@@ -1,13 +1,14 @@
 // TypeScript types matching the database schema
 
 export type UserRole = 'candidate' | 'agent' | 'observer' | 'admin'
-export type Position = 'president' | 'governor' | 'senator' | 'mp' | 'mca'
+export type Position = 'president' | 'governor' | 'senator' | 'women_rep' | 'mp' | 'mca'
 export type SubmissionType = 'primary' | 'backup' | 'public'
 export type SubmissionStatus = 'pending' | 'verified' | 'flagged' | 'rejected'
 export type PhotoType = 'full_form' | 'closeup' | 'signature' | 'stamp' | 'serial_number' | 'other'
 export type DiscrepancyType = 'agent_vs_backup' | 'vs_iebc' | 'statistical_anomaly' | 'location_mismatch'
 export type DiscrepancyStatus = 'open' | 'investigating' | 'resolved' | 'confirmed_error'
 export type NotificationType = 'info' | 'warning' | 'error' | 'success'
+export type PaymentStatus = 'pending' | 'partial' | 'paid' | 'refunded' | 'waived'
 
 export interface User {
   id: number
@@ -25,14 +26,35 @@ export interface User {
 
 export interface Candidate {
   id: number
-  user_id: number
+  // Nullable since migration 003: ballot candidates have no user account.
+  user_id: number | null
   position: Position
   party_name: string | null
   party_abbreviation: string | null
   constituency_id: number | null
   county_id: number | null
   ward_id: number | null
-  created_at: Date
+  // Ballot candidate name. Set for non-system candidates.
+  full_name: string | null
+  // True when the candidate owns/uses a system account.
+  is_system_user: boolean | null
+  // True for internal observer placeholder candidates. Never a ballot entry.
+  is_placeholder: boolean
+  // e.g. 'CAND-2026-00001'. Not unique: see migration 015.
+  candidate_number: string | null
+  // Ballot candidates can be archived instead of deleted.
+  archived: boolean
+  profile_photo: string | null
+  payment_status: PaymentStatus | null
+  // Total paid so far (kept in sync by the payment endpoint).
+  payment_amount: number | null
+  // Full/expected payment amount for this candidate.
+  expected_payment_amount: number | null
+  payment_date: Date | null
+  payment_reference: string | null
+  payment_notes: string | null
+  created_at: Date | null
+  updated_at: Date | null
 }
 
 export interface Agent {
@@ -158,6 +180,8 @@ export interface AuditLog {
   action: string
   entity_type: string
   entity_id: number | null
+  // Ids affected by a bulk operation, stored as a JSON array.
+  entity_ids: number[] | null
   old_values: Record<string, any> | null
   new_values: Record<string, any> | null
   ip_address: string | null
