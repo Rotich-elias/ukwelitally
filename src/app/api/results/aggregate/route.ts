@@ -4,8 +4,9 @@ import { getCandidateRestrictions } from '@/lib/candidate-restrictions'
 import { buildCandidateBreakdown, computeReportingPercentage, computeTurnout } from '@/lib/aggregation'
 import { getFileUrl } from '@/lib/storage'
 import jwt from 'jsonwebtoken'
+import { getJwtSecret } from '@/lib/jwtSecret'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+const JWT_SECRET = getJwtSecret()
 
 export const dynamic = 'force-dynamic'
 

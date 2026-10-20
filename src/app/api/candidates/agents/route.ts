@@ -3,8 +3,9 @@ import { query, queryOne } from '@/lib/db'
 import { hashPassword, normalizePhoneNumber } from '@/lib/auth'
 import { getCandidateRestrictions, canAccessLocation } from '@/lib/candidate-restrictions'
 import jwt from 'jsonwebtoken'
+import { getJwtSecret } from '@/lib/jwtSecret'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+const JWT_SECRET = getJwtSecret()
 
 export const dynamic = 'force-dynamic'
 

@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { getCandidateRestrictions } from '@/lib/candidate-restrictions'
 import jwt from 'jsonwebtoken'
+import { getJwtSecret } from '@/lib/jwtSecret'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+const JWT_SECRET = getJwtSecret()
 
 export const dynamic = 'force-dynamic'
 

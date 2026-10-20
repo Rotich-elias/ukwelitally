@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { verifyJwtEdge } from '@/lib/jwt-edge'
+import { isPlaceholderSecret } from '@/lib/jwtPlaceholders'
 
 /**
  * Route protection for dashboard pages.
@@ -44,8 +45,13 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
+  // A missing or still-placeholder secret cannot validate a token, and a
+  // placeholder is published in .env.example, so it must fail closed here
+  // exactly as it does in the API routes. The check has to be inline
+  // because this module runs on the Edge runtime, where node:crypto (and
+  // therefore src/lib/jwtSecret.ts) is not available.
   const secret = process.env.JWT_SECRET
-  if (!secret) {
+  if (!secret || isPlaceholderSecret(secret)) {
     // Without a secret the token cannot be validated, so fail closed.
     return NextResponse.redirect(new URL('/login', req.url))
   }

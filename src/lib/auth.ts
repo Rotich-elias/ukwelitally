@@ -1,8 +1,9 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { JWTPayload, AuthUser, UserRole } from '@/types/database'
+import { getJwtSecret, isJwtSecretConfigured } from '@/lib/jwtSecret'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this'
+const JWT_SECRET = getJwtSecret()
 const SALT_ROUNDS = 10
 
 // Hash password
@@ -19,7 +20,20 @@ export async function verifyPassword(
 }
 
 // Generate JWT token
+//
+// Refuses to issue a token when no real secret is configured. Without a real
+// secret the token would be signed with the random per-process fallback, so
+// it would be rejected by every other instance: the user would appear to log
+// in and then be logged out on the next request. Failing here turns that
+// confusing behaviour into an obvious server error.
 export function generateToken(payload: JWTPayload): string {
+  if (!isJwtSecretConfigured()) {
+    throw new Error(
+      'JWT_SECRET is not configured. Set JWT_SECRET to a strong random value ' +
+        '(for example: openssl rand -base64 32) before issuing tokens.'
+    )
+  }
+
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: '7d', // Token expires in 7 days
   })

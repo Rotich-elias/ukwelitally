@@ -11,12 +11,17 @@ let pool: Pool | null = null
  *   - Supabase: DATABASE_URL, POSTGRES_URL
  *   - Railway / Render: DATABASE_URL
  * All of them are checked so the app works with whichever provider is used.
+ *
+ * Only POOLED endpoints belong here. A non-pooling URL (POSTGRES_URL_NON_POOLING
+ * or DATABASE_URL_DIRECT) bypasses the provider's connection pooler, which is
+ * the opposite of what a serverless application needs, so those variables are
+ * deliberately not accepted by the application. The migration and seeding
+ * scripts do use them.
  */
 function getDatabaseUrl(): string {
   const candidates = [
     process.env.DATABASE_URL,
     process.env.POSTGRES_URL,
-    process.env.POSTGRES_URL_NON_POOLING,
     process.env.PG_URL,
   ]
 
