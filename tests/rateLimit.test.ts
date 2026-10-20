@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { checkRateLimit, getClientIp, rateLimitKey } from '@/lib/rateLimit'
 
 describe('checkRateLimit', () => {
@@ -31,10 +31,23 @@ describe('checkRateLimit', () => {
   })
 
   it('starts a fresh window once the previous one expires', () => {
-    const key = rateLimitKey('test-expiry', '20.0.0.1')
-    const first = checkRateLimit(key, 1, 1)
-    expect(first.allowed).toBe(true)
-    expect(checkRateLimit(key, 1, 1).allowed).toBe(false)
+    // The window is driven by a mocked clock. With a real clock the window
+    // can expire between the two calls, which made this test flaky.
+    vi.useFakeTimers()
+    try {
+      const key = rateLimitKey('test-expiry', '20.0.0.1')
+      const first = checkRateLimit(key, 1, 1_000)
+      expect(first.allowed).toBe(true)
+
+      // Still inside the window, so the request is blocked.
+      expect(checkRateLimit(key, 1, 1_000).allowed).toBe(false)
+
+      // Past the window, so a fresh one starts and the request is allowed.
+      vi.advanceTimersByTime(1_001)
+      expect(checkRateLimit(key, 1, 1_000).allowed).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 

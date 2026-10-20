@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+
+// The token helpers read JWT_SECRET when their module is first loaded, so a
+// real secret has to be in place before the import below runs. vi.hoisted is
+// evaluated before the imports.
+vi.hoisted(() => {
+  process.env.JWT_SECRET = 'unit-test-secret-not-used-anywhere-else'
+})
+
 import {
   hashPassword,
   verifyPassword,
@@ -11,6 +19,7 @@ import {
   verifyToken,
   sanitizeUser,
 } from '@/lib/auth'
+import { isPlaceholderSecret } from '@/lib/jwtPlaceholders'
 
 describe('hashPassword / verifyPassword', () => {
   it('verifies a correct password', async () => {
@@ -124,6 +133,57 @@ describe('generateToken / verifyToken', () => {
     ].join('.')
 
     expect(verifyToken(forged)).toBeNull()
+  })
+})
+
+describe('token issuance fails closed without a real secret', () => {
+  const original = process.env.JWT_SECRET
+
+  afterEach(() => {
+    process.env.JWT_SECRET = original
+  })
+
+  it('refuses to issue a token when JWT_SECRET is missing', () => {
+    delete process.env.JWT_SECRET
+
+    expect(() =>
+      generateToken({ userId: 1, email: 'a@b.com', role: 'admin' })
+    ).toThrow(/JWT_SECRET/)
+  })
+
+  it('refuses to issue a token when JWT_SECRET is still a placeholder', () => {
+    process.env.JWT_SECRET = 'your-secret-key-change-in-production'
+
+    expect(() =>
+      generateToken({ userId: 1, email: 'a@b.com', role: 'admin' })
+    ).toThrow(/JWT_SECRET/)
+  })
+
+  it('issues a token when a real secret is configured', () => {
+    process.env.JWT_SECRET = 'a-real-secret-for-this-test'
+
+    const token = generateToken({ userId: 1, email: 'a@b.com', role: 'admin' })
+    expect(typeof token).toBe('string')
+    expect(token.split('.')).toHaveLength(3)
+  })
+})
+
+describe('isPlaceholderSecret', () => {
+  it('treats a missing or empty secret as a placeholder', () => {
+    expect(isPlaceholderSecret(undefined)).toBe(true)
+    expect(isPlaceholderSecret(null)).toBe(true)
+    expect(isPlaceholderSecret('')).toBe(true)
+    expect(isPlaceholderSecret('   ')).toBe(true)
+  })
+
+  it('treats the documented placeholders as placeholders', () => {
+    expect(isPlaceholderSecret('your-secret-key-change-in-production')).toBe(true)
+    expect(isPlaceholderSecret('your-secret-key-here')).toBe(true)
+    expect(isPlaceholderSecret('change-me')).toBe(true)
+  })
+
+  it('does not treat a real secret as a placeholder', () => {
+    expect(isPlaceholderSecret('a-real-secret-for-this-test')).toBe(false)
   })
 })
 
