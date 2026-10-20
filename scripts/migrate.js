@@ -47,9 +47,41 @@ function loadDotEnv() {
 
 loadDotEnv()
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  'postgresql://ukwelitally:dev_password_123@localhost:5432/ukwelitally'
+/**
+ * Resolve the connection string for migrations.
+ *
+ * Schema migrations should use a DIRECT connection. Managed providers such as
+ * Neon and Supabase put a pooler (PgBouncer) in front of the database, and in
+ * transaction pooling mode some tooling behaves differently. Providers expose
+ * the direct connection separately, so it is preferred when available.
+ */
+function resolveMigrationUrl() {
+  const candidates = [
+    process.env.DATABASE_URL_DIRECT,
+    process.env.DIRECT_DATABASE_URL,
+    process.env.POSTGRES_URL_NON_POOLING,
+    process.env.PG_URL_DIRECT,
+    process.env.DATABASE_URL,
+    process.env.POSTGRES_URL,
+    process.env.PG_URL,
+  ]
+
+  for (const candidate of candidates) {
+    if (candidate && candidate.trim()) return candidate.trim()
+  }
+
+  return null
+}
+
+const connectionString = resolveMigrationUrl()
+
+if (!connectionString) {
+  console.error(
+    'No database connection string found.\n' +
+      'Set DATABASE_URL (or DATABASE_URL_DIRECT for migrations) and try again.'
+  )
+  process.exit(1)
+}
 
 async function ensureTrackingTable(client) {
   await client.query(`

@@ -13,24 +13,73 @@ database.
 
 ## 1. Provision the database
 
-Create a free PostgreSQL database. Any of these work:
+### Neon (recommended)
+
+Create a free account at [neon.tech](https://neon.tech), then either use the
+Console or the CLI.
+
+**With the CLI (recommended - it prints the right strings):**
+
+```bash
+npm install -g neonctl
+neonctl auth
+
+node scripts/neon-setup.js
+```
+
+This creates the project and prints both connection strings. Add `--push` to
+also set them in Vercel automatically.
+
+**With the Console:**
+
+1. Create a project (pick a region close to Kenya - `aws-eu-west-1` or
+   `aws-eu-central-1`)
+2. Click **Connect** in the nav
+3. In the **Connect to your branch** modal, pick your branch, compute,
+   database and role
+4. Leave **Connection pooling** ON for the application connection string
+5. Copy both strings - see the note below
+
+### Other providers
 
 | Provider | How to get the connection string |
 |---|---|
-| **Neon** | [neon.tech](https://neon.tech) -> create project -> connection string |
 | **Supabase** | [supabase.com](https://supabase.com) -> project -> Settings -> Database |
 | **Vercel Postgres** | Vercel Dashboard -> Storage -> Create Database |
 | **Railway** | [railway.app](https://railway.app) -> new project -> Postgres |
 
-Copy the **pooled** connection string. It looks like:
+---
+
+### Two connection strings, not one
+
+This matters for Neon and Supabase. Both put a **pooler** (PgBouncer) in
+front of the database. The pooler is what lets thousands of serverless
+invocations share a small number of real connections, but it runs in
+*transaction pooling* mode, where session-level state is lost between
+transactions.
+
+| Variable | Which string | Used for |
+|---|---|---|
+| `DATABASE_URL` | **Pooled** (hostname ends in `-pooler`) | The running application |
+| `DATABASE_URL_DIRECT` | **Direct** (no `-pooler`) | Migrations, seeding, `pg_dump` |
+
+Neon's pooled string looks like:
 
 ```
-postgresql://user:password@ep-xxx.region.aws.neon.tech/neondb?sslmode=require
+postgresql://user:password@ep-xxx-pooler.aws-eu-west-1.aws.neon.tech/neondb?sslmode=require
 ```
 
-> **Use the pooled endpoint**, not the direct one. Serverless functions open
-> many short-lived connections, and the pooled endpoint multiplexes them
-> through a single connection to protect the database's connection limit.
+and the direct one is the same without `-pooler`.
+
+If you only set `DATABASE_URL`, migrations still run - they just use the
+pooled connection, which is less reliable for schema changes.
+
+### TLS
+
+Hosted providers require TLS. The app detects this automatically: it adds
+`sslmode=require` to the connection string unless the host is `localhost` or
+an `sslmode` is already present. `DATABASE_SSL` overrides the detection
+(`disable`, `require`, `verify-ca`, `verify-full`).
 
 ---
 
@@ -50,7 +99,8 @@ postgresql://user:password@ep-xxx.region.aws.neon.tech/neondb?sslmode=require
 
 | Variable | Value | Notes |
 |---|---|---|
-| `DATABASE_URL` | your pooled connection string | **Required** |
+| `DATABASE_URL` | pooled connection string | **Required** |
+| `DATABASE_URL_DIRECT` | direct connection string | Recommended, used for migrations |
 | `JWT_SECRET` | `openssl rand -base64 32` | **Required.** Generate a new one for production |
 | `NEXT_PUBLIC_APP_URL` | `https://ukwelitally.vercel.app` | Used to build absolute URLs |
 | `BLOB_READ_WRITE_TOKEN` | set automatically by Vercel Blob | Or see option B below |
@@ -100,11 +150,12 @@ Vercel.
 ## 4. Run the migrations and seed the database
 
 The database starts empty. Run the bootstrap script locally against the hosted
-connection string:
+connection strings:
 
 ```bash
-# Use the production connection string
-DATABASE_URL='postgresql://user:password@host/db?sslmode=require' \
+# Pooled for the app, direct for migrations
+DATABASE_URL='postgresql://user:pass@ep-xxx-pooler.region.neon.tech/neondb?sslmode=require' \
+DATABASE_URL_DIRECT='postgresql://user:pass@ep-xxx.region.neon.tech/neondb?sslmode=require' \
   node scripts/bootstrap-db.js
 ```
 
@@ -129,13 +180,13 @@ node scripts/bootstrap-db.js --skip-admin
 To re-run only the migrations:
 
 ```bash
-DATABASE_URL='postgresql://...' npm run db:migrate
+DATABASE_URL_DIRECT='postgresql://...' npm run db:migrate
 ```
 
 To check which migrations have been applied:
 
 ```bash
-DATABASE_URL='postgresql://...' npm run db:migrate:status
+DATABASE_URL_DIRECT='postgresql://...' npm run db:migrate:status
 ```
 
 ---
@@ -197,13 +248,26 @@ the function logs for `[storage] Using <backend> backend`.
 **`too many connections`**
 
 Lower `DATABASE_POOL_MAX` (try `2` or `1`) and make sure you are using the
-pooled connection string.
+**pooled** connection string. On Neon, check the **Monitoring** page for
+pooler client connections.
 
 **Migrations fail partway**
 
 Each migration runs in its own transaction, so a failure leaves the database
 consistent. Fix the cause and re-run `npm run db:migrate`; already-applied
 migrations are skipped.
+
+**Neon: `relation "public.xxx" does not exist`**
+
+You are connected through the pooler and a session-level `search_path` was
+lost between transactions. Run migrations with `DATABASE_URL_DIRECT` set to
+the direct (non-pooler) connection string.
+
+**Neon: the compute goes to sleep**
+
+Neon's free tier scales compute to zero after a period of inactivity. The
+first request after that is slower (cold start) but works normally. Upgrade
+to a paid plan to keep it always-on.
 
 ---
 

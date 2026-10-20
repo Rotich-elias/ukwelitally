@@ -53,16 +53,35 @@ const flagValue = (name, fallback) => {
   return index !== -1 && args[index + 1] ? args[index + 1] : fallback
 }
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  process.env.POSTGRES_URL ||
-  process.env.POSTGRES_URL_NON_POOLING ||
-  process.env.PG_URL
+/**
+ * Resolve the connection string.
+ *
+ * A direct (non-pooled) connection is preferred for one-off setup work such
+ * as migrations and seeding. Managed providers expose it separately.
+ */
+function resolveConnectionString() {
+  const candidates = [
+    process.env.DATABASE_URL_DIRECT,
+    process.env.DIRECT_DATABASE_URL,
+    process.env.POSTGRES_URL_NON_POOLING,
+    process.env.DATABASE_URL,
+    process.env.POSTGRES_URL,
+    process.env.PG_URL,
+  ]
+
+  for (const candidate of candidates) {
+    if (candidate && candidate.trim()) return candidate.trim()
+  }
+
+  return null
+}
+
+const connectionString = resolveConnectionString()
 
 if (!connectionString) {
   console.error(
     '❌ No database connection string found.\n' +
-      '   Set DATABASE_URL (or POSTGRES_URL) and try again.\n' +
+      '   Set DATABASE_URL (or DATABASE_URL_DIRECT) and try again.\n' +
       '   Example:\n' +
       '     DATABASE_URL=postgresql://user:pass@host/db?sslmode=require node scripts/bootstrap-db.js'
   )

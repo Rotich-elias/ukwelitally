@@ -30,29 +30,67 @@ function getDatabaseUrl(): string {
 }
 
 /**
- * Decide whether the connection requires SSL.
+ * Decide the sslmode for the connection.
  *
- * Managed providers (Neon, Supabase, RDS) generally require TLS, but the
- * setting is only present in some connection strings. An explicit
- * DATABASE_SSL setting always wins so a local socket or a proxy can opt out.
+ * Managed providers (Neon, Supabase, RDS) require TLS. pg maps the modes as:
+ *   - disable      -> no encryption
+ *   - require      -> encrypt, do not verify the server certificate
+ *   - verify-ca    -> encrypt and verify against a supplied CA
+ *   - verify-full  -> encrypt and verify the certificate and hostname
+ *
+ * pg gives the connection string precedence over an explicit `ssl` option, so
+ * the mode is applied by rewriting the sslmode query parameter rather than by
+ * passing a separate option.
  */
-function shouldUseSsl(): boolean | { rejectUnauthorized: boolean } | undefined {
+export function resolveSslMode(connectionString: string): string | null {
   const explicit = process.env.DATABASE_SSL?.toLowerCase()
-  if (explicit === 'false' || explicit === '0' || explicit === 'disable') return false
-  if (explicit === 'true' || explicit === '1' || explicit === 'require') return true
 
-  // Managed providers signal TLS via the sslmode query parameter.
-  const url = getDatabaseUrl()
-  if (url.includes('sslmode=disable') || url.includes('sslmode=allow')) return false
-  if (url.includes('sslmode=')) return { rejectUnauthorized: false }
+  if (explicit) {
+    if (explicit === 'false' || explicit === '0' || explicit === 'disable') {
+      return 'disable'
+    }
+    if (explicit === 'true' || explicit === '1' || explicit === 'require') {
+      return 'require'
+    }
+    if (explicit === 'verify-ca' || explicit === 'verify-full') {
+      return explicit
+    }
+  }
 
-  return undefined
+  // Respect a mode already present in the connection string.
+  const existing = /[?&]sslmode=([^&]*)/i.exec(connectionString)
+  if (existing) return existing[1]
+
+  // Local development databases do not use TLS.
+  const host = /@([^/:?]+)/.exec(connectionString)?.[1]?.toLowerCase()
+  if (host && ['localhost', '127.0.0.1', '::1', '[::1]'].includes(host)) {
+    return null
+  }
+
+  // Everything else is assumed to be a managed provider that needs TLS.
+  return 'require'
+}
+
+/**
+ * Apply the resolved sslmode to the connection string.
+ */
+export function normalizeConnectionString(connectionString: string): string {
+  const sslmode = resolveSslMode(connectionString)
+  if (!sslmode) return connectionString
+
+  const [base, query] = connectionString.split('?')
+  const params = query
+    ? query.split('&').filter((p) => !/^sslmode=/i.test(p))
+    : []
+
+  params.push(`sslmode=${sslmode}`)
+  return `${base}?${params.join('&')}`
 }
 
 // Get database configuration from environment
 function getDbConfig() {
   return {
-    connectionString: getDatabaseUrl(),
+    connectionString: normalizeConnectionString(getDatabaseUrl()),
     // Serverless functions can scale to many concurrent instances. Keep the
     // per-instance pool small so the provider's connection limit is not
     // exhausted, and let the provider's pooler handle multiplexing.
@@ -63,7 +101,6 @@ function getDbConfig() {
     // Expire idle clients so the pool does not hold connections open after a
     // function is frozen and thawed.
     allowExitOnIdle: true,
-    ssl: shouldUseSsl(),
   }
 }
 
