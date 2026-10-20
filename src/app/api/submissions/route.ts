@@ -397,6 +397,23 @@ async function handlePost(req: NextRequest) {
       { status: 201 }
     )
   } catch (error) {
+    // The unique index idx_submissions_user_station_candidate_type (migration
+    // 014) rejects a second submission for the same user, polling station,
+    // submission type and candidate. The duplicate is normally caught by the
+    // pre-insert check above, but two concurrent requests can both pass it.
+    // Report that as the conflict it is instead of a 500.
+    const pgCode = (error as { code?: string } | null)?.code
+    if (pgCode === '23505') {
+      return NextResponse.json(
+        {
+          error: 'Submission already exists for this polling station',
+          details:
+            'A submission for this polling station, type and candidate already exists. Please refresh and try again.',
+        },
+        { status: 409 }
+      )
+    }
+
     console.error('Error creating submission:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },

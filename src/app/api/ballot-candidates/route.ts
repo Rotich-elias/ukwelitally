@@ -3,6 +3,7 @@ import { query, queryMany, queryOne } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import { parseFormData, saveCandidatePhoto } from '@/lib/fileUpload'
 import { getFileUrl } from '@/lib/storage'
+import { validateCandidateLocation } from '@/lib/candidateLocation'
 
 // Generate unique candidate number
 async function generateCandidateNumber(): Promise<string> {
@@ -142,6 +143,17 @@ async function handlePost(req: NextRequest) {
         { error: `${position.replace('_', ' ')} candidates must be assigned to a specific county` },
         { status: 400 }
       )
+    }
+
+    // The electoral area rows have to exist, otherwise the insert fails with
+    // a foreign key violation and the caller gets a 500.
+    const locationCheck = await validateCandidateLocation({
+      county_id,
+      constituency_id,
+      ward_id,
+    })
+    if (!locationCheck.ok) {
+      return NextResponse.json({ error: locationCheck.error }, { status: 400 })
     }
 
     // Handle profile photo upload

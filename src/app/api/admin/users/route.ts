@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
-import { hashPassword, normalizePhoneNumber, generateToken } from '@/lib/auth'
+import { hashPassword, normalizePhoneNumber } from '@/lib/auth'
 import jwt from 'jsonwebtoken'
+import { getJwtSecret } from '@/lib/jwtSecret'
+import { validateCandidateLocation } from '@/lib/candidateLocation'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+const JWT_SECRET = getJwtSecret()
 
 export const dynamic = 'force-dynamic'
 
@@ -139,6 +141,17 @@ export async function POST(request: NextRequest) {
           { error: `${position.replace('_', ' ')} candidates must be assigned to a specific county` },
           { status: 400 }
         )
+      }
+
+      // The electoral area rows have to exist, otherwise the insert fails
+      // with a foreign key violation and the caller gets a 500.
+      const locationCheck = await validateCandidateLocation({
+        county_id,
+        constituency_id,
+        ward_id,
+      })
+      if (!locationCheck.ok) {
+        return NextResponse.json({ error: locationCheck.error }, { status: 400 })
       }
 
       await query(

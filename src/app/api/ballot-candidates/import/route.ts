@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne, transaction } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
+import { validateCandidateLocation } from '@/lib/candidateLocation'
 
 // POST /api/ballot-candidates/import - Bulk import ballot candidates from CSV
 async function handlePost(req: NextRequest) {
@@ -80,6 +81,7 @@ async function handlePost(req: NextRequest) {
       }
 
       candidates.push({
+        row_number: i + 1,
         full_name: row.full_name,
         position: row.position.toLowerCase(),
         party_name: row.party_name || null,
@@ -97,13 +99,32 @@ async function handlePost(req: NextRequest) {
       )
     }
 
+    // The electoral area rows have to exist, otherwise the insert fails with
+    // a foreign key violation and the whole import is rolled back.
+    const importable: any[] = []
+    for (const candidate of candidates) {
+      const locationCheck = await validateCandidateLocation(candidate)
+      if (!locationCheck.ok) {
+        errors.push(`Row ${candidate.row_number}: ${locationCheck.error}`)
+        continue
+      }
+      importable.push(candidate)
+    }
+
+    if (importable.length === 0) {
+      return NextResponse.json(
+        { error: 'No valid candidates to import', errors },
+        { status: 400 }
+      )
+    }
+
     // Import in transaction
     const result = await transaction(async (client) => {
       let imported = 0
       let skipped = 0
       const skippedList = []
 
-      for (const candidate of candidates) {
+      for (const candidate of importable) {
         // Check for duplicates
         const existing = await client.query(
           `SELECT id FROM candidates
