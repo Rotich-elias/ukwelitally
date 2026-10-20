@@ -14,7 +14,8 @@
     "db:migrate:status": "node scripts/migrate.js --status",
     "db:bootstrap": "node scripts/bootstrap-db.js",
     "db:neon": "node scripts/neon-setup.js",
-    "db:setup": "bash setup-db.sh"
+    "db:setup": "bash setup-db.sh",
+    "icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1153.0",

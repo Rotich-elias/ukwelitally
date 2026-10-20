@@ -223,6 +223,27 @@ npm run db:migrate:status   # show applied/pending without applying
 - Placeholder candidates used internally for observer submissions are excluded
   from every ballot candidate list and from result aggregation
 
+## Branding
+
+The favicon, PWA icons and social share image are generated from the brand
+logo by `scripts/generate-icons.js`. It crops the emblem out of the source
+image, masks it to a circle with transparent corners and writes every size the
+app needs.
+
+```bash
+npm run icons -- ~/Downloads/ukwelitally-logo.jpeg
+```
+
+Generated files:
+
+| File | Purpose |
+|---|---|
+| `src/app/icon.png` | Browser tab icon (Next.js file convention) |
+| `src/app/apple-icon.png` | iOS home screen icon |
+| `src/app/favicon.ico` | Legacy favicon (16/32/48) |
+| `src/app/opengraph-image.png` | Social share card |
+| `public/icons/icon-*.png` | PWA manifest icons, plus maskable variants |
+
 ## Deployment
 
 The app runs on Vercel with a hosted PostgreSQL database. See

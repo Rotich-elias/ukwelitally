@@ -3,68 +3,81 @@
   "short_name": "UkweliTally",
   "description": "Independent election results tallying platform for Kenya 2027 Elections",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#16a34a",
   "orientation": "portrait-primary",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "categories": ["government", "productivity", "utilities"],
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
       "sizes": "72x72",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-96x96.png",
       "sizes": "96x96",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-128x128.png",
       "sizes": "128x128",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-144x144.png",
       "sizes": "144x144",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-152x152.png",
       "sizes": "152x152",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-384x384.png",
       "sizes": "384x384",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512x512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["government", "productivity", "utilities"],
   "screenshots": [],
   "shortcuts": [
     {
-      "name": "Submit Results",
-      "short_name": "Submit",
-      "description": "Submit new polling station results",
-      "url": "/dashboard/submit",
+      "name": "View Results",
+      "short_name": "Results",
+      "description": "View aggregated results",
+      "url": "/results",
       "icons": [
         {
           "src": "/icons/icon-96x96.png",
@@ -73,10 +86,10 @@
       ]
     },
     {
-      "name": "View Results",
-      "short_name": "Results",
-      "description": "View aggregated results",
-      "url": "/dashboard/results",
+      "name": "Submit Results",
+      "short_name": "Submit",
+      "description": "Submit polling station results",
+      "url": "/dashboard/agent",
       "icons": [
         {
           "src": "/icons/icon-96x96.png",
