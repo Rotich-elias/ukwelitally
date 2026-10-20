@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { queryMany, queryOne } from '@/lib/db'
 import { getCandidateRestrictions } from '@/lib/candidate-restrictions'
 import { buildCandidateBreakdown, computeReportingPercentage, computeTurnout } from '@/lib/aggregation'
+import { getFileUrl } from '@/lib/storage'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
@@ -306,7 +307,7 @@ export async function GET(req: NextRequest) {
       party_name: row.party_name || 'Independent',
       total_votes: parseInt(row.total_votes) || 0,
       stations_reporting: parseInt(row.stations_reporting) || 0,
-      profile_photo: row.profile_photo,
+      profile_photo: row.profile_photo ? getFileUrl(row.profile_photo) : null,
       candidate_number: row.candidate_number,
       position: row.candidate_position,
       official_name: row.official_name,

@@ -26,7 +26,7 @@ async function handlePost(req: NextRequest) {
         try {
           // Check if candidate exists and is a ballot candidate (not system user)
           const candidateResult = await client.query(
-            'SELECT * FROM candidates WHERE id = $1 AND is_system_user = false',
+            'SELECT * FROM candidates WHERE id = $1 AND is_system_user = false AND is_placeholder = false',
             [candidateId]
           )
           

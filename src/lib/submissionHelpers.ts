@@ -2,6 +2,7 @@ import { query, queryMany } from '@/lib/db'
 import { unlink } from 'fs/promises'
 import { join } from 'path'
 import { existsSync } from 'fs'
+import { getStorage } from '@/lib/storage'
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || '/tmp/ukwelitally-uploads'
 
@@ -27,17 +28,21 @@ export async function deleteSubmission(submissionId: number): Promise<void> {
 
     console.log('[deleteSubmission] Found', photos.length, 'photos to delete')
 
-    // Delete photo files from disk
-    for (const photo of photos) {
-      try {
-        const fullPath = join(UPLOAD_DIR, photo.file_path)
-        if (existsSync(fullPath)) {
-          await unlink(fullPath)
-          console.log('[deleteSubmission] Deleted file:', fullPath)
+    // Delete photo files. Only the local disk backend supports deletion;
+    // object storage backends should be cleaned up with a lifecycle rule.
+    const storage = getStorage()
+    if (storage.name === 'local') {
+      for (const photo of photos) {
+        try {
+          const fullPath = join(UPLOAD_DIR, photo.file_path)
+          if (existsSync(fullPath)) {
+            await unlink(fullPath)
+            console.log('[deleteSubmission] Deleted file:', fullPath)
+          }
+        } catch (error) {
+          console.error('[deleteSubmission] Error deleting file:', photo.file_path, error)
+          // Continue with other deletions even if one file fails
         }
-      } catch (error) {
-        console.error('[deleteSubmission] Error deleting file:', photo.file_path, error)
-        // Continue with other deletions even if one file fails
       }
     }
 

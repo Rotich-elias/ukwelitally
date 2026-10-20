@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryMany } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
+import { getFileUrl } from '@/lib/storage'
 
 // GET /api/submissions/review-queue - Get submissions needing admin review
 async function handleGet(req: NextRequest) {
@@ -57,7 +58,7 @@ async function handleGet(req: NextRequest) {
             json_build_object(
               'id', sp.id,
               'photo_type', sp.photo_type,
-              'file_path', '/api/uploads' || sp.file_path
+              'file_path', sp.file_path
             )
           ) FILTER (WHERE sp.id IS NOT NULL),
           '[]'
@@ -85,10 +86,20 @@ async function handleGet(req: NextRequest) {
 
     const submissions = await queryMany(sql, params)
 
+    // Photo paths are stored relative; resolve them to a reachable URL based
+    // on the active storage backend.
+    const withPhotoUrls = submissions.map((submission: any) => ({
+      ...submission,
+      photos: (submission.photos || []).map((photo: any) => ({
+        ...photo,
+        file_path: getFileUrl(photo.file_path),
+      })),
+    }))
+
     return NextResponse.json({
       success: true,
-      submissions,
-      count: submissions.length,
+      submissions: withPhotoUrls,
+      count: withPhotoUrls.length,
     })
   } catch (error) {
     console.error('Error fetching review queue:', error)

@@ -203,7 +203,7 @@ async function handlePost(req: NextRequest) {
       for (const candidate of candidates) {
         // Check if candidate already exists
         const existing = await client.query(
-          'SELECT id FROM candidates WHERE full_name = $1 AND position = $2 AND is_system_user = false',
+          'SELECT id FROM candidates WHERE full_name = $1 AND position = $2 AND is_system_user = false AND is_placeholder = false',
           [candidate.full_name, candidate.position]
         )
 

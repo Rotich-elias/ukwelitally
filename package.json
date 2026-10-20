@@ -12,9 +12,12 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "node scripts/migrate.js",
     "db:migrate:status": "node scripts/migrate.js --status",
+    "db:bootstrap": "node scripts/bootstrap-db.js",
     "db:setup": "bash setup-db.sh"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1153.0",
+    "@vercel/blob": "^2.8.2",
     "bcryptjs": "^2.4.3",
     "csv-parser": "^3.2.0",
     "date-fns": "^3.6.0",

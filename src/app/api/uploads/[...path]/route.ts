@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readFile } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
+import { getStorage } from '@/lib/storage'
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || '/tmp/ukwelitally-uploads'
+export const dynamic = 'force-dynamic'
 
 // GET /api/uploads/[...path] - Serve uploaded files
 export async function GET(
@@ -22,28 +20,22 @@ export async function GET(
       )
     }
 
-    // Construct full path
-    const fullPath = join(UPLOAD_DIR, filePath)
+    const storage = getStorage()
+    const file = await storage.get(filePath)
 
     // Check if file exists
-    if (!existsSync(fullPath)) {
+    if (!file) {
       return NextResponse.json(
         { error: 'File not found' },
         { status: 404 }
       )
     }
 
-    // Read file
-    const fileBuffer = await readFile(fullPath)
-
-    // Determine content type based on file extension
-    const ext = filePath.split('.').pop()?.toLowerCase()
-    const contentType = getContentType(ext || '')
-
-    // Return file with appropriate headers
-    return new NextResponse(fileBuffer, {
+    // Return file with appropriate headers. The buffer is passed through a
+    // Uint8Array so it satisfies the Response body type.
+    return new NextResponse(new Uint8Array(file.data), {
       headers: {
-        'Content-Type': contentType,
+        'Content-Type': file.contentType,
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     })
@@ -54,16 +46,4 @@ export async function GET(
       { status: 500 }
     )
   }
-}
-
-function getContentType(ext: string): string {
-  const types: Record<string, string> = {
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'png': 'image/png',
-    'gif': 'image/gif',
-    'webp': 'image/webp',
-    'pdf': 'application/pdf',
-  }
-  return types[ext] || 'application/octet-stream'
 }

@@ -4,6 +4,7 @@ import { withAuth } from '@/middleware/auth'
 import { parseFormData, saveUploadedFile } from '@/lib/fileUpload'
 import { verifyLocation, calculateConfidenceScore } from '@/lib/validation'
 import { getObserverAssignment, getPlaceholderCandidateId } from '@/lib/observer'
+import { getFileUrl } from '@/lib/storage'
 import { Submission, PollingStation, Agent, Candidate } from '@/types/database'
 
 // GET /api/submissions - List submissions
@@ -381,17 +382,17 @@ async function handlePost(req: NextRequest) {
       ]
     )
 
-    // Transform photo paths to include API route
-    const photosWithApiPath = result.uploadedPhotos.map((photo: any) => ({
+    // Resolve photo paths to reachable URLs based on the storage backend.
+    const photosWithUrls = result.uploadedPhotos.map((photo: any) => ({
       ...photo,
-      filePath: `/api/uploads${photo.filePath}`,
+      filePath: getFileUrl(photo.filePath),
     }))
 
     return NextResponse.json(
       {
         message: 'Submission created successfully',
         submission: result.submission,
-        photos: photosWithApiPath,
+        photos: photosWithUrls,
       },
       { status: 201 }
     )

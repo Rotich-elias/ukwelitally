@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { query, queryMany, queryOne } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import { parseFormData, saveCandidatePhoto } from '@/lib/fileUpload'
+import { getFileUrl } from '@/lib/storage'
 
 // Generate unique candidate number
 async function generateCandidateNumber(): Promise<string> {
@@ -59,7 +60,7 @@ async function handleGet(req: NextRequest) {
       LEFT JOIN counties co ON c.county_id = co.id
       LEFT JOIN constituencies con ON c.constituency_id = con.id
       LEFT JOIN wards w ON c.ward_id = w.id
-      WHERE c.is_system_user = false
+      WHERE c.is_system_user = false AND c.is_placeholder = false
     `
     const params: any[] = []
     let paramIndex = 1
@@ -73,7 +74,15 @@ async function handleGet(req: NextRequest) {
 
     const candidates = await queryMany(sql, params)
 
-    return NextResponse.json({ candidates })
+    // Resolve profile photo paths to reachable URLs.
+    const withPhotoUrls = candidates.map((candidate: any) => ({
+      ...candidate,
+      profile_photo: candidate.profile_photo
+        ? getFileUrl(candidate.profile_photo)
+        : null,
+    }))
+
+    return NextResponse.json({ candidates: withPhotoUrls })
   } catch (error) {
     console.error('Error fetching ballot candidates:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -151,7 +160,7 @@ async function handlePost(req: NextRequest) {
     // Check for duplicates
     const existing = await queryOne(
       `SELECT id FROM candidates
-       WHERE full_name = $1 AND position = $2 AND is_system_user = false`,
+       WHERE full_name = $1 AND position = $2 AND is_system_user = false AND is_placeholder = false`,
       [full_name, position]
     )
 
@@ -236,7 +245,7 @@ async function handlePut(req: NextRequest) {
 
     // Verify it's a ballot candidate
     const existing = await queryOne(
-      'SELECT * FROM candidates WHERE id = $1 AND is_system_user = false',
+      'SELECT * FROM candidates WHERE id = $1 AND is_system_user = false AND is_placeholder = false',
       [candidate_id]
     )
 
@@ -267,7 +276,7 @@ async function handlePut(req: NextRequest) {
            party_name = COALESCE($2, party_name),
            party_abbreviation = COALESCE($3, party_abbreviation),
            profile_photo = COALESCE($4, profile_photo)
-       WHERE id = $5 AND is_system_user = false
+       WHERE id = $5 AND is_system_user = false AND is_placeholder = false
        RETURNING *`,
       [full_name, party_name, party_abbreviation, profile_photo, candidate_id]
     )
@@ -317,7 +326,7 @@ async function handleDelete(req: NextRequest) {
 
     // Verify it's a ballot candidate
     const existing = await queryOne(
-      'SELECT * FROM candidates WHERE id = $1 AND is_system_user = false',
+      'SELECT * FROM candidates WHERE id = $1 AND is_system_user = false AND is_placeholder = false',
       [candidateId]
     )
 

@@ -1,9 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
 import ServiceWorkerRegistrar from './ServiceWorkerRegistrar'
 import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'UkweliTally - Independent Election Results Tallying',
@@ -26,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} antialiased`}>
+      <body className="font-sans antialiased">
         <ServiceWorkerRegistrar />
         {children}
       </body>

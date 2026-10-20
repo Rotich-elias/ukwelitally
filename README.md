@@ -91,6 +91,7 @@ ukwelitally/
 │   │   ├── notifications.ts # In-app notification helpers
 │   │   ├── observer.ts      # Observer assignment helpers
 │   │   ├── rateLimit.ts     # Request rate limiting
+│   │   ├── storage.ts       # File storage backend (Blob / S3 / local disk)
 │   │   ├── validation.ts    # Vote count validation, anomaly detection
 │   │   └── verification.ts  # Primary/backup and IEBC comparison
 │   └── types/               # TypeScript types
@@ -221,6 +222,26 @@ npm run db:migrate:status   # show applied/pending without applying
 - Rate limiting on login, registration and volunteer signup
 - Placeholder candidates used internally for observer submissions are excluded
   from every ballot candidate list and from result aggregation
+
+## Deployment
+
+The app runs on Vercel with a hosted PostgreSQL database. See
+[DEPLOYMENT.md](./DEPLOYMENT.md) for the full walkthrough.
+
+Quick summary:
+
+1. Create a hosted Postgres database (Neon, Supabase, Vercel Postgres, Railway)
+   and use its **pooled** connection string
+2. Set `DATABASE_URL` and a fresh `JWT_SECRET` in the Vercel project
+3. Connect a Vercel Blob store (or S3 bucket) for uploaded evidence — the
+   local filesystem is ephemeral on Vercel
+4. Bootstrap the database:
+   ```bash
+   DATABASE_URL='postgresql://...' npm run db:bootstrap
+   ```
+   This applies all migrations, loads the Kenya electoral geography and
+   creates the first admin account
+5. `git push origin main`
 
 ## Development Roadmap
 

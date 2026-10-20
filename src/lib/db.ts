@@ -3,19 +3,67 @@ import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg'
 // Singleton pool instance
 let pool: Pool | null = null
 
-// Get database configuration from environment
-function getDbConfig() {
-  const databaseUrl = process.env.DATABASE_URL
+/**
+ * Resolve the database connection string.
+ *
+ * Hosted Postgres providers use different environment variable names:
+ *   - Vercel Postgres / Neon: POSTGRES_URL, POSTGRES_PRISMA_URL, DATABASE_URL
+ *   - Supabase: DATABASE_URL, POSTGRES_URL
+ *   - Railway / Render: DATABASE_URL
+ * All of them are checked so the app works with whichever provider is used.
+ */
+function getDatabaseUrl(): string {
+  const candidates = [
+    process.env.DATABASE_URL,
+    process.env.POSTGRES_URL,
+    process.env.POSTGRES_URL_NON_POOLING,
+    process.env.PG_URL,
+  ]
 
-  if (!databaseUrl) {
-    throw new Error('DATABASE_URL environment variable is not set')
+  for (const candidate of candidates) {
+    if (candidate && candidate.trim()) return candidate.trim()
   }
 
+  throw new Error(
+    'Database connection string is not set. Set DATABASE_URL (or POSTGRES_URL) in your environment.'
+  )
+}
+
+/**
+ * Decide whether the connection requires SSL.
+ *
+ * Managed providers (Neon, Supabase, RDS) generally require TLS, but the
+ * setting is only present in some connection strings. An explicit
+ * DATABASE_SSL setting always wins so a local socket or a proxy can opt out.
+ */
+function shouldUseSsl(): boolean | { rejectUnauthorized: boolean } | undefined {
+  const explicit = process.env.DATABASE_SSL?.toLowerCase()
+  if (explicit === 'false' || explicit === '0' || explicit === 'disable') return false
+  if (explicit === 'true' || explicit === '1' || explicit === 'require') return true
+
+  // Managed providers signal TLS via the sslmode query parameter.
+  const url = getDatabaseUrl()
+  if (url.includes('sslmode=disable') || url.includes('sslmode=allow')) return false
+  if (url.includes('sslmode=')) return { rejectUnauthorized: false }
+
+  return undefined
+}
+
+// Get database configuration from environment
+function getDbConfig() {
   return {
-    connectionString: databaseUrl,
-    max: 20, // Maximum pool size
+    connectionString: getDatabaseUrl(),
+    // Serverless functions can scale to many concurrent instances. Keep the
+    // per-instance pool small so the provider's connection limit is not
+    // exhausted, and let the provider's pooler handle multiplexing.
+    max: parseInt(process.env.DATABASE_POOL_MAX || '5', 10),
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 10000,
+    // Vercel and other serverless platforms recycle the execution context.
+    // Expire idle clients so the pool does not hold connections open after a
+    // function is frozen and thawed.
+    allowExitOnIdle: true,
+    ssl: shouldUseSsl(),
   }
 }
 
@@ -25,8 +73,11 @@ export function getPool(): Pool {
     pool = new Pool(getDbConfig())
 
     pool.on('error', (err) => {
+      // An idle client erroring out is recoverable. The previous behaviour of
+      // calling process.exit(-1) would kill the whole serverless invocation
+      // and surface as a 500 to the user, so the error is logged and the pool
+      // is left to reconnect on the next query.
       console.error('Unexpected error on idle client', err)
-      process.exit(-1)
     })
   }
 
@@ -102,7 +153,7 @@ export async function queryMany<T extends QueryResultRow = any>(
   return result.rows
 }
 
-// Close the pool (useful for testing)
+// Close the pool (useful for testing and graceful shutdown)
 export async function closePool(): Promise<void> {
   if (pool) {
     await pool.end()

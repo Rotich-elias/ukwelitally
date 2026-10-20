@@ -8,6 +8,22 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        // A system font stack avoids a build-time and runtime dependency on
+        // Google Fonts, which is unreliable from some networks and slows the
+        // first paint for users on slow connections.
+        sans: [
+          'Inter',
+          'ui-sans-serif',
+          'system-ui',
+          '-apple-system',
+          'Segoe UI',
+          'Roboto',
+          'Helvetica Neue',
+          'Arial',
+          'sans-serif',
+        ],
+      },
       colors: {
         primary: {
           50: '#f0fdf4',

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { queryMany, queryOne } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import { buildCandidateBreakdown } from '@/lib/aggregation'
+import { getFileUrl } from '@/lib/storage'
 
 // GET /api/polling-stations/[id]/detailed-results - Get detailed results for a specific polling station
 async function handleGet(req: NextRequest, context?: any) {
@@ -85,7 +86,7 @@ async function handleGet(req: NextRequest, context?: any) {
             json_build_object(
               'id', sp.id,
               'photo_type', sp.photo_type,
-              'file_path', '/api/uploads' || sp.file_path
+              'file_path', sp.file_path
             )
           ) FILTER (WHERE sp.id IS NOT NULL),
           '[]'
@@ -133,8 +134,17 @@ async function handleGet(req: NextRequest, context?: any) {
 
     console.log('[Detailed Results] Submissions fetched:', submissions.length)
 
+    // Resolve photo paths to reachable URLs based on the storage backend.
+    const submissionsWithUrls = submissions.map((submission: any) => ({
+      ...submission,
+      photos: (submission.photos || []).map((photo: any) => ({
+        ...photo,
+        file_path: getFileUrl(photo.file_path),
+      })),
+    }))
+
     // Calculate aggregate results from verified submissions
-    const verifiedSubmissions = submissions.filter((s: any) => s.status === 'verified')
+    const verifiedSubmissions = submissionsWithUrls.filter((s: any) => s.status === 'verified')
     console.log('[Detailed Results] Verified submissions:', verifiedSubmissions.length)
 
     let aggregateResults = null
@@ -196,7 +206,7 @@ async function handleGet(req: NextRequest, context?: any) {
     return NextResponse.json({
       success: true,
       polling_station: pollingStation,
-      submissions,
+      submissions: submissionsWithUrls,
       aggregate_results: aggregateResults,
       submission_count: submissions.length,
       verified_count: verifiedSubmissions.length,

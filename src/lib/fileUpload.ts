@@ -3,6 +3,7 @@ import { join } from 'path'
 import { existsSync } from 'fs'
 import crypto from 'crypto'
 import sharp from 'sharp'
+import { getStorage } from '@/lib/storage'
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || '/tmp/ukwelitally-uploads'
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '10485760') // 10MB default
@@ -115,19 +116,16 @@ export async function saveUploadedFile(
   // Compress image
   const compressedBuffer = await compressImage(buffer)
 
-  // Generate filename and full path
+  // Generate filename and store via the configured storage backend. On
+  // serverless platforms the local filesystem is ephemeral, so writing to
+  // disk would lose the evidence.
   const filename = generateFilename(file.name)
-  const subdirPath = join(UPLOAD_DIR, subdir)
-  if (!existsSync(subdirPath)) {
-    await mkdir(subdirPath, { recursive: true })
-  }
-  const filePath = join(subdirPath, filename)
-
-  // Save file
-  await writeFile(filePath, compressedBuffer)
+  const storageKey = `${subdir}/${filename}`
+  const storage = getStorage()
+  await storage.put(storageKey, compressedBuffer, 'image/jpeg')
 
   return {
-    filePath: filePath.replace(UPLOAD_DIR, ''), // Store relative path
+    filePath: `/${storageKey}`, // Store relative path
     fileSize: compressedBuffer.length,
     mimeType: file.type,
     hash,
@@ -186,17 +184,12 @@ export async function saveCandidatePhoto(file: File): Promise<string> {
     .jpeg({ quality: 90 })
     .toBuffer()
 
-  // Generate filename and full path
+  // Generate filename and store via the configured storage backend
   const filename = generateFilename(file.name)
-  const subdirPath = join(UPLOAD_DIR, 'candidate-photos')
-  if (!existsSync(subdirPath)) {
-    await mkdir(subdirPath, { recursive: true })
-  }
-  const filePath = join(subdirPath, filename)
-
-  // Save file
-  await writeFile(filePath, compressedBuffer)
+  const storageKey = `candidate-photos/${filename}`
+  const storage = getStorage()
+  await storage.put(storageKey, compressedBuffer, 'image/jpeg')
 
   // Return relative path for database storage (consistent with submission photos)
-  return `/candidate-photos/${filename}`
+  return `/${storageKey}`
 }
