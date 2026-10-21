@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryMany } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
+import { getFileUrl } from '@/lib/storage'
 
 // GET /api/candidates - List all candidates by position
 async function handleGet(req: NextRequest) {
@@ -18,6 +19,7 @@ async function handleGet(req: NextRequest) {
         c.party_name,
         c.party_abbreviation,
         c.is_system_user,
+        c.profile_photo,
         COALESCE(u.full_name, c.full_name) as candidate_name,
         co.name as county_name,
         con.name as constituency_name,
@@ -57,7 +59,14 @@ async function handleGet(req: NextRequest) {
 
     const candidates = await queryMany(sql, params)
 
-    return NextResponse.json({ candidates })
+    // The stored reference is a storage key, so it is resolved into a URL
+    // that can actually be loaded.
+    const withPhotoUrls = candidates.map((candidate: any) => ({
+      ...candidate,
+      profile_photo: candidate.profile_photo ? getFileUrl(candidate.profile_photo) : null,
+    }))
+
+    return NextResponse.json({ candidates: withPhotoUrls })
   } catch (error) {
     console.error('Error fetching candidates:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

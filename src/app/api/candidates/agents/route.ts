@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
 import { hashPassword, normalizePhoneNumber } from '@/lib/auth'
-import { getCandidateRestrictions, canAccessLocation } from '@/lib/candidate-restrictions'
+import { getAssignmentScope, isStationInScope, describeScope } from '@/lib/agentScope'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from '@/lib/jwtSecret'
 
@@ -105,44 +105,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
     }
 
-    // Get candidate restrictions and validate polling station location
+    // The station has to be inside the candidate's own scope, which comes
+    // from their race and electoral area. The interface only shows those
+    // stations, but the API decides.
+    let scope = null
     if (polling_station_id) {
-      const restrictions = await getCandidateRestrictions(decoded.userId)
+      scope = await getAssignmentScope(decoded.userId)
 
-      if (restrictions && restrictions.position !== 'president') {
-        // Get polling station location
-        const station = await queryOne(
-          `SELECT ps.id, w.id as ward_id, const.id as constituency_id, co.id as county_id
-           FROM polling_stations ps
-           JOIN wards w ON ps.ward_id = w.id
-           JOIN constituencies const ON w.constituency_id = const.id
-           JOIN counties co ON const.county_id = co.id
-           WHERE ps.id = $1`,
-          [polling_station_id]
+      if (!scope) {
+        return NextResponse.json({ error: 'Candidate profile not found' }, { status: 404 })
+      }
+
+      const allowed = await isStationInScope(scope, polling_station_id)
+      if (!allowed) {
+        return NextResponse.json(
+          {
+            error: `You can only assign agents to ${describeScope(scope)}. This station is outside your electoral area.`,
+          },
+          { status: 403 }
         )
-
-        if (!station) {
-          return NextResponse.json(
-            { error: 'Polling station not found' },
-            { status: 404 }
-          )
-        }
-
-        // Check if candidate can access this station's location
-        const canAccess = canAccessLocation(restrictions, {
-          county_id: station.county_id,
-          constituency_id: station.constituency_id,
-          ward_id: station.ward_id,
-        })
-
-        if (!canAccess) {
-          return NextResponse.json(
-            {
-              error: `You can only assign agents to polling stations within your electoral area. This station is outside your ${restrictions.position === 'mca' ? 'ward' : restrictions.position === 'mp' ? 'constituency' : 'county'}.`
-            },
-            { status: 403 }
-          )
-        }
       }
     }
 
@@ -160,6 +141,27 @@ export async function POST(request: NextRequest) {
         { error: 'User with this email, phone, or ID number already exists' },
         { status: 409 }
       )
+    }
+
+    // A station has one primary agent per team. A second one is a
+    // conflicting assignment, so the candidate is asked to add a backup
+    // agent instead.
+    if (polling_station_id && is_primary !== false) {
+      const existingPrimary = await queryOne(
+        `SELECT id FROM agents
+          WHERE candidate_id = $1 AND polling_station_id = $2 AND is_primary = TRUE`,
+        [candidate.id, polling_station_id]
+      )
+
+      if (existingPrimary) {
+        return NextResponse.json(
+          {
+            error:
+              'This polling station already has a primary agent in your team. Add the agent as a backup agent instead.',
+          },
+          { status: 409 }
+        )
+      }
     }
 
     // Hash password

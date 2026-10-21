@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryMany } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
-import { getFileUrl } from '@/lib/storage'
+import { getEvidenceUrl } from '@/lib/storage'
 
 // GET /api/submissions/review-queue - Get submissions needing admin review
 async function handleGet(req: NextRequest) {
@@ -86,13 +86,13 @@ async function handleGet(req: NextRequest) {
 
     const submissions = await queryMany(sql, params)
 
-    // Photo paths are stored relative; resolve them to a reachable URL based
-    // on the active storage backend.
+    // The evidence of a submission is private, so it is served through the
+    // authorized evidence route instead of the public upload route.
     const withPhotoUrls = submissions.map((submission: any) => ({
       ...submission,
       photos: (submission.photos || []).map((photo: any) => ({
         ...photo,
-        file_path: getFileUrl(photo.file_path),
+        file_path: getEvidenceUrl(photo.id),
       })),
     }))
 

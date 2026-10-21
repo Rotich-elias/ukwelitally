@@ -1,5 +1,5 @@
 import { readFile, writeFile, mkdir } from 'fs/promises'
-import { join, dirname } from 'path'
+import { join, dirname, resolve } from 'path'
 import { existsSync } from 'fs'
 
 /**
@@ -17,6 +17,15 @@ import { existsSync } from 'fs'
  *
  * The returned object always exposes the same interface, so the rest of the
  * app does not care which backend is in use.
+ *
+ * Two properties matter for the evidence the platform stores:
+ *
+ *   - `durable` tells the caller whether the bytes survive a restart or a
+ *     redeployment. The local backend is not durable, so an upload on a
+ *     serverless platform is refused instead of being silently lost.
+ *   - `public` tells the caller whether a key may be served without an
+ *     authorization check. Candidate photos are public; submission evidence
+ *     is not.
  */
 
 export interface StoredFile {
@@ -28,13 +37,56 @@ export interface StoredFile {
 
 export interface StorageBackend {
   readonly name: 'vercel-blob' | 's3' | 'local'
+  /** True when the bytes survive a restart or a redeployment. */
+  readonly durable: boolean
   /** Persist a buffer under the given key. */
   put(key: string, data: Buffer, contentType: string): Promise<StoredFile>
   /** Read a file back. Returns null when it does not exist. */
   get(key: string): Promise<{ data: Buffer; contentType: string } | null>
 }
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || '/tmp/ukwelitally-uploads'
+/**
+ * The default local directory.
+ *
+ * It deliberately lives inside the project instead of /tmp: the operating
+ * system clears /tmp on reboot, which would make every uploaded photo and
+ * every piece of evidence disappear from the local database.
+ */
+const DEFAULT_UPLOAD_DIR = '.uploads'
+
+/**
+ * The directory the local backend writes to.
+ *
+ * It is resolved on every call so a change to the environment is picked up
+ * without a restart, and so the tests can point it at a temporary folder.
+ */
+export function getUploadDir(): string {
+  return resolve(process.env.UPLOAD_DIR || DEFAULT_UPLOAD_DIR)
+}
+
+/**
+ * The key prefixes whose files may be served without an authorization check.
+ *
+ * Candidate photos are shown on the public results pages. Everything else is
+ * submission evidence and is only served through the authorized evidence
+ * route.
+ */
+const PUBLIC_KEY_PREFIXES = ['candidate-photos/']
+
+/**
+ * True when the key belongs to a file that may be served publicly.
+ */
+export function isPublicKey(key: string): boolean {
+  const normalized = key.replace(/^\/+/, '')
+  return PUBLIC_KEY_PREFIXES.some((prefix) => normalized.startsWith(prefix))
+}
+
+/**
+ * True when the code runs on a platform with an ephemeral filesystem.
+ */
+export function isServerlessRuntime(): boolean {
+  return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME)
+}
 
 /**
  * Resolve the public base URL for locally stored files.
@@ -50,9 +102,10 @@ function localPublicUrl(key: string): string {
  */
 const localStorage: StorageBackend = {
   name: 'local',
+  durable: false,
 
   async put(key: string, data: Buffer): Promise<StoredFile> {
-    const fullPath = join(UPLOAD_DIR, key)
+    const fullPath = join(getUploadDir(), key)
     const dir = dirname(fullPath)
     if (!existsSync(dir)) {
       await mkdir(dir, { recursive: true })
@@ -62,7 +115,7 @@ const localStorage: StorageBackend = {
   },
 
   async get(key: string) {
-    const fullPath = join(UPLOAD_DIR, key)
+    const fullPath = join(getUploadDir(), key)
     if (!existsSync(fullPath)) return null
 
     const data = await readFile(fullPath)
@@ -83,6 +136,7 @@ function createVercelBlobBackend(): StorageBackend | null {
 
   return {
     name: 'vercel-blob',
+    durable: true,
 
     async put(key: string, data: Buffer): Promise<StoredFile> {
       const result = await put(key, data, {
@@ -146,6 +200,7 @@ function createS3Backend(): StorageBackend | null {
 
   return {
     name: 's3',
+    durable: true,
 
     async put(key: string, data: Buffer, contentType: string): Promise<StoredFile> {
       await client.send(
@@ -215,7 +270,15 @@ export function getStorage(): StorageBackend {
     createS3Backend() ||
     localStorage
 
-  console.log(`[storage] Using ${backend.name} backend`)
+  if (backend.durable) {
+    console.log(`[storage] Using ${backend.name} backend (durable)`)
+  } else {
+    console.warn(
+      `[storage] Using the local ${getUploadDir()} backend. Files written here are lost when the ` +
+        'machine is restarted and are not shared between serverless instances. Configure ' +
+        'BLOB_READ_WRITE_TOKEN (Vercel Blob) or S3_BUCKET with S3_* credentials for a durable store.'
+    )
+  }
 
   return backend
 }
@@ -254,4 +317,14 @@ export function getFileUrl(key: string): string {
   }
 
   return `/api/uploads/${normalized}`
+}
+
+/**
+ * The URL of a piece of submission evidence.
+ *
+ * Evidence is private: it is served through the authorized evidence route
+ * instead of the public upload route, so a leaked id does not expose it.
+ */
+export function getEvidenceUrl(photoId: number): string {
+  return `/api/submission-photos/${photoId}`
 }

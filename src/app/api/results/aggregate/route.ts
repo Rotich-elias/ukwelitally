@@ -163,10 +163,14 @@ export async function GET(req: NextRequest) {
     // ------------------------------------------------------------------
     // Totals query.
     //
-    // This aggregates over the set of distinct verified primary results for
-    // the requested area. It deliberately does NOT join candidate_votes:
-    // joining that table fans out one result row into one row per candidate,
-    // which would multiply the vote totals by the number of candidates.
+    // This aggregates over the selected result of every polling station in
+    // the requested area. The selected result is either a verified agent
+    // primary result or a candidate approved observer fallback, so a station
+    // is never counted twice.
+    //
+    // It deliberately does NOT join candidate_votes: joining that table
+    // fans out one result row into one row per candidate, which would
+    // multiply the vote totals by the number of candidates.
     // ------------------------------------------------------------------
     const totalsSql = `
       WITH scoped_results AS (
@@ -177,13 +181,16 @@ export async function GET(req: NextRequest) {
           r.valid_votes,
           r.rejected_votes,
           s.polling_station_id
-        FROM submissions s
+        FROM selected_results sel
+        JOIN submissions s ON s.id = sel.submission_id
         JOIN results r ON s.id = r.submission_id AND r.position = $1
         JOIN polling_stations ps ON s.polling_station_id = ps.id
         JOIN wards w ON ps.ward_id = w.id
         JOIN constituencies const ON w.constituency_id = const.id
         JOIN counties co ON const.county_id = co.id
-        WHERE s.status = 'verified' AND s.submission_type = 'primary' ${buildLocationClause(2)}
+        WHERE sel.position = $1
+          AND s.status = 'verified'
+          ${buildLocationClause(2)}
       )
       SELECT
         COUNT(DISTINCT polling_station_id) AS stations_reporting,
@@ -202,6 +209,26 @@ export async function GET(req: NextRequest) {
     const totalValidVotes = parseInt(totalsRow.total_valid_votes) || 0
     const totalRejectedVotes = parseInt(totalsRow.total_rejected_votes) || 0
     const reportedRegisteredVoters = parseInt(totalsRow.reported_registered_voters) || 0
+
+    // How the selected results were produced: an agent primary result or a
+    // candidate approved observer fallback. The two are never mixed up.
+    const sourceSql = `
+      SELECT
+        COUNT(*) FILTER (WHERE sel.source = 'agent_primary') AS agent_primary,
+        COUNT(*) FILTER (WHERE sel.source = 'observer_fallback') AS observer_fallback
+      FROM selected_results sel
+      JOIN submissions s ON s.id = sel.submission_id
+      JOIN results r ON s.id = r.submission_id AND r.position = $1
+      JOIN polling_stations ps ON s.polling_station_id = ps.id
+      JOIN wards w ON ps.ward_id = w.id
+      JOIN constituencies const ON w.constituency_id = const.id
+      JOIN counties co ON const.county_id = co.id
+      WHERE sel.position = $1
+        AND s.status = 'verified'
+        ${buildLocationClause(2)}
+    `
+    const sourceResult = await queryMany(sourceSql, buildScopedParams())
+    const sourceRow = sourceResult[0] || {}
 
     // Total counts of all stations in the area (without status filter)
     const totalStatsSql = `
@@ -286,7 +313,8 @@ export async function GET(req: NextRequest) {
         co_cand.name as candidate_county,
         const_cand.name as candidate_constituency,
         w_cand.name as candidate_ward
-      FROM submissions s
+      FROM selected_results sel
+      JOIN submissions s ON s.id = sel.submission_id
       JOIN results r ON s.id = r.submission_id AND r.position = $1
       JOIN candidate_votes cv ON r.id = cv.result_id
       JOIN polling_stations ps ON s.polling_station_id = ps.id
@@ -297,7 +325,9 @@ export async function GET(req: NextRequest) {
       LEFT JOIN counties co_cand ON cm.county_id = co_cand.id
       LEFT JOIN constituencies const_cand ON cm.constituency_id = const_cand.id
       LEFT JOIN wards w_cand ON cm.ward_id = w_cand.id
-      WHERE s.status = 'verified' AND s.submission_type = 'primary' ${buildLocationClause(2)}
+      WHERE sel.position = $1
+        AND s.status = 'verified'
+        ${buildLocationClause(2)}
       GROUP BY cv.candidate_name, cm.profile_photo, cm.candidate_number, cm.position, cm.resolved_name, co_cand.name, const_cand.name, w_cand.name
     `
 
@@ -346,6 +376,9 @@ export async function GET(req: NextRequest) {
         total_stations: totalStationsInArea, // All stations in area
         stations_reported: stationsWithSubmissions, // Stations with ANY submission (matches polling stations view)
         reporting_percentage: reportingPercentage,
+        // Where the counted results came from.
+        agent_primary_results: parseInt(sourceRow.agent_primary) || 0,
+        observer_fallback_results: parseInt(sourceRow.observer_fallback) || 0,
       },
     })
   } catch (error) {

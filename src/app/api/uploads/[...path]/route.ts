@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getStorage } from '@/lib/storage'
+import { getStorage, isPublicKey } from '@/lib/storage'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/uploads/[...path] - Serve uploaded files
+// GET /api/uploads/[...path] - Serve a publicly stored file
+//
+// Only files in a public key prefix (candidate photos) are served here.
+// Submission evidence is private and is served through
+// /api/submission-photos/:id, which checks who is asking.
 export async function GET(
   req: NextRequest,
   { params }: { params: { path: string[] } }
@@ -18,6 +22,12 @@ export async function GET(
         { error: 'Invalid file path' },
         { status: 400 }
       )
+    }
+
+    // Private evidence is not served from here. The answer is a 404 so the
+    // route does not confirm which files exist.
+    if (!isPublicKey(filePath)) {
+      return NextResponse.json({ error: 'File not found' }, { status: 404 })
     }
 
     const storage = getStorage()

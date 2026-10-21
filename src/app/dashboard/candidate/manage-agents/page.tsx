@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
-import LocationSelector from '@/components/LocationSelector'
+import PollingStationPicker from '@/components/PollingStationPicker'
 
 interface Agent {
   agent_id: number
@@ -124,10 +124,6 @@ export default function ManageAgentsPage() {
 
   const generatePassword = () => {
     return 'Agent' + Math.floor(Math.random() * 9000 + 1000)
-  }
-
-  const handleLocationChange = (location: any) => {
-    setFormData({ ...formData, polling_station_id: location.pollingStationId })
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -423,11 +419,13 @@ export default function ManageAgentsPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3">Assign Polling Station (Optional)</h3>
-                  <LocationSelector
-                    onLocationChange={handleLocationChange}
-                    showPollingStations={true}
-                    required={false}
+                  <h3 className="text-lg font-semibold text-white mb-3">
+                    Assign Polling Station (Optional)
+                  </h3>
+                  <PollingStationPicker
+                    onChange={(pollingStationId) => {
+                      setFormData({ ...formData, polling_station_id: pollingStationId ?? undefined })
+                    }}
                   />
                 </div>
 

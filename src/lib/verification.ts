@@ -80,6 +80,7 @@ export async function compareWithPrimarySubmission(
        AND r.position = $2
        AND s.status = 'verified'
        AND s.submission_type = 'primary'
+       AND s.superseded_by_submission_id IS NULL
        AND s.id <> $3
      ORDER BY s.submitted_at DESC
      LIMIT 1`,

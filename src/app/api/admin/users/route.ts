@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
                ELSE NULL
              END as profile_id,
              c.position,
+             c.access_status,
              c.payment_status,
              c.payment_amount,
              c.payment_date
@@ -212,7 +213,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { user_id, email, phone, full_name, active } = body
+    const { user_id, email, phone, full_name, active, access_status } = body
 
     if (!user_id) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
@@ -222,6 +223,58 @@ export async function PUT(request: NextRequest) {
     const currentUser = await queryOne('SELECT * FROM users WHERE id = $1', [user_id])
     if (!currentUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // The purchased access of a candidate is a separate concept from the
+    // login account: an account can be active while the subscription is
+    // suspended, and the platform administrator controls both.
+    let candidateAccessChanged = false
+    if (access_status !== undefined) {
+      if (!['active', 'suspended', 'revoked'].includes(access_status)) {
+        return NextResponse.json(
+          { error: 'access_status must be one of active, suspended or revoked' },
+          { status: 400 }
+        )
+      }
+
+      if (currentUser.role !== 'candidate') {
+        return NextResponse.json(
+          { error: 'Only candidate accounts have purchased access' },
+          { status: 400 }
+        )
+      }
+
+      const currentAccess = await queryOne<{ id: number; access_status: string }>(
+        'SELECT id, access_status FROM candidates WHERE user_id = $1',
+        [user_id]
+      )
+
+      if (!currentAccess) {
+        return NextResponse.json(
+          { error: 'Candidate profile not found' },
+          { status: 404 }
+        )
+      }
+
+      if (currentAccess.access_status !== access_status) {
+        await query(
+          'UPDATE candidates SET access_status = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2',
+          [access_status, user_id]
+        )
+        candidateAccessChanged = true
+
+        await query(
+          `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, old_values, new_values, ip_address)
+           VALUES ($1, 'candidate_access_changed', 'candidate', $2, $3, $4, $5)`,
+          [
+            decoded.userId,
+            currentAccess.id,
+            JSON.stringify({ access_status: currentAccess.access_status }),
+            JSON.stringify({ access_status }),
+            request.headers.get('x-forwarded-for') || 'unknown',
+          ]
+        )
+      }
     }
 
     // Build update query dynamically
@@ -254,14 +307,17 @@ export async function PUT(request: NextRequest) {
       paramIndex++
     }
 
-    if (updates.length === 0) {
+    if (updates.length === 0 && !candidateAccessChanged) {
       return NextResponse.json({ error: 'No changes to update' }, { status: 400 })
     }
 
-    params.push(user_id)
-    const queryText = `UPDATE users SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${paramIndex} RETURNING *`
+    let updatedUser = currentUser
+    if (updates.length > 0) {
+      params.push(user_id)
+      const queryText = `UPDATE users SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${paramIndex} RETURNING *`
 
-    const updatedUser = await queryOne(queryText, params)
+      updatedUser = (await queryOne(queryText, params)) ?? currentUser
+    }
 
     // Audit log
     await query(
@@ -281,7 +337,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'User updated successfully',
-      data: updatedUser,
+      data: updatedUser ?? currentUser,
     })
   } catch (error) {
     console.error('Error updating user:', error)

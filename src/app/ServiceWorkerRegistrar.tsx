@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { registerServiceWorker } from '@/lib/pwa'
+import { registerServiceWorker, watchInstallPrompt } from '@/lib/pwa'
 
 /**
  * Registers the service worker once the app has mounted.
@@ -12,6 +12,13 @@ import { registerServiceWorker } from '@/lib/pwa'
 export default function ServiceWorkerRegistrar() {
   useEffect(() => {
     registerServiceWorker()
+
+    // The browser hands the install prompt over early, so it is watched from
+    // the start: the button of the app can then show it whenever the user
+    // asks for it.
+    const stopWatching = watchInstallPrompt()
+
+    return stopWatching
   }, [])
 
   return null

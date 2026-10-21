@@ -1,17 +1,37 @@
 import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
+import { join, resolve } from 'path'
 import { existsSync } from 'fs'
 import crypto from 'crypto'
 import sharp from 'sharp'
-import { getStorage } from '@/lib/storage'
+import { getStorage, getUploadDir, isServerlessRuntime } from '@/lib/storage'
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || '/tmp/ukwelitally-uploads'
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '10485760') // 10MB default
+
+/**
+ * Refuse to store a file on a platform that cannot keep it.
+ *
+ * On a serverless platform the local filesystem is ephemeral: a file written
+ * by one invocation is gone by the next. Storing election evidence there
+ * would look like it worked and then disappear, so the upload is rejected
+ * with an explanation instead.
+ */
+function assertDurableBackend(): void {
+  const storage = getStorage()
+  if (storage.durable) return
+  if (!isServerlessRuntime()) return
+
+  throw new Error(
+    'No durable file storage is configured, so uploaded files would be lost. ' +
+      'Set BLOB_READ_WRITE_TOKEN (Vercel Blob) or S3_BUCKET with S3_REGION and ' +
+      'S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY, then try again.'
+  )
+}
 
 // Ensure upload directory exists
 export async function ensureUploadDir() {
-  if (!existsSync(UPLOAD_DIR)) {
-    await mkdir(UPLOAD_DIR, { recursive: true })
+  const dir = getUploadDir()
+  if (!existsSync(dir)) {
+    await mkdir(dir, { recursive: true })
   }
 }
 
@@ -122,6 +142,7 @@ export async function saveUploadedFile(
   const filename = generateFilename(file.name)
   const storageKey = `${subdir}/${filename}`
   const storage = getStorage()
+  assertDurableBackend()
   await storage.put(storageKey, compressedBuffer, 'image/jpeg')
 
   return {
@@ -188,6 +209,7 @@ export async function saveCandidatePhoto(file: File): Promise<string> {
   const filename = generateFilename(file.name)
   const storageKey = `candidate-photos/${filename}`
   const storage = getStorage()
+  assertDurableBackend()
   await storage.put(storageKey, compressedBuffer, 'image/jpeg')
 
   // Return relative path for database storage (consistent with submission photos)

@@ -50,6 +50,7 @@ async function handleGet(req: NextRequest) {
         c.party_name,
         c.party_abbreviation,
         c.is_system_user,
+        c.profile_photo,
         co.name as county_name,
         con.name as constituency_name,
         w.name as ward_name,
@@ -222,7 +223,17 @@ async function handlePost(req: NextRequest) {
     )
 
     return NextResponse.json(
-      { message: 'Ballot candidate created successfully', candidate },
+      {
+        message: 'Ballot candidate created successfully',
+        // The photo is resolved into a URL so the interface can show it
+        // straight away.
+        candidate: {
+          ...candidate,
+          profile_photo: candidate.profile_photo
+            ? getFileUrl(candidate.profile_photo)
+            : null,
+        },
+      },
       { status: 201 }
     )
   } catch (error) {
@@ -309,7 +320,12 @@ async function handlePut(req: NextRequest) {
 
     return NextResponse.json({
       message: 'Ballot candidate updated successfully',
-      candidate: result.rows[0],
+      candidate: {
+        ...result.rows[0],
+        profile_photo: result.rows[0].profile_photo
+          ? getFileUrl(result.rows[0].profile_photo)
+          : null,
+      },
     })
   } catch (error) {
     console.error('Error updating ballot candidate:', error)

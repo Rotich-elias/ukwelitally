@@ -8,6 +8,61 @@ export interface CandidateRestrictions {
 }
 
 /**
+ * The full candidate profile of a logged in candidate.
+ *
+ * `access_status` is the purchased access entitlement. It is separate from
+ * `users.active` (the login account) and from the reporting window (the
+ * submission permission).
+ */
+export interface CandidateProfile extends CandidateRestrictions {
+  id: number
+  user_id: number
+  full_name: string
+  party_name: string | null
+  access_status: 'active' | 'suspended' | 'revoked'
+}
+
+/**
+ * Load the candidate profile that belongs to a user account.
+ */
+export async function getCandidateProfile(
+  userId: number
+): Promise<CandidateProfile | null> {
+  const row = await queryOne<{
+    id: number
+    user_id: number
+    full_name: string
+    party_name: string | null
+    position: CandidateRestrictions['position']
+    county_id: number | null
+    constituency_id: number | null
+    ward_id: number | null
+    access_status: 'active' | 'suspended' | 'revoked'
+  }>(
+    `SELECT c.id, c.user_id, c.party_name, c.position, c.county_id, c.constituency_id,
+            c.ward_id, c.access_status, u.full_name
+       FROM candidates c
+       JOIN users u ON u.id = c.user_id
+      WHERE c.user_id = $1`,
+    [userId]
+  )
+
+  if (!row) return null
+
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    full_name: row.full_name,
+    party_name: row.party_name,
+    position: row.position,
+    county_id: row.county_id ?? undefined,
+    constituency_id: row.constituency_id ?? undefined,
+    ward_id: row.ward_id ?? undefined,
+    access_status: row.access_status,
+  }
+}
+
+/**
  * Get location restrictions for a candidate
  * Returns the electoral area they are vying for
  */

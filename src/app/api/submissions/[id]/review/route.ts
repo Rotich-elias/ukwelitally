@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query, queryOne } from '@/lib/db'
+import { query, queryOne, transaction } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import { compareWithIebcResults, compareWithPrimarySubmission } from '@/lib/verification'
-import { notifyAdmins, notifySubmissionOwner } from '@/lib/notifications'
+import { notifyAdmins, notifySubmissionOwner, createNotification } from '@/lib/notifications'
+import { recordAgentFallbackConflict } from '@/lib/fallback'
+import { markSuperseded } from '@/lib/submissionRevisions'
 import { Submission } from '@/types/database'
 
 // POST /api/submissions/[id]/review - Admin review action
@@ -64,6 +66,19 @@ async function handlePost(
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 })
     }
 
+    // An observer submission is an alternative result. It only becomes the
+    // result of a station through the candidate's fallback decision, so the
+    // generic review action is not available for it.
+    if (submission.submission_origin === 'observer' && user.role === 'candidate') {
+      return NextResponse.json(
+        {
+          error:
+            'Observer submissions are reviewed through the fallback review. Use the observer review queue to approve or reject a fallback.',
+        },
+        { status: 400 }
+      )
+    }
+
     let newStatus = submission.status
     let verifiedAt = submission.verified_at
 
@@ -82,22 +97,159 @@ async function handlePost(
 
     console.log('[Review] Updating submission status to:', newStatus)
 
-    // Update submission
-    await query(
-      `UPDATE submissions
-       SET status = $1, verified_at = $2
-       WHERE id = $3`,
-      [newStatus, verifiedAt, submissionId]
-    )
+    // The status change, the review record and the selection update are
+    // applied in one transaction, so a report never sees half of a decision.
+    let conflict_detected = false
 
-    console.log('[Review] Creating review record')
+    await transaction(async (client) => {
+      // Update submission
+      await client.query(
+        `UPDATE submissions
+         SET status = $1, verified_at = $2
+         WHERE id = $3`,
+        [newStatus, verifiedAt, submissionId]
+      )
 
-    // Create review record
-    await query(
-      `INSERT INTO submission_reviews (submission_id, reviewer_id, action, review_notes)
-       VALUES ($1, $2, $3, $4)`,
-      [submissionId, user.userId, action, review_notes || null]
-    )
+      console.log('[Review] Creating review record')
+
+      // Create review record
+      await client.query(
+        `INSERT INTO submission_reviews (submission_id, reviewer_id, action, review_notes)
+         VALUES ($1, $2, $3, $4)`,
+        [submissionId, user.userId, action, review_notes || null]
+      )
+
+      // A submission that is no longer approved must not stay the selected
+      // result: a report would otherwise count figures that were flagged or
+      // rejected. The station simply has no result until a version is
+      // approved.
+      if (newStatus !== 'verified') {
+        await client.query(
+          'DELETE FROM selected_results WHERE submission_id = $1',
+          [submissionId]
+        )
+      }
+
+      // A verified agent primary result becomes the selected result for the
+      // station and position, unless a candidate already approved an observer
+      // fallback for it. An approved fallback is never silently replaced: the
+      // conflict is recorded and the candidate resolves it.
+      if (
+        newStatus === 'verified' &&
+        submission.submission_origin === 'agent' &&
+        submission.submission_type === 'primary'
+      ) {
+        const positionRow = await client.query<{ position: string }>(
+          'SELECT position FROM results WHERE submission_id = $1 LIMIT 1',
+          [submissionId]
+        )
+        const position = positionRow.rows[0]?.position
+
+        if (position) {
+          const existingResult = await client.query<{
+            id: number
+            source: string
+            submission_id: number
+            approved_by: number | null
+          }>(
+            `SELECT id, source, submission_id, approved_by
+               FROM selected_results
+              WHERE polling_station_id = $1 AND position = $2
+              FOR UPDATE`,
+            [submission.polling_station_id, position]
+          )
+          const existing = existingResult.rows[0]
+
+          if (!existing) {
+            await client.query(
+              `INSERT INTO selected_results (polling_station_id, position, submission_id, source)
+               VALUES ($1, $2, $3, 'agent_primary')
+               ON CONFLICT (polling_station_id, position) DO NOTHING`,
+              [submission.polling_station_id, position, submissionId]
+            )
+          } else if (
+            submission.supersedes_submission_id &&
+            existing.submission_id === submission.supersedes_submission_id
+          ) {
+            // The approved submission is a correction of the selected result.
+            // The selected result follows the correction. The figures of the
+            // earlier version are kept.
+            await client.query(
+              `UPDATE selected_results
+                  SET submission_id = $1,
+                      source = 'agent_primary',
+                      approved_at = NOW()
+                WHERE id = $2`,
+              [submissionId, existing.id]
+            )
+          } else if (existing.source === 'observer_fallback') {
+            const conflictId = await recordAgentFallbackConflict({
+              agentSubmissionId: submissionId,
+              observerSubmissionId: existing.submission_id,
+              pollingStationId: submission.polling_station_id,
+              position,
+              details: {
+                conflict: 'agent_result_after_approved_observer_fallback',
+                requires_review: true,
+              },
+            })
+
+            if (existing.approved_by) {
+              await createNotification({
+                userId: existing.approved_by,
+                title: 'New agent result for an approved fallback',
+                message:
+                  'An agent result was approved for a polling station where you approved an observer fallback. The approved fallback was not replaced. Please resolve the conflict.',
+                type: 'warning',
+                relatedEntityType: 'discrepancy',
+                relatedEntityId: conflictId ?? undefined,
+              })
+            }
+            conflict_detected = true
+          } else {
+            // Another agent result is already selected for this station. The
+            // first one stays selected so the outcome never depends on which
+            // submission happened to arrive last.
+            await recordAgentFallbackConflict({
+              agentSubmissionId: submissionId,
+              observerSubmissionId: existing.submission_id,
+              pollingStationId: submission.polling_station_id,
+              position,
+              details: {
+                conflict: 'second_agent_result_for_same_station',
+                requires_review: true,
+                note: 'The first agent result stays the selected result for this station.',
+              },
+            })
+            conflict_detected = true
+          }
+
+          // The versions this correction replaces are superseded once the
+          // correction is approved. Their figures and evidence are kept.
+          if (submission.supersedes_submission_id) {
+            const superseded = await markSuperseded(client, {
+              revisionSubmissionId: submissionId,
+              supersedesSubmissionId: submission.supersedes_submission_id,
+            })
+
+            if (superseded.length > 0) {
+              await client.query(
+                `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, new_values)
+                 VALUES ($1, 'submission_revision_approved', 'submission', $2, $3)`,
+                [
+                  user.userId,
+                  submissionId,
+                  JSON.stringify({
+                    superseded_submission_ids: superseded,
+                    revision_number: submission.revision_number,
+                  }),
+                ]
+              )
+            }
+          }
+        }
+      }
+    })
 
     console.log('[Review] Creating audit log')
 
@@ -191,6 +343,7 @@ async function handlePost(
         verified_at: verifiedAt,
       },
       discrepancy_detected: !!discrepancy,
+      conflict_detected: conflict_detected,
     })
   } catch (error) {
     console.error('Error reviewing submission:', error)

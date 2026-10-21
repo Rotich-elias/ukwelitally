@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
 import LocationSelector from '@/components/LocationSelector'
+import LocationManager from '@/components/admin/LocationManager'
 
 interface User {
   id: number
@@ -17,6 +18,7 @@ interface User {
   profile_id?: number
   position?: string
   payment_status?: string
+  access_status?: string
   payment_amount?: number
   payment_date?: string
 }
@@ -62,7 +64,7 @@ export default function AdminDashboard() {
   const [totalPaid, setTotalPaid] = useState(0)
   const [expectedAmount, setExpectedAmount] = useState(0)
   const [filterRole, setFilterRole] = useState<string>('all')
-  const [viewMode, setViewMode] = useState<'users' | 'ballot_candidates'>('users')
+  const [viewMode, setViewMode] = useState<'users' | 'ballot_candidates' | 'locations'>('users')
   const [ballotCandidates, setBallotCandidates] = useState<any[]>([])
   const [loadingBallot, setLoadingBallot] = useState(false)
   const [showBallotModal, setShowBallotModal] = useState(false)
@@ -142,6 +144,10 @@ export default function AdminDashboard() {
     const userData = JSON.parse(user)
     if (userData.role !== 'admin') {
       router.push('/login')
+      return
+    }
+
+    if (viewMode === 'locations') {
       return
     }
 
@@ -421,6 +427,11 @@ export default function AdminDashboard() {
           phone: selectedUser.phone,
           full_name: selectedUser.full_name,
           active: selectedUser.active,
+          // Only candidates have a purchased access entitlement.
+          access_status:
+            selectedUser.role === 'candidate'
+              ? selectedUser.access_status || 'active'
+              : undefined,
         }),
       })
 
@@ -720,7 +731,7 @@ export default function AdminDashboard() {
               >
                 + Create User
               </button>
-            ) : (
+            ) : viewMode === 'ballot_candidates' ? (
               <>
                 <button
                   onClick={() => setShowImportModal(true)}
@@ -746,7 +757,7 @@ export default function AdminDashboard() {
                   + Add Ballot Candidate
                 </button>
               </>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -775,6 +786,19 @@ export default function AdminDashboard() {
           >
             Ballot Candidates
             {viewMode === 'ballot_candidates' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
+            )}
+          </button>
+          <button
+            onClick={() => setViewMode('locations')}
+            className={`px-6 py-3 font-medium transition-colors relative ${
+              viewMode === 'locations'
+                ? 'text-blue-400'
+                : 'text-dark-400 hover:text-white'
+            }`}
+          >
+            Locations
+            {viewMode === 'locations' && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
             )}
           </button>
@@ -939,6 +963,18 @@ export default function AdminDashboard() {
                             }`}>
                               {user.payment_status || 'pending'}
                             </span>
+                            <span
+                              title="Purchased access"
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                (user.access_status || 'active') === 'active'
+                                  ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30'
+                                  : (user.access_status || 'active') === 'suspended'
+                                    ? 'bg-orange-500/20 text-orange-400'
+                                    : 'bg-red-500/20 text-red-400'
+                              }`}
+                            >
+                              {user.access_status || 'active'}
+                            </span>
                             <button
                               onClick={async () => {
                                 setSelectedUser(user as any)
@@ -1030,7 +1066,7 @@ export default function AdminDashboard() {
             </table>
           </div>
         </div>
-        ) : (
+        ) : viewMode === 'ballot_candidates' ? (
           // Ballot Candidates View
           <div className="glass-effect rounded-xl overflow-hidden">
             {ballotSuccess && (
@@ -1196,6 +1232,9 @@ export default function AdminDashboard() {
               </table>
             </div>
           </div>
+        ) : (
+          // Locations View
+          <LocationManager />
         )}
       </div>
 
@@ -1930,6 +1969,30 @@ export default function AdminDashboard() {
                     <option value="inactive">Inactive</option>
                   </select>
                 </div>
+
+                {selectedUser.role === 'candidate' && (
+                  <div>
+                    <label className="block text-sm font-medium text-dark-200 mb-2">
+                      Purchased access
+                    </label>
+                    <select
+                      value={selectedUser.access_status || 'active'}
+                      onChange={(e) =>
+                        setSelectedUser({ ...selectedUser, access_status: e.target.value })
+                      }
+                      className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                    >
+                      <option value="active">Active</option>
+                      <option value="suspended">Suspended</option>
+                      <option value="revoked">Revoked</option>
+                    </select>
+                    <p className="text-xs text-dark-400 mt-2">
+                      The access status controls whether this candidate can submit results. It is
+                      separate from the account status above and from the candidate&apos;s own
+                      reporting window, which the candidate controls.
+                    </p>
+                  </div>
+                )}
 
                 <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
                   <p className="text-sm text-yellow-400">

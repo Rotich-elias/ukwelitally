@@ -65,6 +65,7 @@ async function handleGet(req: NextRequest) {
       JOIN constituencies const ON w.constituency_id = const.id
       JOIN counties co ON const.county_id = co.id
       LEFT JOIN submissions s ON ps.id = s.polling_station_id
+        AND s.superseded_by_submission_id IS NULL
       ${whereClause}
       GROUP BY ps.id, ps.code, ps.name, ps.registered_voters, w.name, const.name, co.name
       ${havingClause}
@@ -106,6 +107,7 @@ async function handleGet(req: NextRequest) {
         JOIN constituencies const ON w.constituency_id = const.id
         JOIN counties co ON const.county_id = co.id
         LEFT JOIN submissions s ON ps.id = s.polling_station_id
+        AND s.superseded_by_submission_id IS NULL
         ${whereClause}
         GROUP BY ps.id
         HAVING COUNT(s.id) > 0
@@ -128,6 +130,7 @@ async function handleGet(req: NextRequest) {
       JOIN constituencies const ON w.constituency_id = const.id
       JOIN counties co ON const.county_id = co.id
       LEFT JOIN submissions s ON ps.id = s.polling_station_id
+        AND s.superseded_by_submission_id IS NULL
       ${whereClause}
     `
     const statusCountsResult = await queryOne<{ verified: number; pending: number; flagged: number }>(statusCountsSql, params)

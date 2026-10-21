@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { query, transaction } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import { hashPassword, normalizePhoneNumber } from '@/lib/auth'
+import { getAssignmentScope, isStationInScope } from '@/lib/agentScope'
 
 // POST /api/agents/import - Bulk import agents from CSV
 async function handlePost(req: NextRequest) {
@@ -11,6 +12,17 @@ async function handlePost(req: NextRequest) {
     // Only admins and candidates can import agents
     if (user.role !== 'admin' && user.role !== 'candidate') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    // A candidate may only import agents for their own team, and only for
+    // the polling stations inside their own electoral area. The CSV carries
+    // a candidate id, so it has to be checked rather than trusted.
+    let importScope = null
+    if (user.role === 'candidate') {
+      importScope = await getAssignmentScope(user.userId)
+      if (!importScope) {
+        return NextResponse.json({ error: 'Candidate profile not found' }, { status: 404 })
+      }
     }
 
     const formData = await req.formData()
@@ -113,6 +125,14 @@ async function handlePost(req: NextRequest) {
         continue
       }
 
+      // A candidate may only import agents for their own team.
+      if (importScope && candidateId !== importScope.candidate.id) {
+        errors.push(
+          `Row ${i + 1}: You can only import agents for your own candidate (id ${importScope.candidate.id})`
+        )
+        continue
+      }
+
       agents.push({
         full_name: row.full_name,
         email: row.email.toLowerCase(),
@@ -183,6 +203,20 @@ async function handlePost(req: NextRequest) {
           skipped++
           skippedList.push(`${agent.full_name} - Polling Station ID ${agent.polling_station_id} not found`)
           continue
+        }
+
+        // Verify the station is inside the candidate's own scope. The check
+        // runs here as well, so a hand edited CSV cannot move an agent into
+        // another candidate's area.
+        if (importScope) {
+          const inScope = await isStationInScope(importScope, agent.polling_station_id)
+          if (!inScope) {
+            skipped++
+            skippedList.push(
+              `${agent.full_name} - Polling Station ID ${agent.polling_station_id} is outside your electoral area`
+            )
+            continue
+          }
         }
 
         // Hash password

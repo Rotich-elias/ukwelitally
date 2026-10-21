@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import InstallAppButton from '@/components/InstallAppButton'
 
 interface User {
   id: string
@@ -118,6 +119,7 @@ export default function DashboardNav() {
               <span className="text-sm px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full border border-blue-500/30">
                 {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
               </span>
+              <InstallAppButton variant="compact" />
               <button
                 onClick={() => {
                   setShowNotifications(!showNotifications)

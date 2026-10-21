@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { queryMany, queryOne } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import { buildCandidateBreakdown } from '@/lib/aggregation'
-import { getFileUrl } from '@/lib/storage'
+import { getEvidenceUrl } from '@/lib/storage'
+import { getCandidateRestrictions, canAccessLocation } from '@/lib/candidate-restrictions'
 
 // GET /api/polling-stations/[id]/detailed-results - Get detailed results for a specific polling station
 async function handleGet(req: NextRequest, context?: any) {
@@ -56,6 +57,26 @@ async function handleGet(req: NextRequest, context?: any) {
     }
 
     console.log('[Detailed Results] Polling station found:', pollingStation.name)
+
+    // A candidate may only look at the stations in their own electoral area,
+    // so the submissions and the evidence of another candidate stay private.
+    if (user.role === 'candidate') {
+      const restrictions = await getCandidateRestrictions(user.userId)
+      if (
+        restrictions &&
+        restrictions.position !== 'president' &&
+        !canAccessLocation(restrictions, {
+          county_id: pollingStation.county_id,
+          constituency_id: pollingStation.constituency_id,
+          ward_id: pollingStation.ward_id,
+        })
+      ) {
+        return NextResponse.json(
+          { error: 'This polling station is outside your electoral area' },
+          { status: 403 }
+        )
+      }
+    }
 
     // Get all submissions for this polling station
     console.log('[Detailed Results] Fetching submissions...')
@@ -134,12 +155,13 @@ async function handleGet(req: NextRequest, context?: any) {
 
     console.log('[Detailed Results] Submissions fetched:', submissions.length)
 
-    // Resolve photo paths to reachable URLs based on the storage backend.
+    // The evidence of a submission is private, so it is served through the
+    // authorized evidence route instead of the public upload route.
     const submissionsWithUrls = submissions.map((submission: any) => ({
       ...submission,
       photos: (submission.photos || []).map((photo: any) => ({
         ...photo,
-        file_path: getFileUrl(photo.file_path),
+        file_path: getEvidenceUrl(photo.id),
       })),
     }))
 

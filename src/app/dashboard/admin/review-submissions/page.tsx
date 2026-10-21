@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
+import SafeImage from '@/components/SafeImage'
 
 interface ReviewSubmission {
   id: number
@@ -438,11 +439,15 @@ export default function ReviewSubmissionsPage() {
                       <p className="text-dark-400 text-xs mb-2 capitalize">
                         {photo.photo_type.replace('_', ' ')}
                       </p>
-                      <img
+                      <SafeImage
                         src={photo.file_path}
                         alt={photo.photo_type}
                         className="w-full h-40 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => window.open(photo.file_path, '_blank')}
+                        fallback={
+                          <div className="w-full h-40 rounded bg-dark-800 flex items-center justify-center text-xs text-dark-500">
+                            Image unavailable
+                          </div>
+                        }
                       />
                     </div>
                   ))}

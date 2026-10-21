@@ -4,6 +4,18 @@ export type UserRole = 'candidate' | 'agent' | 'observer' | 'admin'
 export type Position = 'president' | 'governor' | 'senator' | 'women_rep' | 'mp' | 'mca'
 export type SubmissionType = 'primary' | 'backup' | 'public'
 export type SubmissionStatus = 'pending' | 'verified' | 'flagged' | 'rejected'
+/** Who produced a submission. Observers never produce a primary result. */
+export type SubmissionOrigin = 'agent' | 'observer' | 'admin'
+/** Review state of an observer submission. */
+export type ReviewStatus = 'pending_review' | 'approved_fallback' | 'rejected_fallback'
+/** Which kind of result is selected for a station and position. */
+export type SelectedResultSource = 'agent_primary' | 'observer_fallback'
+/** Purchased access of a candidate, independent of the login account. */
+export type CandidateAccessStatus = 'active' | 'suspended' | 'revoked'
+/** State of a candidate controlled reporting window. */
+export type SubmissionWindowStatus = 'closed' | 'open' | 'scheduled'
+/** State of a reporting window once the server clock is applied. */
+export type ReportingWindowState = 'closed' | 'open' | 'scheduled' | 'expired'
 export type PhotoType = 'full_form' | 'closeup' | 'signature' | 'stamp' | 'serial_number' | 'other'
 export type DiscrepancyType = 'agent_vs_backup' | 'vs_iebc' | 'statistical_anomaly' | 'location_mismatch'
 export type DiscrepancyStatus = 'open' | 'investigating' | 'resolved' | 'confirmed_error'
@@ -45,6 +57,9 @@ export interface Candidate {
   // Ballot candidates can be archived instead of deleted.
   archived: boolean
   profile_photo: string | null
+  // Purchased access entitlement. Independent of users.active and of the
+  // candidate controlled reporting window.
+  access_status: CandidateAccessStatus
   payment_status: PaymentStatus | null
   // Total paid so far (kept in sync by the payment endpoint).
   payment_amount: number | null
@@ -118,6 +133,20 @@ export interface Submission {
   candidate_id: number
   submission_type: SubmissionType
   status: SubmissionStatus
+  // Who produced the submission.
+  submission_origin: SubmissionOrigin
+  // Review state of an observer submission.
+  review_status: ReviewStatus | null
+  review_reason: string | null
+  reviewed_by: number | null
+  reviewed_at: Date | null
+  // The candidate whose reporting window authorised this submission.
+  scope_candidate_id: number | null
+  // Versioned corrections. The original submission is kept, never replaced.
+  supersedes_submission_id: number | null
+  superseded_by_submission_id: number | null
+  revision_number: number
+  revision_reason: string | null
   submitted_lat: number | null
   submitted_lng: number | null
   location_verified: boolean
@@ -132,6 +161,34 @@ export interface Submission {
   flagged_reason: string | null
   created_at: Date
   updated_at: Date
+}
+
+export interface SubmissionWindow {
+  id: number
+  candidate_id: number
+  position: Position | null
+  status: SubmissionWindowStatus
+  opens_at: Date | null
+  closes_at: Date | null
+  opened_by: number | null
+  opened_at: Date | null
+  closed_by: number | null
+  closed_at: Date | null
+  schedule_cancelled_at: Date | null
+  schedule_cancelled_by: number | null
+  created_at: Date
+  updated_at: Date
+}
+
+export interface SelectedResult {
+  id: number
+  polling_station_id: number
+  position: Position
+  submission_id: number
+  source: SelectedResultSource
+  approved_by: number | null
+  approved_at: Date | null
+  created_at: Date
 }
 
 export interface SubmissionPhoto {

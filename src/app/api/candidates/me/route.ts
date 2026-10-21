@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryOne } from '@/lib/db'
+import { getFileUrl } from '@/lib/storage'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from '@/lib/jwtSecret'
 
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
         c.county_id,
         c.constituency_id,
         c.ward_id,
+        c.profile_photo,
         u.full_name,
         u.email,
         u.phone,
@@ -71,6 +73,7 @@ export async function GET(request: NextRequest) {
         party_name: candidate.party_name,
         position: candidate.position,
         electoral_area: electoralArea,
+        profile_photo: candidate.profile_photo ? getFileUrl(candidate.profile_photo) : null,
         county_id: candidate.county_id,
         constituency_id: candidate.constituency_id,
         ward_id: candidate.ward_id,

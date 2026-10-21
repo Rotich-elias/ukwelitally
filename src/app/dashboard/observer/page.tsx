@@ -23,6 +23,24 @@ interface ObserverInfo {
   constituency_name: string
   county_name: string
   volunteer_registration_id: number
+  available_positions?: Array<{ position: string; candidate_ids: number[] }>
+}
+
+interface SubmissionWindowState {
+  status: 'closed' | 'open' | 'scheduled' | 'expired'
+  can_submit: boolean
+  message: string
+  opens_at_display: string
+  closes_at_display: string
+}
+
+interface ObserverSubmission {
+  id: number
+  status: string
+  review_status: string | null
+  submission_type: string
+  submitted_at: string
+  polling_station_name: string
 }
 
 interface Candidate {
@@ -55,6 +73,13 @@ export default function ObserverDashboard() {
   })
 
   const [candidateVotes, setCandidateVotes] = useState<Record<number, string>>({})
+  const [position, setPosition] = useState('president')
+  const [submissionWindow, setSubmissionWindow] = useState<SubmissionWindowState | null>(null)
+  const [accountActive, setAccountActive] = useState(true)
+  const [mySubmissions, setMySubmissions] = useState<ObserverSubmission[]>([])
+  const [availablePositions, setAvailablePositions] = useState<
+    Array<{ position: string; candidate_ids: number[] }>
+  >([])
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -87,8 +112,15 @@ export default function ObserverDashboard() {
           const data = await response.json()
           setObserverInfo(data.data)
 
-          // Fetch presidential candidates
-          fetchPresidentialCandidates(token)
+          // The observer picks the race they are reporting. Every race that
+          // has a candidate in their area can be reported.
+          const positions = data.data.available_positions || []
+          setAvailablePositions(positions)
+          if (positions.length > 0) {
+            const preferred = positions.find((p: any) => p.position === 'president')
+            setPosition((preferred || positions[0]).position)
+          }
+
         } else {
           setError('Failed to load observer information')
         }
@@ -101,28 +133,66 @@ export default function ObserverDashboard() {
       }
     }
 
-    const fetchPresidentialCandidates = async (authToken: string) => {
-      setLoadingCandidates(true)
-      try {
-        const response = await fetch('/api/candidates?position=president', {
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-          },
-        })
+    fetchObserverInfo()
+  }, [router])
 
+  // The candidates of the race the observer reports.
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    setLoadingCandidates(true)
+    fetch(`/api/candidates?position=${position}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (response) => {
         if (response.ok) {
           const data = await response.json()
           setCandidates(data.candidates || [])
         }
+      })
+      .catch((err) => console.error('Failed to fetch candidates:', err))
+      .finally(() => setLoadingCandidates(false))
+  }, [position])
+
+  // The reporting window and the observer's own submissions follow the
+  // position the observer reports.
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    const fetchWindow = async () => {
+      try {
+        const response = await fetch(`/api/submissions/window?position=${position}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setSubmissionWindow(data.window)
+          setAccountActive(data.account_active !== false)
+        }
       } catch (err) {
-        console.error('Failed to fetch candidates:', err)
-      } finally {
-        setLoadingCandidates(false)
+        console.error('Failed to fetch the reporting window:', err)
       }
     }
 
-    fetchObserverInfo()
-  }, [router])
+    const fetchMySubmissions = async () => {
+      try {
+        const response = await fetch('/api/submissions', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setMySubmissions(data.submissions || [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch your submissions:', err)
+      }
+    }
+
+    fetchWindow()
+    fetchMySubmissions()
+  }, [position])
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -142,12 +212,12 @@ export default function ObserverDashboard() {
       }
 
       const token = localStorage.getItem('token')
-      
+
       // Create submission first
       const submitData = new FormData()
       submitData.append('polling_station_id', observerInfo.polling_station_id.toString())
       submitData.append('submission_type', 'backup') // Observer submissions are backup type
-      submitData.append('position', 'president')
+      submitData.append('position', position)
 
       // Add photos
       formData.photos.forEach((photo, index) => {
@@ -186,7 +256,7 @@ export default function ObserverDashboard() {
         },
         body: JSON.stringify({
           submission_id: submissionData.submission.id,
-          position: 'president',
+          position,
           registered_voters: parseInt(formData.registered_voters),
           total_votes_cast: parseInt(formData.total_votes_cast),
           valid_votes: validVotes,
@@ -202,7 +272,7 @@ export default function ObserverDashboard() {
         throw new Error(resultsData.error || 'Failed to submit results')
       }
 
-      setSuccess('Presidential results submitted successfully!')
+      setSuccess('Alternative result submitted. It is waiting for the candidate to review it.')
       
       // Reset form
       setFormData({
@@ -214,7 +284,7 @@ export default function ObserverDashboard() {
       setCandidateVotes({})
       setStep('form')
     } catch (err: any) {
-      setError(err.message || 'Failed to submit presidential results')
+      setError(err.message || 'Failed to submit the alternative result')
     } finally {
       setSubmitting(false)
     }
@@ -235,9 +305,53 @@ export default function ObserverDashboard() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Presidential Results Observer</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Election Observer</h1>
           <p className="text-dark-300">
-            Welcome, {user?.full_name}. Submit presidential election results for your assigned polling station.
+            Welcome, {user?.full_name}. Submit alternative results for your assigned polling
+            station.
+          </p>
+        </div>
+
+        {/* Reporting window status */}
+        {submissionWindow && (
+          <div
+            className={`mb-6 rounded-xl p-5 border ${
+              submissionWindow.can_submit
+                ? 'bg-emerald-500/10 border-emerald-500/40'
+                : 'bg-orange-500/10 border-orange-500/40'
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-white font-semibold">
+                  Result submission is {submissionWindow.status}
+                </h3>
+                <p className="text-sm text-dark-200 mt-1">{submissionWindow.message}</p>
+                {!accountActive && (
+                  <p className="text-sm text-red-300 mt-1">
+                    Your account is not active. Contact an administrator to restore it.
+                  </p>
+                )}
+              </div>
+              <div className="text-xs text-dark-300 text-right">
+                <p>
+                  Opens: <span className="text-white font-medium">{submissionWindow.opens_at_display}</span>
+                </p>
+                <p>
+                  Closes: <span className="text-white font-medium">{submissionWindow.closes_at_display}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Observer notice */}
+        <div className="mb-6 bg-blue-500/10 border border-blue-500/30 rounded-xl p-5">
+          <h3 className="text-white font-semibold mb-1">How observer results are used</h3>
+          <p className="text-sm text-dark-200">
+            Your result is an alternative result. It is stored separately from the agent result
+            and it never replaces it. The candidate reviews your submission and may approve it as
+            the fallback for a polling station where no agent reported.
           </p>
         </div>
 
@@ -257,13 +371,37 @@ export default function ObserverDashboard() {
           {/* Main Form */}
           <div className="lg:col-span-2">
             <div className="glass-effect rounded-xl p-6">
-              <h2 className="text-xl font-semibold text-white mb-6">Submit Presidential Results</h2>
+              <h2 className="text-xl font-semibold text-white mb-6">Submit Alternative Result</h2>
+
+              {/* Race selector */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-dark-200 mb-2">
+                  Election race you are reporting
+                </label>
+                <select
+                  value={position}
+                  onChange={(e) => setPosition(e.target.value)}
+                  disabled={availablePositions.length === 0}
+                  className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm disabled:opacity-50"
+                >
+                  {availablePositions.map((entry) => (
+                    <option key={entry.position} value={entry.position}>
+                      {entry.position.replace(/_/g, ' ').toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-dark-400 mt-2">
+                  {availablePositions.length > 0
+                    ? 'Only the races that have a candidate reporting at your polling station can be reported.'
+                    : 'No candidate is reporting at your polling station yet, so there is no race to report. The candidate has to assign a team to this station first.'}
+                </p>
+              </div>
 
               <form onSubmit={handleSubmitPresidentialResults} className="space-y-6">
                 {/* Photo Upload */}
                 <div>
                   <label className="block text-sm font-medium text-dark-200 mb-2">
-                    Form 34A Photos (Presidential)
+                    Form 34A Photos
                   </label>
                   <div className="border-2 border-dashed border-dark-700 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
                     <input
@@ -341,9 +479,11 @@ export default function ObserverDashboard() {
 
                 {/* Presidential Candidate Votes */}
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-4">Presidential Candidate Votes</h3>
+                  <h3 className="text-lg font-semibold text-white mb-4">
+                    {position.replace(/_/g, ' ').toUpperCase()} Candidate Votes
+                  </h3>
                   {loadingCandidates ? (
-                    <div className="text-center py-8 text-dark-400">Loading presidential candidates...</div>
+                    <div className="text-center py-8 text-dark-400">Loading candidates...</div>
                   ) : candidates.length > 0 ? (
                     <div className="space-y-3">
                       {candidates.map((candidate) => (
@@ -379,7 +519,7 @@ export default function ObserverDashboard() {
                     </div>
                   ) : (
                     <div className="text-center py-8 text-yellow-400">
-                      No presidential candidates found. Please contact admin.
+                      No candidates found for this race. Please contact admin.
                     </div>
                   )}
                 </div>
@@ -387,17 +527,73 @@ export default function ObserverDashboard() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={submitting || candidates.length === 0}
+                  disabled={
+                    submitting ||
+                    candidates.length === 0 ||
+                    availablePositions.length === 0 ||
+                    submissionWindow?.can_submit === false
+                  }
                   className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting ? 'Submitting...' : 'Submit Presidential Results'}
+                  {submitting
+                    ? 'Submitting...'
+                    : submissionWindow?.can_submit === false
+                      ? 'Result submission is closed'
+                      : 'Submit Alternative Result'}
                 </button>
+                {submissionWindow?.can_submit === false && (
+                  <p className="text-xs text-orange-300 text-center">{submissionWindow.message}</p>
+                )}
               </form>
             </div>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* My submissions */}
+            <div className="glass-effect rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">My Submissions</h3>
+              {mySubmissions.length === 0 ? (
+                <p className="text-sm text-dark-400">
+                  You have not submitted any result yet.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {mySubmissions.slice(0, 5).map((submission) => (
+                    <div
+                      key={submission.id}
+                      className="bg-dark-900/50 border border-dark-700 rounded-lg p-3"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <p className="text-sm text-white font-medium truncate">
+                          {submission.polling_station_name || 'Polling station'}
+                        </p>
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 ${
+                            submission.review_status === 'approved_fallback'
+                              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                              : submission.review_status === 'rejected_fallback'
+                                ? 'bg-slate-500/20 text-slate-300 border border-slate-500/30'
+                                : 'bg-orange-500/20 text-orange-300 border border-orange-500/30'
+                          }`}
+                        >
+                          {submission.review_status === 'approved_fallback'
+                            ? 'Approved fallback'
+                            : submission.review_status === 'rejected_fallback'
+                              ? 'Rejected'
+                              : 'Awaiting review'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-dark-400">
+                        {new Date(submission.submitted_at).toLocaleString('en-KE')} ·{' '}
+                        {submission.status}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Polling Station Info */}
             <div className="glass-effect rounded-xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Your Assigned Polling Station</h3>

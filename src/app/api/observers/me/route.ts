@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
+import { getPositionsForStation } from '@/lib/submissionWindow'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from '@/lib/jwtSecret'
 
@@ -65,9 +66,18 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // The races an observer may report from their station. Each position
+    // lists the candidates whose reporting window governs the submission.
+    const availablePositions = await getPositionsForStation(
+      result.rows[0].polling_station_id
+    )
+
     return NextResponse.json({
       success: true,
-      data: result.rows[0],
+      data: {
+        ...result.rows[0],
+        available_positions: availablePositions,
+      },
     })
   } catch (error) {
     console.error('Error fetching observer info:', error)

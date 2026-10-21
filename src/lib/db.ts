@@ -1,5 +1,9 @@
 import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg'
 
+// Re-exported so the transaction helpers can be typed by the callers that
+// pass a client around.
+export type { PoolClient, QueryResult, QueryResultRow }
+
 // Singleton pool instance
 let pool: Pool | null = null
 

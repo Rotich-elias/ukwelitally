@@ -4,8 +4,18 @@ import { withAuth } from '@/middleware/auth'
 import { parseFormData, saveUploadedFile } from '@/lib/fileUpload'
 import { verifyLocation, calculateConfidenceScore } from '@/lib/validation'
 import { getObserverAssignment, getPlaceholderCandidateId } from '@/lib/observer'
-import { getFileUrl } from '@/lib/storage'
+import { getFileUrl, getEvidenceUrl } from '@/lib/storage'
+import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
+import { getCurrentVersion } from '@/lib/submissionRevisions'
+import {
+  evaluateSubmissionAuthorization,
+  getAgentWindowContext,
+  getObserverWindowContext,
+} from '@/lib/submissionWindow'
 import { Submission, PollingStation, Agent, Candidate } from '@/types/database'
+
+/** The positions a result may be reported for. */
+const VALID_POSITIONS = ['president', 'governor', 'senator', 'women_rep', 'mp', 'mca']
 
 // GET /api/submissions - List submissions
 async function handleGet(req: NextRequest) {
@@ -20,10 +30,20 @@ async function handleGet(req: NextRequest) {
       SELECT s.*,
              u.full_name as submitter_name,
              ps.name as polling_station_name,
-             ps.code as polling_station_code
+             ps.code as polling_station_code,
+             COALESCE(
+               json_agg(
+                 json_build_object(
+                   'id', sp.id,
+                   'photo_type', sp.photo_type
+                 )
+               ) FILTER (WHERE sp.id IS NOT NULL),
+               '[]'
+             ) as photos
       FROM submissions s
       JOIN users u ON s.user_id = u.id
       JOIN polling_stations ps ON s.polling_station_id = ps.id
+      LEFT JOIN submission_photos sp ON s.id = sp.submission_id
       WHERE 1=1
     `
     const params: any[] = []
@@ -50,6 +70,12 @@ async function handleGet(req: NextRequest) {
       }
       sql += ` AND s.candidate_id = $${paramIndex++}`
       params.push(candidate.id)
+    } else if (user.role === 'observer') {
+      // An observer only ever sees their own submissions. The alternative
+      // results of other observers and the agent results of other teams are
+      // not theirs to read.
+      sql += ` AND s.user_id = $${paramIndex++}`
+      params.push(user.userId)
     }
 
     // Apply additional filters
@@ -66,11 +92,24 @@ async function handleGet(req: NextRequest) {
       params.push(status)
     }
 
+    // The photos are aggregated per submission, so the rows are grouped
+    // after the filters have been applied.
+    sql += ' GROUP BY s.id, u.id, ps.id'
     sql += ' ORDER BY s.created_at DESC LIMIT 100'
 
     const submissions = await queryMany(sql, params)
 
-    return NextResponse.json({ submissions })
+    // The evidence of a submission is private, so it is served through the
+    // authorized evidence route instead of the public upload route.
+    const withEvidence = submissions.map((submission: any) => ({
+      ...submission,
+      photos: (submission.photos || []).map((photo: any) => ({
+        ...photo,
+        file_path: getEvidenceUrl(photo.id),
+      })),
+    }))
+
+    return NextResponse.json({ submissions: withEvidence })
   } catch (error) {
     console.error('Error fetching submissions:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -82,12 +121,27 @@ async function handlePost(req: NextRequest) {
   try {
     const user = (req as any).user
 
+    // Rate limit the submission endpoint per user and client address.
+    const limit = checkRateLimit(
+      rateLimitKey('submission', `${user.userId}:${getClientIp(req)}`),
+      RATE_LIMITS.submission.limit,
+      RATE_LIMITS.submission.windowMs
+    )
+    if (!limit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Too many submissions. Please wait a moment and try again.',
+        },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
+      )
+    }
+
     // Parse multipart form data
     const { fields, files } = await parseFormData(req)
 
     // Validate required fields
     const pollingStationId = parseInt(fields.polling_station_id)
-    const submissionType = fields.submission_type || 'primary'
+    let submissionType = fields.submission_type || 'primary'
     const submittedLat = fields.submitted_lat ? parseFloat(fields.submitted_lat) : null
     const submittedLng = fields.submitted_lng ? parseFloat(fields.submitted_lng) : null
     const deviceId = fields.device_id || null
@@ -186,6 +240,83 @@ async function handlePost(req: NextRequest) {
           { status: 400 }
         )
       }
+    } else {
+      return NextResponse.json(
+        { error: 'Only agents and observers can submit results' },
+        { status: 403 }
+      )
+    }
+
+    // An observer submission is an alternative result. It must never be
+    // recorded as a primary result, and the submission type is fixed by the
+    // role rather than by the request.
+    const submissionOrigin = user.role === 'observer' ? 'observer' : 'agent'
+    if (user.role === 'observer' && submissionType === 'primary') {
+      return NextResponse.json(
+        { error: 'Observers submit alternative results, not primary results' },
+        { status: 400 }
+      )
+    }
+    if (user.role === 'observer') {
+      submissionType = 'backup'
+    }
+
+    // Submission permission is checked on the server: an active account,
+    // valid purchased access, an assigned polling station and an open
+    // reporting window. A stale frontend cannot bypass any of it.
+    const account = await queryOne<{ active: boolean }>(
+      'SELECT active FROM users WHERE id = $1',
+      [user.userId]
+    )
+    const accountActive = account?.active === true
+
+    const position = user.role === 'observer' ? fields.position || 'president' : null
+
+    if (user.role === 'observer' && !VALID_POSITIONS.includes(position!)) {
+      return NextResponse.json(
+        { error: 'Invalid position for an observer submission' },
+        { status: 400 }
+      )
+    }
+
+    const windowContext =
+      user.role === 'observer'
+        ? await getObserverWindowContext(user.userId, pollingStationId, position!)
+        : await getAgentWindowContext(user.userId)
+
+    if (!windowContext) {
+      return NextResponse.json(
+        { error: 'Your reporting profile could not be resolved' },
+        { status: 403 }
+      )
+    }
+
+    const stationAssigned =
+      user.role === 'agent'
+        ? (await queryOne<{ polling_station_id: number | null }>(
+            'SELECT polling_station_id FROM agents WHERE user_id = $1 AND candidate_id = $2',
+            [user.userId, candidateId]
+          ))?.polling_station_id === pollingStationId
+        : true
+
+    const authorization = evaluateSubmissionAuthorization({
+      role: user.role,
+      accountActive,
+      candidateAccessStatus: windowContext.accessStatus,
+      window: windowContext.evaluation,
+      stationAssigned,
+      kind: user.role === 'observer' ? 'observer' : 'agent',
+    })
+
+    if (!authorization.allowed) {
+      return NextResponse.json(
+        {
+          error: authorization.message,
+          code: authorization.code,
+          window_status: windowContext.evaluation.status,
+        },
+        { status: 403 }
+      )
     }
 
     // Verify GPS location if provided
@@ -203,38 +334,38 @@ async function handlePost(req: NextRequest) {
       distance = verification.distance
     }
 
-    // Check for duplicate submission and handle revisions
-    const existingSubmission = await queryOne<{ id: number; status: string }>(
-      `SELECT id, status FROM submissions
-       WHERE user_id = $1 AND polling_station_id = $2 AND candidate_id = $3 AND submission_type = $4`,
-      [user.userId, pollingStationId, candidateId, submissionType]
-    )
+    // A correction is stored as the next version of the submission. The
+    // original submission, its figures and its evidence are kept: nothing is
+    // deleted, and the selected result only follows the new version once the
+    // new version is approved.
+    const existingSubmission = await getCurrentVersion({
+      userId: user.userId,
+      pollingStationId,
+      candidateId,
+      submissionType,
+    })
+
+    let supersedesSubmissionId: number | null = null
+    let revisionNumber = 1
+    let revisionReason: string | null = null
 
     if (existingSubmission) {
       const status = existingSubmission.status
 
-      // If submission is flagged or rejected, allow revision by deleting the old one
       if (status === 'flagged' || status === 'rejected') {
-        console.log('[Submission] Allowing revision - deleting existing submission:', existingSubmission.id, 'with status:', status)
+        revisionReason = (fields.revision_reason || '').trim() || null
+        if (!revisionReason) {
+          return NextResponse.json(
+            {
+              error:
+                'A reason is required when correcting a submission. Explain what was wrong with the previous version.',
+            },
+            { status: 400 }
+          )
+        }
 
-        // Delete old submission and its files
-        const { deleteSubmission } = await import('@/lib/submissionHelpers')
-        await deleteSubmission(existingSubmission.id)
-
-        // Log revision in audit
-        await query(
-          `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, old_values)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [
-            user.userId,
-            'submission_revised',
-            'submission',
-            existingSubmission.id,
-            JSON.stringify({ old_status: status, polling_station_id: pollingStationId }),
-          ]
-        )
-
-        console.log('[Submission] Old submission deleted, proceeding with new submission')
+        supersedesSubmissionId = existingSubmission.id
+        revisionNumber = existingSubmission.revision_number + 1
       } else {
         // Submission exists and is pending or verified - block duplicate
         return NextResponse.json(
@@ -263,15 +394,26 @@ async function handlePost(req: NextRequest) {
       const submissionResult = await client.query<Submission>(
         `INSERT INTO submissions (
           polling_station_id, user_id, candidate_id, submission_type,
+          submission_origin, review_status, scope_candidate_id,
+          supersedes_submission_id, revision_number, revision_reason,
           submitted_lat, submitted_lng, location_verified,
           device_id, device_type, ip_address, confidence_score
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING *`,
         [
           pollingStationId,
           user.userId,
           candidateId,
           submissionType,
+          submissionOrigin,
+          // An observer submission waits for the candidate to decide whether it
+          // can be used as the fallback for a station.
+          submissionOrigin === 'observer' ? 'pending_review' : null,
+          // The candidate whose reporting window authorised this submission.
+          windowContext.authorisedByCandidateId,
+          supersedesSubmissionId,
+          revisionNumber,
+          revisionReason,
           submittedLat,
           submittedLng,
           locationVerified,
@@ -287,6 +429,7 @@ async function handlePost(req: NextRequest) {
       // Process and save photos
       const photoTypes = ['full_form', 'closeup', 'signature', 'stamp', 'serial_number']
       const uploadedPhotos: any[] = []
+      const skippedPhotos: Array<{ type: string; reason: string }> = []
       const photoHashes = new Set<string>()
 
       for (const [fieldName, fileArray] of Object.entries(files)) {
@@ -298,30 +441,55 @@ async function handlePost(req: NextRequest) {
 
             // Check for duplicate hash
             if (photoHashes.has(fileInfo.hash)) {
+              skippedPhotos.push({
+                type: photoType,
+                reason: 'The same photo was already attached to this submission.',
+              })
               continue // Skip duplicate
             }
             photoHashes.add(fileInfo.hash)
 
-            // Insert photo record
-            await client.query(
-              `INSERT INTO submission_photos (
-                submission_id, photo_type, file_path, file_size, mime_type,
-                width, height, exif_data, hash
-              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-              [
-                submission.id,
-                photoType,
-                fileInfo.filePath,
-                fileInfo.fileSize,
-                fileInfo.mimeType,
-                fileInfo.width,
-                fileInfo.height,
-                JSON.stringify(fileInfo.exifData),
-                fileInfo.hash,
-              ]
-            )
+            // The photo insert runs inside a savepoint. A rejected photo
+            // (for example the same image uploaded twice, which the unique
+            // hash constraint refuses) then only rolls back that photo
+            // instead of aborting the whole submission.
+            await client.query('SAVEPOINT photo_insert')
+            try {
+              // Insert photo record
+              const photoRecord = await client.query<{ id: number }>(
+                `INSERT INTO submission_photos (
+                  submission_id, photo_type, file_path, file_size, mime_type,
+                  width, height, exif_data, hash
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                RETURNING id`,
+                [
+                  submission.id,
+                  photoType,
+                  fileInfo.filePath,
+                  fileInfo.fileSize,
+                  fileInfo.mimeType,
+                  fileInfo.width,
+                  fileInfo.height,
+                  JSON.stringify(fileInfo.exifData),
+                  fileInfo.hash,
+                ]
+              )
+              await client.query('RELEASE SAVEPOINT photo_insert')
 
-            uploadedPhotos.push({ type: photoType, ...fileInfo })
+              uploadedPhotos.push({
+                id: photoRecord.rows[0]?.id,
+                type: photoType,
+                ...fileInfo,
+              })
+            } catch (error) {
+              await client.query('ROLLBACK TO SAVEPOINT photo_insert')
+              console.error('Error uploading photo:', error)
+              skippedPhotos.push({
+                type: photoType,
+                reason: 'The photo could not be stored and was not attached.',
+              })
+              // Continue with other photos
+            }
           } catch (error) {
             console.error('Error uploading photo:', error)
             // Continue with other photos
@@ -365,7 +533,8 @@ async function handlePost(req: NextRequest) {
           status,
           verified_at: verifiedAt
         },
-        uploadedPhotos
+        uploadedPhotos,
+        skippedPhotos
       }
     })
 
@@ -378,14 +547,48 @@ async function handlePost(req: NextRequest) {
         'submission_created',
         'submission',
         result.submission.id,
-        JSON.stringify({ polling_station_id: pollingStationId, photo_count: result.uploadedPhotos.length }),
+        JSON.stringify({
+          polling_station_id: pollingStationId,
+          photo_count: result.uploadedPhotos.length,
+          submission_origin: submissionOrigin,
+          submission_type: submissionType,
+          review_status: result.submission.review_status,
+          scope_candidate_id: windowContext.authorisedByCandidateId,
+          revision_number: revisionNumber,
+        }),
       ]
     )
 
-    // Resolve photo paths to reachable URLs based on the storage backend.
+    // A correction is recorded separately, so the relationship between the
+    // versions, the correcting user, the time and the reason are in the
+    // audit trail.
+    if (supersedesSubmissionId) {
+      await query(
+        `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, old_values, new_values)
+         VALUES ($1, 'submission_revised', 'submission', $2, $3, $4)`,
+        [
+          user.userId,
+          result.submission.id,
+          JSON.stringify({
+            superseded_submission_id: supersedesSubmissionId,
+            previous_status: existingSubmission?.status,
+          }),
+          JSON.stringify({
+            revision_submission_id: result.submission.id,
+            revision_number: revisionNumber,
+            revision_reason: revisionReason,
+            corrected_by: user.userId,
+            corrected_at: new Date().toISOString(),
+          }),
+        ]
+      )
+    }
+
+    // The evidence is private, so it is served through the authorized
+    // evidence route instead of the public upload route.
     const photosWithUrls = result.uploadedPhotos.map((photo: any) => ({
       ...photo,
-      filePath: getFileUrl(photo.filePath),
+      filePath: photo.id ? getEvidenceUrl(photo.id) : getFileUrl(photo.filePath),
     }))
 
     return NextResponse.json(
@@ -393,6 +596,9 @@ async function handlePost(req: NextRequest) {
         message: 'Submission created successfully',
         submission: result.submission,
         photos: photosWithUrls,
+        // Photos that could not be attached are reported, never dropped
+        // silently.
+        skipped_photos: result.skippedPhotos,
       },
       { status: 201 }
     )

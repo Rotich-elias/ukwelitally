@@ -3,22 +3,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
+import SubmissionControlPanel from '@/components/SubmissionControlPanel'
+import SafeImage from '@/components/SafeImage'
+import type { ReportProfile, ReportResult, ReportSummary } from '@/lib/reportPdf'
 
-interface CandidateProfile {
-  full_name: string
-  party_name: string
-  position: string
-  electoral_area: string
+interface CandidateProfile extends ReportProfile {
   county_id?: number
   constituency_id?: number
   ward_id?: number
 }
 
-interface CandidateResult {
-  candidate_name: string
-  party_name: string
-  total_votes: number
-  percentage: number
+interface CandidateResult extends ReportResult {
   polling_stations_count?: number
   profile_photo?: string
   candidate_number?: string
@@ -27,15 +22,7 @@ interface CandidateResult {
   electoral_area?: string
 }
 
-interface ResultsSummary {
-  total_votes_cast: number
-  registered_voters: number
-  rejected_votes: number
-  turnout_percentage: number
-  total_stations: number
-  stations_reported: number
-  reporting_percentage: number
-}
+type ResultsSummary = ReportSummary
 
 interface Activity {
   id: string
@@ -54,6 +41,8 @@ export default function CandidateDashboard() {
   const [summary, setSummary] = useState<ResultsSummary | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [activitiesLoading, setActivitiesLoading] = useState(true)
+  const [generatingReport, setGeneratingReport] = useState(false)
+  const [reportError, setReportError] = useState<string | null>(null)
 
   // Fetch profile data
   const fetchProfile = useCallback(async () => {
@@ -144,458 +133,25 @@ export default function CandidateDashboard() {
     return Math.round(summary.reporting_percentage)
   }
 
-  const downloadReport = () => {
+  const downloadReport = async () => {
     if (!profile || !summary) {
-      alert('No data available to download')
+      setReportError('No data available to download yet.')
       return
     }
 
-    // Generate report content
-    const reportDate = new Date().toLocaleString('en-KE', {
-      dateStyle: 'full',
-      timeStyle: 'long',
-      timeZone: 'Africa/Nairobi'
-    })
+    setGeneratingReport(true)
+    setReportError(null)
 
-    const totalValidVotes = results.reduce((sum, r) => sum + r.total_votes, 0)
-
-    const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Election Results Report - ${profile.position.toUpperCase()}</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    try {
+      // The PDF engine is only downloaded when a report is actually requested.
+      const { downloadElectionReportPdf } = await import('@/lib/reportPdf')
+      await downloadElectionReportPdf({ profile, summary, results })
+    } catch (error) {
+      console.error('Failed to generate report:', error)
+      setReportError('Could not generate the PDF report. Please try again.')
+    } finally {
+      setGeneratingReport(false)
     }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      color: #1f2937;
-      background: #f9fafb;
-      padding: 40px 20px;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: white;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .header {
-      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-      color: white;
-      padding: 40px;
-      text-align: center;
-    }
-
-    .header h1 {
-      font-size: 32px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    .header .subtitle {
-      font-size: 18px;
-      opacity: 0.95;
-    }
-
-    .meta-info {
-      background: #f3f4f6;
-      padding: 20px 40px;
-      border-bottom: 2px solid #e5e7eb;
-    }
-
-    .meta-info .date {
-      font-size: 14px;
-      color: #6b7280;
-    }
-
-    .content {
-      padding: 40px;
-    }
-
-    .section {
-      margin-bottom: 40px;
-    }
-
-    .section-title {
-      font-size: 24px;
-      font-weight: bold;
-      color: #1f2937;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 3px solid #3b82f6;
-    }
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    .info-card {
-      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-      padding: 20px;
-      border-radius: 8px;
-      border-left: 4px solid #3b82f6;
-    }
-
-    .info-card .label {
-      font-size: 12px;
-      text-transform: uppercase;
-      color: #6b7280;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      margin-bottom: 5px;
-    }
-
-    .info-card .value {
-      font-size: 24px;
-      font-weight: bold;
-      color: #1f2937;
-    }
-
-    .info-card .sub-value {
-      font-size: 14px;
-      color: #6b7280;
-      margin-top: 5px;
-    }
-
-    .candidate-info {
-      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-      padding: 30px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-      border: 2px solid #3b82f6;
-    }
-
-    .candidate-info h3 {
-      font-size: 28px;
-      color: #1e40af;
-      margin-bottom: 15px;
-    }
-
-    .candidate-info .detail {
-      display: flex;
-      align-items: center;
-      margin: 10px 0;
-      font-size: 16px;
-    }
-
-    .candidate-info .detail strong {
-      min-width: 150px;
-      color: #1e40af;
-    }
-
-    .results-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-    }
-
-    .results-table thead {
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-      color: white;
-    }
-
-    .results-table th {
-      padding: 16px;
-      text-align: left;
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 12px;
-      letter-spacing: 0.5px;
-    }
-
-    .results-table th:last-child,
-    .results-table td:last-child {
-      text-align: right;
-    }
-
-    .results-table tbody tr {
-      border-bottom: 1px solid #e5e7eb;
-      transition: background-color 0.2s;
-    }
-
-    .results-table tbody tr:hover {
-      background-color: #f9fafb;
-    }
-
-    .results-table tbody tr:nth-child(even) {
-      background-color: #f9fafb;
-    }
-
-    .results-table td {
-      padding: 16px;
-      font-size: 14px;
-    }
-
-    .rank-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    .rank-1 {
-      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-      color: white;
-      box-shadow: 0 2px 4px rgba(251, 191, 36, 0.4);
-    }
-
-    .rank-2 {
-      background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
-      color: white;
-      box-shadow: 0 2px 4px rgba(156, 163, 175, 0.4);
-    }
-
-    .rank-3 {
-      background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
-      color: white;
-      box-shadow: 0 2px 4px rgba(251, 146, 60, 0.4);
-    }
-
-    .rank-other {
-      background: #e5e7eb;
-      color: #6b7280;
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 8px;
-      background: #e5e7eb;
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 8px;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
-      border-radius: 4px;
-      transition: width 0.3s ease;
-    }
-
-    .party-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      background: #dbeafe;
-      color: #1e40af;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .footer {
-      background: #f3f4f6;
-      padding: 30px 40px;
-      text-align: center;
-      border-top: 2px solid #e5e7eb;
-    }
-
-    .footer .logo {
-      font-size: 24px;
-      font-weight: bold;
-      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 10px;
-    }
-
-    .footer .disclaimer {
-      font-size: 14px;
-      color: #6b7280;
-      line-height: 1.8;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    .stats-highlight {
-      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-      border-left: 4px solid #10b981;
-    }
-
-    .stats-highlight .value {
-      color: #047857;
-    }
-
-    @media print {
-      body {
-        background: white;
-        padding: 0;
-      }
-
-      .container {
-        box-shadow: none;
-        border-radius: 0;
-      }
-
-      .results-table tbody tr:hover {
-        background-color: transparent;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <h1>🗳️ ELECTION RESULTS REPORT</h1>
-      <div class="subtitle">${profile.position.toUpperCase()} - ${profile.electoral_area}</div>
-    </div>
-
-    <!-- Meta Information -->
-    <div class="meta-info">
-      <div class="date">📅 Generated: ${reportDate}</div>
-    </div>
-
-    <!-- Content -->
-    <div class="content">
-      <!-- Candidate Information Section -->
-      <div class="section">
-        <h2 class="section-title">Candidate Information</h2>
-        <div class="candidate-info">
-          <h3>${profile.full_name}</h3>
-          <div class="detail"><strong>Position:</strong> ${profile.position.toUpperCase()}</div>
-          <div class="detail"><strong>Political Party:</strong> ${profile.party_name}</div>
-          <div class="detail"><strong>Electoral Area:</strong> ${profile.electoral_area}</div>
-        </div>
-      </div>
-
-      <!-- Summary Statistics Section -->
-      <div class="section">
-        <h2 class="section-title">Summary Statistics</h2>
-        <div class="info-grid">
-          <div class="info-card">
-            <div class="label">Total Polling Stations</div>
-            <div class="value">${summary.total_stations.toLocaleString()}</div>
-          </div>
-
-          <div class="info-card stats-highlight">
-            <div class="label">Stations Reported</div>
-            <div class="value">${summary.stations_reported.toLocaleString()}</div>
-            <div class="sub-value">${getProgressPercentage()}% reporting</div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: ${getProgressPercentage()}%"></div>
-            </div>
-          </div>
-
-          <div class="info-card">
-            <div class="label">Pending Stations</div>
-            <div class="value">${(summary.total_stations - summary.stations_reported).toLocaleString()}</div>
-            <div class="sub-value">Awaiting results</div>
-          </div>
-
-          <div class="info-card">
-            <div class="label">Registered Voters</div>
-            <div class="value">${summary.registered_voters.toLocaleString()}</div>
-          </div>
-
-          <div class="info-card stats-highlight">
-            <div class="label">Total Votes Cast</div>
-            <div class="value">${summary.total_votes_cast.toLocaleString()}</div>
-          </div>
-
-          <div class="info-card">
-            <div class="label">Voter Turnout</div>
-            <div class="value">${summary.turnout_percentage.toFixed(1)}%</div>
-          </div>
-
-          <div class="info-card">
-            <div class="label">Valid Votes</div>
-            <div class="value">${totalValidVotes.toLocaleString()}</div>
-          </div>
-
-          <div class="info-card">
-            <div class="label">Rejected Votes</div>
-            <div class="value">${summary.rejected_votes.toLocaleString()}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Detailed Results Section -->
-      <div class="section">
-        <h2 class="section-title">Detailed Results - ${profile.position.toUpperCase()} Position</h2>
-        ${results.length > 0 ? `
-        <table class="results-table">
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Candidate Name</th>
-              <th>Party</th>
-              <th>Votes</th>
-              <th>Percentage</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${results.map((result, index) => `
-            <tr>
-              <td>
-                <span class="rank-badge ${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : 'rank-other'}">
-                  ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
-                </span>
-              </td>
-              <td><strong>${result.candidate_name}</strong></td>
-              <td><span class="party-badge">${result.party_name}</span></td>
-              <td><strong>${result.total_votes.toLocaleString()}</strong></td>
-              <td>
-                <strong>${result.percentage.toFixed(2)}%</strong>
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: ${result.percentage}%"></div>
-                </div>
-              </td>
-            </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        ` : `
-        <p style="text-align: center; color: #6b7280; padding: 40px;">No results available yet. Results will appear as polling stations submit their data.</p>
-        `}
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-      <div class="logo">UkweliTally</div>
-      <div class="disclaimer">
-        <strong>⚠️ Official Use Only</strong><br>
-        This report was generated from the UkweliTally Election Results System.<br>
-        Please verify all data before making public announcements.<br>
-        For inquiries, contact: elgeiy8@gmail.com | WhatsApp: 0721 237 811
-      </div>
-    </div>
-  </div>
-</body>
-</html>`
-
-    // Create and download file
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-
-    const fileName = `Election_Report_${profile.position}_${profile.electoral_area.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`
-    link.download = fileName
-
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
   }
 
   return (
@@ -628,6 +184,9 @@ export default function CandidateDashboard() {
             </div>
           )}
         </div>
+
+        {/* Result submission control */}
+        <SubmissionControlPanel />
 
         {/* Election Process Overview */}
         <div className="glass-effect rounded-xl p-6 mb-8">
@@ -860,19 +419,18 @@ export default function CandidateDashboard() {
 
                           {/* Candidate Photo */}
                           <div className="flex-shrink-0">
-                            {result.profile_photo ? (
-                              <img
-                                src={result.profile_photo}
-                                alt={result.candidate_name}
-                                className="w-24 h-24 rounded-xl object-cover border-2 border-dark-600"
-                              />
-                            ) : (
-                              <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 border-dark-600 flex items-center justify-center">
-                                <svg className="w-12 h-12 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                              </div>
-                            )}
+                            <SafeImage
+                              src={result.profile_photo}
+                              alt={result.candidate_name}
+                              className="w-24 h-24 rounded-xl object-cover border-2 border-dark-600"
+                              fallback={
+                                <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 border-dark-600 flex items-center justify-center">
+                                  <svg className="w-12 h-12 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                  </svg>
+                                </div>
+                              }
+                            />
                           </div>
 
                           {/* Candidate Details */}
@@ -975,10 +533,21 @@ export default function CandidateDashboard() {
                 </button>
                 <button
                   onClick={downloadReport}
-                  className="w-full btn-secondary text-sm py-2"
+                  disabled={generatingReport}
+                  className="w-full btn-secondary text-sm py-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Download Report
+                  {generatingReport ? (
+                    <span className="inline-flex items-center gap-2">
+                      <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></span>
+                      Generating PDF...
+                    </span>
+                  ) : (
+                    'Download Report (PDF)'
+                  )}
                 </button>
+                {reportError && (
+                  <p className="text-xs text-red-400">{reportError}</p>
+                )}
                 <button className="w-full btn-secondary text-sm py-2">
                   View Results Map
                 </button>

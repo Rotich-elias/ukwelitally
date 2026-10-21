@@ -15,6 +15,11 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || '/tmp/ukwelitally-uploads'
  * - candidate_votes records
  * - submission_reviews records
  * - submission record itself
+ *
+ * This is a maintenance helper, not part of the correction workflow. A
+ * correction is stored as the next version of a submission (see
+ * `src/lib/submissionRevisions.ts`) so the original figures and evidence are
+ * never destroyed.
  */
 export async function deleteSubmission(submissionId: number): Promise<void> {
   console.log('[deleteSubmission] Deleting submission:', submissionId)
@@ -61,23 +66,41 @@ export async function deleteSubmission(submissionId: number): Promise<void> {
 }
 
 /**
- * Check if a submission can be revised
- * Returns true if submission exists and is flagged/rejected
+ * Check if a submission can be revised.
+ *
+ * A submission can be revised when it was flagged or rejected. The revision
+ * is stored as the next version of the submission: the original is kept with
+ * its figures and its evidence, and the selected result only follows the new
+ * version once the new version is approved.
+ *
+ * Returns the version that would be corrected and the number the new
+ * version gets.
  */
 export async function canReviseSubmission(
   userId: number,
   pollingStationId: number,
   candidateId: number,
   submissionType: string
-): Promise<{ canRevise: boolean; existingSubmissionId?: number; status?: string }> {
-  const existingSubmission = await queryMany(
-    `SELECT id, status FROM submissions
-     WHERE user_id = $1 AND polling_station_id = $2 AND candidate_id = $3 AND submission_type = $4`,
+): Promise<{
+  canRevise: boolean
+  existingSubmissionId?: number
+  status?: string
+  nextRevisionNumber?: number
+}> {
+  const existingSubmission = await queryMany<{
+    id: number
+    status: string
+    revision_number: number
+  }>(
+    `SELECT id, status, revision_number FROM submissions
+     WHERE user_id = $1 AND polling_station_id = $2 AND candidate_id = $3 AND submission_type = $4
+     ORDER BY revision_number DESC
+     LIMIT 1`,
     [userId, pollingStationId, candidateId, submissionType]
   )
 
   if (existingSubmission.length === 0) {
-    return { canRevise: true } // No existing submission, can create new
+    return { canRevise: true, nextRevisionNumber: 1 } // No existing submission, can create new
   }
 
   const submission = existingSubmission[0]
@@ -88,6 +111,7 @@ export async function canReviseSubmission(
       canRevise: true,
       existingSubmissionId: submission.id,
       status,
+      nextRevisionNumber: submission.revision_number + 1,
     }
   }
 
@@ -95,5 +119,6 @@ export async function canReviseSubmission(
     canRevise: false,
     existingSubmissionId: submission.id,
     status,
+    nextRevisionNumber: submission.revision_number,
   }
 }

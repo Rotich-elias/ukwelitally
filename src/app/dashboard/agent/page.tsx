@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
+import SafeImage from '@/components/SafeImage'
 
 interface AgentInfo {
   agent_id: number
@@ -37,6 +38,14 @@ interface FlaggedSubmission {
   review_notes: string | null
 }
 
+interface SubmissionWindowState {
+  status: 'closed' | 'open' | 'scheduled' | 'expired'
+  can_submit: boolean
+  message: string
+  opens_at_display: string
+  closes_at_display: string
+}
+
 export default function AgentDashboard() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -51,11 +60,14 @@ export default function AgentDashboard() {
   const [flaggedSubmission, setFlaggedSubmission] = useState<FlaggedSubmission | null>(null)
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(false)
+  const [accountActive, setAccountActive] = useState(true)
+  const [submissionWindow, setSubmissionWindow] = useState<SubmissionWindowState | null>(null)
 
   const [formData, setFormData] = useState({
     registered_voters: '',
     total_votes_cast: '',
     rejected_votes: '',
+    revision_reason: '',
     photos: [] as File[],
   })
 
@@ -88,6 +100,26 @@ export default function AgentDashboard() {
       router.push('/login')
       return
     }
+
+    // The reporting window decides whether a result can be submitted.
+    const fetchSubmissionWindow = async (authToken: string) => {
+      try {
+        const response = await fetch('/api/submissions/window', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+          },
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setSubmissionWindow(data.window)
+          setAccountActive(data.account_active !== false)
+        }
+      } catch (err) {
+        console.error('Failed to fetch the reporting window:', err)
+      }
+    }
+
+    fetchSubmissionWindow(token)
 
     // Fetch agent info
     const fetchAgentInfo = async () => {
@@ -207,6 +239,12 @@ export default function AgentDashboard() {
       submitData.append('candidate_id', agentInfo.candidate_id.toString()) // Use agent's candidate
       submitData.append('submission_type', 'primary')
 
+      // A correction is stored as the next version of the submission. The
+      // previous version is kept, so the reason has to be recorded.
+      if (formData.revision_reason.trim()) {
+        submitData.append('revision_reason', formData.revision_reason.trim())
+      }
+
       // Add photos
       formData.photos.forEach((photo, index) => {
         submitData.append(`full_form_${index}`, photo)
@@ -295,6 +333,7 @@ export default function AgentDashboard() {
         registered_voters: '',
         total_votes_cast: '',
         rejected_votes: '',
+        revision_reason: '',
         photos: [],
       })
       setCandidateVotes({})
@@ -317,6 +356,39 @@ export default function AgentDashboard() {
           <h1 className="text-3xl font-bold text-white mb-2">Agent Dashboard</h1>
           <p className="text-dark-300">Submit polling station results</p>
         </div>
+
+        {/* Reporting window status */}
+        {submissionWindow && (
+          <div
+            className={`mb-6 rounded-xl p-5 border ${
+              submissionWindow.can_submit
+                ? 'bg-emerald-500/10 border-emerald-500/40'
+                : 'bg-orange-500/10 border-orange-500/40'
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-white font-semibold">
+                  Result submission is {submissionWindow.status}
+                </h3>
+                <p className="text-sm text-dark-200 mt-1">{submissionWindow.message}</p>
+                {!accountActive && (
+                  <p className="text-sm text-red-300 mt-1">
+                    Your account is not active. Contact your candidate to restore it.
+                  </p>
+                )}
+              </div>
+              <div className="text-xs text-dark-300 text-right">
+                <p>
+                  Opens: <span className="text-white font-medium">{submissionWindow.opens_at_display}</span>
+                </p>
+                <p>
+                  Closes: <span className="text-white font-medium">{submissionWindow.closes_at_display}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Revision Required Notification */}
         {flaggedSubmission && (
@@ -368,7 +440,9 @@ export default function AgentDashboard() {
 
                 <div className="mt-4 pt-4 border-t border-yellow-500/30">
                   <p className="text-sm text-yellow-200">
-                    <strong>Next Step:</strong> Upload new photos and results below. The old submission will be replaced automatically.
+                    <strong>Next Step:</strong> Upload new photos and results below. Your
+                    previous submission is kept as an earlier version with its figures, and a
+                    reason for the correction is recorded.
                   </p>
                 </div>
               </div>
@@ -419,6 +493,28 @@ export default function AgentDashboard() {
                     </div>
                   )}
 
+                  {/* Correction reason */}
+                  {flaggedSubmission && (
+                    <div>
+                      <label className="block text-sm font-medium text-dark-200 mb-2">
+                        Reason for the correction
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.revision_reason}
+                        onChange={(e) =>
+                          setFormData({ ...formData, revision_reason: e.target.value })
+                        }
+                        placeholder="e.g. Corrected the rejected votes total from 12 to 21"
+                        className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+                      />
+                      <p className="text-xs text-dark-400 mt-1">
+                        Your previous submission is kept as an earlier version. The reason is
+                        recorded with the correction.
+                      </p>
+                    </div>
+                  )}
+
                   {/* Photo Upload */}
                   <div>
                     <label className="block text-sm font-medium text-dark-200 mb-2">
@@ -458,11 +554,20 @@ export default function AgentDashboard() {
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || submissionWindow?.can_submit === false}
                     className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? 'Uploading...' : 'Upload & Continue'}
+                    {loading
+                      ? 'Uploading...'
+                      : submissionWindow?.can_submit === false
+                        ? 'Result submission is closed'
+                        : 'Upload & Continue'}
                   </button>
+                  {submissionWindow?.can_submit === false && (
+                    <p className="text-xs text-orange-300 text-center">
+                      {submissionWindow.message}
+                    </p>
+                  )}
                 </form>
               ) : (
                 <form onSubmit={handleSubmitResults} className="space-y-6">
@@ -579,10 +684,14 @@ export default function AgentDashboard() {
                     </button>
                     <button
                       type="submit"
-                      disabled={loading || candidates.length === 0}
+                      disabled={loading || candidates.length === 0 || submissionWindow?.can_submit === false}
                       className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {loading ? 'Submitting...' : 'Submit Results'}
+                      {loading
+                        ? 'Submitting...'
+                        : submissionWindow?.can_submit === false
+                          ? 'Result submission is closed'
+                          : 'Submit Results'}
                     </button>
                   </div>
                 </form>
@@ -692,6 +801,15 @@ export default function AgentDashboard() {
                         </span>
                       </div>
 
+                      {submission.revision_number > 1 && (
+                        <p className="text-xs text-dark-400 mb-2">
+                          Version {submission.revision_number}
+                          {submission.superseded_by_submission_id
+                            ? ' · replaced by a later version'
+                            : ' · current version'}
+                        </p>
+                      )}
+
                       <div className="flex items-center gap-3 text-xs">
                         <div className="flex items-center gap-1">
                           <span className="text-dark-400">Confidence:</span>
@@ -715,6 +833,36 @@ export default function AgentDashboard() {
                       {submission.has_discrepancy && (
                         <div className="mt-2 pt-2 border-t border-dark-700">
                           <p className="text-xs text-red-400">⚠ Has discrepancy</p>
+                        </div>
+                      )}
+
+                      {Array.isArray(submission.photos) && submission.photos.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-dark-700">
+                          <p className="text-xs text-dark-400 mb-2">
+                            Evidence ({submission.photos.length})
+                          </p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {submission.photos.map((photo: any) => (
+                              <a
+                                key={photo.id}
+                                href={photo.file_path}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block"
+                              >
+                                <SafeImage
+                                  src={photo.file_path}
+                                  alt={String(photo.photo_type || 'evidence').replace(/_/g, ' ')}
+                                  className="w-full h-16 object-cover rounded border border-dark-700"
+                                  fallback={
+                                    <div className="w-full h-16 rounded bg-dark-800 border border-dark-700 flex items-center justify-center text-[10px] text-dark-500">
+                                      Unavailable
+                                    </div>
+                                  }
+                                />
+                              </a>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>

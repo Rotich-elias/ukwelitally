@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import InstallAppButton from '@/components/InstallAppButton'
 
 export default function Home() {
   const [isContactModalOpen, setContactModalOpen] = useState(false)
@@ -49,7 +50,7 @@ export default function Home() {
           Empowering candidates and agents to verify election results with
           transparency, accuracy, and real-time updates for Kenya 2027 Elections
         </p>
-        <div className="flex gap-4 justify-center animate-fade-in-up">
+        <div className="flex gap-4 justify-center animate-fade-in-up flex-wrap">
           <button
             onClick={() => setContactModalOpen(true)}
             className="btn-primary"
@@ -68,7 +69,12 @@ export default function Home() {
           >
             Learn More
           </a>
+          <InstallAppButton />
         </div>
+        <p className="mt-4 text-sm text-dark-400">
+          Install UkweliTally on your phone to keep tallying, even when the
+          network is slow.
+        </p>
       </section>
 
       {/* Features Section */}

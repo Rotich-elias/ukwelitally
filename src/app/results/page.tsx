@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
 import LocationSelector from '@/components/LocationSelector'
+import SafeImage from '@/components/SafeImage'
 
 interface ResultsData {
   candidate_name: string
@@ -660,19 +661,18 @@ export default function ResultsPage() {
 
                         {/* Photo */}
                         <div className="flex-shrink-0">
-                          {result.profile_photo ? (
-                            <img
-                              src={result.profile_photo}
-                              alt={result.candidate_name}
-                              className="w-24 h-24 rounded-lg object-cover border-2 border-dark-700"
-                            />
-                          ) : (
-                            <div className="w-24 h-24 rounded-lg bg-dark-800 border-2 border-dark-700 flex items-center justify-center">
-                              <svg className="w-12 h-12 text-dark-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                          )}
+                          <SafeImage
+                            src={result.profile_photo}
+                            alt={result.candidate_name}
+                            className="w-24 h-24 rounded-lg object-cover border-2 border-dark-700"
+                            fallback={
+                              <div className="w-24 h-24 rounded-lg bg-dark-800 border-2 border-dark-700 flex items-center justify-center">
+                                <svg className="w-12 h-12 text-dark-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              </div>
+                            }
+                          />
                         </div>
 
                         {/* Candidate Details */}
