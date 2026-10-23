@@ -136,7 +136,7 @@ export default function LocationManager() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
-  const [importType, setImportType] = useState('wards')
+  const [importType, setImportType] = useState('polling_stations')
   const [importFile, setImportFile] = useState<File | null>(null)
   const [importResult, setImportResult] = useState<any>(null)
   const [importPhase, setImportPhase] = useState<ImportPhase>('idle')
@@ -322,14 +322,16 @@ export default function LocationManager() {
       {tab === 'import' ? (
         <div className="glass-effect rounded-xl p-6 space-y-5">
           <div>
-            <h3 className="text-lg font-semibold text-white mb-1">Bulk import</h3>
+            <h3 className="text-lg font-semibold text-white mb-1">Polling station import</h3>
             <p className="text-sm text-dark-300">
-              Load an official IEBC file to create or update wards and polling
-              stations. New wards/polling stations are created when they do not
-              exist and sufficient details are provided. Existing records are
-              matched by code or by name and updated. A ward&apos;s code is never
-              changed by the import. Only the columns the file carries are
-              written.
+              Load the official IEBC polling station file. It must carry the
+              eight columns County, Constituency, Ward, IEBC Code, Polling
+              Station, Stream, Registration Centre and Registered Voters. A
+              station the platform does not have is created, and so is a
+              missing ward, constituency or county: the import creates the
+              hierarchy from the county down. Existing records are matched by
+              code and stream, or by name, and are updated without changing
+              their codes.
             </p>
           </div>
 
@@ -346,7 +348,6 @@ export default function LocationManager() {
                 }}
                 className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
               >
-                <option value="wards">Wards (WARDS.csv)</option>
                 <option value="polling_stations">Polling stations (POLLING_STATIONS.csv)</option>
                 <option value="prune_placeholders">Remove the placeholder wards</option>
               </select>
@@ -450,6 +451,7 @@ export default function LocationManager() {
                   {(
                     [
                       ['Rows read', importResult.total_rows],
+                      ['To create', importResult.create ?? 0],
                       ['To update', importResult.update],
                       ['To skip', importResult.skip],
                       ['With errors', importResult.error_rows],
@@ -464,7 +466,8 @@ export default function LocationManager() {
               )}
               {importResult.updated !== undefined && (
                 <p className="text-dark-300">
-                  Updated: {importResult.updated} · Skipped: {importResult.skipped}
+                  Created: {importResult.created ?? 0} · Updated:{' '}
+                  {importResult.updated} · Skipped: {importResult.skipped}
                 </p>
               )}
               {importResult.removed !== undefined && (

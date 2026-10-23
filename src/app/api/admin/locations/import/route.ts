@@ -3,15 +3,18 @@ import { withAuth } from '@/middleware/auth'
 import { auditRequestContext } from '@/lib/audit'
 import { query } from '@/lib/db'
 import {
-  importWardsFromCsv,
   importPollingStationsFromCsv,
-  previewWardsImport,
   previewPollingStationsImport,
   prunePlaceholderWards,
   findPlaceholderWards,
+  missingStationHeaders,
 } from '@/lib/locationAdmin'
 
 export const dynamic = 'force-dynamic'
+
+/** The header of the official IEBC polling-station file. */
+const REQUIRED_HEADER =
+  'County, Constituency, Ward, IEBC Code, Polling Station, Stream, Registration Centre, Registered Voters'
 
 /**
  * POST /api/admin/locations/import
@@ -19,26 +22,25 @@ export const dynamic = 'force-dynamic'
  * Bulk maintenance of the electoral geography.
  *
  * Form fields:
- *   type        wards | polling_stations | prune_placeholders
- *   file        the CSV file (wards and polling_stations)
+ *   type        polling_stations | prune_placeholders
+ *   file        the CSV file (polling_stations)
  *   dry_run     true to report what would change without writing anything
  *
- * The official IEBC files work as they are:
+ * The polling-station file must carry the eight official IEBC columns:
  *
- *   WARDS.csv            ward_name, constituency_name, county_name, registered_voters
- *   POLLING_STATIONS.csv station_name, station_code, ward_name, constituency_name,
- *                        county_name, latitude, longitude, registered_voters
+ *   County, Constituency, Ward, IEBC Code, Polling Station, Stream,
+ *   Registration Centre, Registered Voters
  *
- * The electoral geography is only ever updated, never created: a row that
- * matches no existing ward or polling station is skipped with an error. A
- * ward is matched by its code, or by its name inside its constituency. A
- * polling station is matched by its code, or by its name inside its ward.
- * Only the columns the file carries are written, so a column left out keeps
- * the value the record already has.
+ * A station is matched by its IEBC code and its stream, then by its name
+ * inside its ward. A station the platform does not have is created, and so is
+ * a missing ward, constituency or county: the import creates the hierarchy
+ * from the county down before it writes the station. A level that already
+ * exists is matched by name and keeps its code.
  *
  * The dry run reads the file with the same planner the import writes with, so
- * the preview reports the rows that would be updated and the rows that would
- * be skipped, with the reason of each one. It only reads: nothing is written.
+ * the preview reports the rows that would be created or updated and the rows
+ * that would be skipped, with the reason of each one. It only reads: nothing
+ * is written.
  */
 async function handlePost(req: NextRequest) {
   try {
@@ -73,9 +75,9 @@ async function handlePost(req: NextRequest) {
       })
     }
 
-    if (type !== 'wards' && type !== 'polling_stations') {
+    if (type !== 'polling_stations') {
       return NextResponse.json(
-        { error: 'type must be wards, polling_stations or prune_placeholders' },
+        { error: 'type must be polling_stations or prune_placeholders' },
         { status: 400 }
       )
     }
@@ -87,28 +89,36 @@ async function handlePost(req: NextRequest) {
 
     const text = await file.text()
 
+    const missing = missingStationHeaders(text)
+    if (missing.length > 0) {
+      return NextResponse.json(
+        {
+          error: `The polling station file is missing the column(s) ${missing.join(
+            ', '
+          )}. The file must have the columns: ${REQUIRED_HEADER}`,
+          missing_columns: missing,
+          required_columns: REQUIRED_HEADER,
+        },
+        { status: 400 }
+      )
+    }
+
     if (dryRun) {
       // The preview reads the file with the planner the import writes with.
       // It only reads from the database, nothing is written.
-      const preview =
-        type === 'wards'
-          ? await previewWardsImport(text)
-          : await previewPollingStationsImport(text)
+      const preview = await previewPollingStationsImport(text)
 
       return NextResponse.json({
         success: true,
         dry_run: true,
-        message: `${preview.total_rows} row(s) read: ${preview.create ?? 0} to create, ${preview.update ?? 0} to update, ${preview.skip} to skip${
+        message: `${preview.total_rows} row(s) read: ${preview.create ?? 0} to create, ${preview.update} to update, ${preview.skip} to skip${
           preview.error_rows ? ` (${preview.error_rows} with errors)` : ''
         }. Nothing was written.`,
         ...preview,
       })
     }
 
-    const summary =
-      type === 'wards'
-        ? await importWardsFromCsv(text, actor)
-        : await importPollingStationsFromCsv(text, actor)
+    const summary = await importPollingStationsFromCsv(text, actor)
 
     // Roll parent registered voters up from polling stations so the
     // county/constituency/ward totals stay consistent after an import.

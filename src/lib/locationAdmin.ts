@@ -96,6 +96,10 @@ export class LocationError extends Error {
 export const MAX_WARD_CODE_LENGTH = 50
 /** The widest code a polling station can have (polling_stations.code is VARCHAR(50)). */
 export const MAX_STATION_CODE_LENGTH = 50
+/** The widest code a county can have (counties.code is VARCHAR(10)). */
+export const MAX_COUNTY_CODE_LENGTH = 10
+/** The widest code a constituency can have (constituencies.code is VARCHAR(10)). */
+export const MAX_CONSTITUENCY_CODE_LENGTH = 10
 
 /* -------------------------------------------------------------------------- */
 /*                                  Listing                                   */
@@ -108,6 +112,235 @@ export interface LocationFilters {
   search?: string | null
   limit?: number
   offset?: number
+}
+
+/** A short, stable hash of a name, used to tell apart codes that share a prefix. */
+function shortHash(value: string): string {
+  let hash = 0
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0
+  }
+  return hash.toString(36).toUpperCase().padStart(6, '0').slice(-6)
+}
+
+/** A name reduced to the characters a code may carry. */
+function codeSeed(name: string): string {
+  return name.toUpperCase().replace(/[^A-Z0-9]/g, '')
+}
+
+/**
+ * A code that no row of the table uses yet.
+ *
+ * The name gives the readable part; when two names share a prefix (or the
+ * readable part is taken) a hash of the full name keeps the code unique. Codes
+ * are generated only for records the import creates: a record that already
+ * exists is matched by name and keeps its code.
+ */
+async function uniqueCode(
+  table: 'counties' | 'constituencies' | 'wards',
+  name: string,
+  maxLength: number
+): Promise<string> {
+  const seed = codeSeed(name) || 'AREA'
+  const hash = shortHash(name)
+  const candidates: string[] = []
+  const hashed = `${seed.slice(0, Math.max(1, maxLength - hash.length - 1))}-${hash}`
+  candidates.push(seed.slice(0, maxLength), hashed.slice(0, maxLength))
+  for (let suffix = 2; suffix <= 99; suffix += 1) {
+    const tail = `-${suffix}`
+    candidates.push(`${seed.slice(0, Math.max(1, maxLength - tail.length))}${tail}`)
+  }
+
+  for (const candidate of candidates) {
+    const existing = await queryOne<{ id: number }>(
+      `SELECT id FROM ${table} WHERE code = $1 LIMIT 1`,
+      [candidate]
+    )
+    if (!existing) return candidate
+  }
+
+  throw new LocationError('invalid_input', `Could not make a unique code for "${name}"`)
+}
+
+async function findCountyByName(
+  name: string
+): Promise<{ id: number; name: string } | null> {
+  return queryOne<{ id: number; name: string }>(
+    `SELECT id, name FROM counties
+      WHERE REGEXP_REPLACE(UPPER(TRIM(name)), '\\s+', ' ', 'g')
+          = REGEXP_REPLACE(UPPER(TRIM($1)), '\\s+', ' ', 'g')
+      ORDER BY id
+      LIMIT 1`,
+    [name]
+  )
+}
+
+async function findConstituencyByName(
+  name: string,
+  countyId?: number
+): Promise<{ id: number; county_id: number; name: string; county_name: string | null } | null> {
+  const params: any[] = [name]
+  let countyFilter = ''
+  if (countyId !== undefined) {
+    params.push(countyId)
+    countyFilter = 'AND c.county_id = $2'
+  }
+
+  return queryOne<{
+    id: number
+    county_id: number
+    name: string
+    county_name: string | null
+  }>(
+    `SELECT c.id, c.county_id, c.name, co.name AS county_name
+       FROM constituencies c
+       LEFT JOIN counties co ON co.id = c.county_id
+      WHERE REGEXP_REPLACE(UPPER(TRIM(c.name)), '\\s+', ' ', 'g')
+          = REGEXP_REPLACE(UPPER(TRIM($1)), '\\s+', ' ', 'g')
+        ${countyFilter}
+      ORDER BY c.id
+      LIMIT 1`,
+    params
+  )
+}
+
+/** A county, created when the file names one the platform does not have. */
+async function ensureCounty(name: string): Promise<{ id: number; name: string }> {
+  const existing = await findCountyByName(name)
+  if (existing) return existing
+
+  const displayName = name.trim().replace(/\s+/g, ' ')
+  const code = await uniqueCode('counties', displayName, MAX_COUNTY_CODE_LENGTH)
+
+  try {
+    const created = await queryOne<{ id: number; name: string }>(
+      `INSERT INTO counties (name, code)
+       VALUES ($1, $2)
+       RETURNING id, name`,
+      [displayName, code]
+    )
+    if (created) return created
+  } catch {
+    // Another import may have created it between the read and the write.
+  }
+
+  const found = await findCountyByName(displayName)
+  if (!found) {
+    throw new LocationError('invalid_input', `Could not create the county "${displayName}"`)
+  }
+  return found
+}
+
+/**
+ * A constituency, created under its county when the file names one the
+ * platform does not have.
+ */
+async function ensureConstituency(
+  name: string,
+  countyId: number
+): Promise<{ id: number; county_id: number; name: string; county_name: string | null }> {
+  const existing = await findConstituencyByName(name, countyId)
+  if (existing) return existing
+
+  const displayName = name.trim().replace(/\s+/g, ' ')
+  const code = await uniqueCode('constituencies', displayName, MAX_CONSTITUENCY_CODE_LENGTH)
+
+  try {
+    const created = await queryOne<{ id: number; county_id: number; name: string }>(
+      `INSERT INTO constituencies (name, code, county_id)
+       VALUES ($1, $2, $3)
+       RETURNING id, county_id, name`,
+      [displayName, code, countyId]
+    )
+    if (created) return { ...created, county_name: null }
+  } catch {
+    // Another import may have created it between the read and the write.
+  }
+
+  const found = await findConstituencyByName(displayName, countyId)
+  if (!found) {
+    throw new LocationError(
+      'invalid_input',
+      `Could not create the constituency "${displayName}"`
+    )
+  }
+  return found
+}
+
+/**
+ * A ward, created under its constituency when the file names one the platform
+ * does not have.
+ */
+async function ensureWard(
+  name: string,
+  constituencyId: number,
+  countyId: number,
+  preferredCode?: string | null
+): Promise<{ id: number; constituency_id: number; county_id: number }> {
+  const displayName = name.trim().replace(/\s+/g, ' ')
+
+  const existing = await queryOne<{
+    id: number
+    constituency_id: number
+    county_id: number
+  }>(
+    `SELECT id, constituency_id, county_id FROM wards
+      WHERE constituency_id = $1
+        AND REGEXP_REPLACE(UPPER(TRIM(name)), '\\s+', ' ', 'g')
+          = REGEXP_REPLACE(UPPER(TRIM($2)), '\\s+', ' ', 'g')
+      ORDER BY id
+      LIMIT 1`,
+    [constituencyId, displayName]
+  )
+  if (existing) return existing
+
+  let code = (preferredCode || '').trim()
+  if (code && code.length <= MAX_WARD_CODE_LENGTH) {
+    const taken = await queryOne<{ id: number }>(
+      'SELECT id FROM wards WHERE code = $1 LIMIT 1',
+      [code]
+    )
+    if (taken) code = ''
+  } else {
+    code = ''
+  }
+  if (!code) {
+    code = await uniqueCode('wards', displayName, MAX_WARD_CODE_LENGTH)
+  }
+
+  try {
+    const created = await queryOne<{
+      id: number
+      constituency_id: number
+      county_id: number
+    }>(
+      `INSERT INTO wards (name, code, constituency_id, county_id)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, constituency_id, county_id`,
+      [displayName, code, constituencyId, countyId]
+    )
+    if (created) return created
+  } catch {
+    // Another import may have created it between the read and the write.
+  }
+
+  const found = await queryOne<{
+    id: number
+    constituency_id: number
+    county_id: number
+  }>(
+    `SELECT id, constituency_id, county_id FROM wards
+      WHERE constituency_id = $1
+        AND REGEXP_REPLACE(UPPER(TRIM(name)), '\\s+', ' ', 'g')
+          = REGEXP_REPLACE(UPPER(TRIM($2)), '\\s+', ' ', 'g')
+      ORDER BY id
+      LIMIT 1`,
+    [constituencyId, displayName]
+  )
+  if (!found) {
+    throw new LocationError('invalid_input', `Could not create the ward "${displayName}"`)
+  }
+  return found
 }
 
 /**
@@ -758,7 +991,7 @@ export interface ImportRowPlan {
  * of a preview are the numbers the import produces.
  */
 export interface ImportPreview {
-  type: 'wards' | 'polling_stations'
+  type: 'polling_stations'
   total_rows: number
   valid_rows: number
   create?: number
@@ -768,26 +1001,6 @@ export interface ImportPreview {
   warning_rows: number
   issues: ImportIssue[]
   rows: ImportRowPlan[]
-}
-
-/**
- * A row of a ward file, resolved against the database.
- *
- * Only the fields present in the file are carried, so a column that the file
- * leaves out keeps the value the ward already has. The import never creates a
- * ward: a row must match one that exists.
- */
-interface WardPlanEntry {
-  index: number
-  row: number
-  action: 'update' | 'create'
-  /** The ward that exists and is updated. */
-  existing_id?: number
-  code?: string
-  name?: string
-  constituency_id?: number
-  county_id?: number
-  registered_voters?: number
 }
 
 /** A row of a polling station file, resolved against the database. */
@@ -801,18 +1014,22 @@ interface StationPlanEntry {
   /** The fields present in the file. */
   name?: string
   ward_id?: number
+  /**
+   * The hierarchy to create when the ward of the file is not on the platform
+   * yet. A missing level is created from the county down before the station is
+   * written.
+   */
+  ward_name?: string
+  ward_code?: string
+  constituency_id?: number
+  constituency_name?: string
+  county_id?: number
+  county_name?: string
   latitude?: number
   longitude?: number
   registered_voters?: number
   stream?: string | null
   registration_centre?: string | null
-}
-
-interface WardPlan {
-  /** The rows that would be written, by the line of the file. */
-  entries: Map<number, WardPlanEntry>
-  /** Every row of the file. */
-  rows: ImportRowPlan[]
 }
 
 interface StationPlan {
@@ -827,6 +1044,9 @@ interface StationPlan {
  * without being renamed first.
  */
 export function parseCsv(text: string): Array<Record<string, string>> {
+  // A spreadsheet often writes a byte order mark before the first header.
+  text = text.replace(/^\uFEFF/, '')
+
   const rows: string[] = []
   let current = ''
   let inQuotes = false
@@ -877,6 +1097,44 @@ export function parseCsv(text: string): Array<Record<string, string>> {
     })
     return record
   })
+}
+
+/**
+ * The columns a polling-station file must carry.
+ *
+ * The official IEBC export writes them as
+ * `County, Constituency, Ward, IEBC Code, Polling Station, Stream,
+ * Registration Centre, Registered Voters`; parseCsv normalises the names, so
+ * the file is checked against the normalised form.
+ */
+export const STATION_CSV_HEADERS = [
+  'county',
+  'constituency',
+  'ward',
+  'iebc_code',
+  'polling_station',
+  'stream',
+  'registration_centre',
+  'registered_voters',
+] as const
+
+/** The normalised column names of a CSV file. */
+export function readCsvHeaders(text: string): string[] {
+  const firstLine = text
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/)
+    .find((line) => line.trim() !== '')
+  if (!firstLine) return []
+
+  return splitCsvRow(firstLine).map((header) =>
+    header.trim().toLowerCase().replace(/\s+/g, '_')
+  )
+}
+
+/** The required columns a polling-station file is missing. */
+export function missingStationHeaders(text: string): string[] {
+  const headers = readCsvHeaders(text)
+  return STATION_CSV_HEADERS.filter((header) => !headers.includes(header))
 }
 
 /**
@@ -935,327 +1193,6 @@ function normaliseName(value: string): string {
 }
 
 /**
- * Read a ward file and decide what every row would update, without writing.
- *
- * New wards can be created from the file when they don't already exist.
- * A ward is matched by its code when the file carries one, and by its name
- * inside the constituency otherwise. Existing wards are updated when matched.
- * A ward's code is never changed by the import.
- *
- * Only the fields present in the file are carried, so a column the file
- * leaves out keeps the value the ward already has.
- */
-async function planWardImport(text: string): Promise<WardPlan> {
-  const rows = parseCsv(text)
-  const entries = new Map<number, WardPlanEntry>()
-  const planned: ImportRowPlan[] = []
-
-  /** The codes of the file, and the line each one is on. */
-  const fileCodes = new Map<string, number>()
-
-  for (let index = 0; index < rows.length; index += 1) {
-    const row = rows[index]
-    const rowNumber = index + 2
-    const issues: ImportIssue[] = []
-
-    const name = pick(row, ['ward_name', 'ward', 'name'])
-    const constituencyName = pick(row, ['constituency_name', 'constituency'])
-    const countyName = pick(row, ['county_name', 'county'])
-    const rawCode = pick(row, ['iebc_code', 'code', 'ward_code'])
-
-    const skip = (issue: ImportIssue): ImportRowPlan => {
-      issues.push(issue)
-      return {
-        row: rowNumber,
-        action: 'skip',
-        code: rawCode ?? null,
-        name: name ?? null,
-        parent: constituencyName ?? null,
-        target_id: null,
-        issues: [...issues],
-      }
-    }
-
-    // A row needs a code or a name to match a ward, and a constituency to
-    // place a name match.
-    if (!rawCode && !name) {
-      planned.push(
-        skip({
-          row: rowNumber,
-          code: 'missing_field',
-          severity: 'error',
-          message: 'The row needs a ward code or a ward name to identify the ward',
-          field: 'code',
-        })
-      )
-      continue
-    }
-
-    if (rawCode && rawCode.length > MAX_WARD_CODE_LENGTH) {
-      planned.push(
-        skip({
-          row: rowNumber,
-          code: 'invalid_code',
-          severity: 'error',
-          message: `The code "${rawCode}" is longer than ${MAX_WARD_CODE_LENGTH} characters`,
-          field: 'code',
-        })
-      )
-      continue
-    }
-
-    if (rawCode && fileCodes.has(rawCode)) {
-      planned.push(
-        skip({
-          row: rowNumber,
-          code: 'duplicate_code',
-          severity: 'error',
-          message: `The code "${rawCode}" is already used by row ${fileCodes.get(rawCode)}`,
-          field: 'code',
-        })
-      )
-      continue
-    }
-
-    // The number of the registered voters, when the file carries one.
-    const votersRaw = pick(row, ['registered_voters', 'voters', 'registered voters'])
-    let registeredVoters: number | undefined
-    if (votersRaw !== undefined) {
-      const parsed = parseInt(votersRaw, 10)
-      if (Number.isNaN(parsed)) {
-        issues.push({
-          row: rowNumber,
-          code: 'invalid_number',
-          severity: 'warning',
-          message: `The registered voters "${votersRaw}" is not a number; it is left as it is`,
-          field: 'registered_voters',
-        })
-      } else {
-        registeredVoters = parsed
-      }
-    }
-
-    // A row without a code is matched by name, which needs the constituency.
-    let matched: { id: number; code: string; constituency_id: number } | null = null
-
-    if (rawCode) {
-      matched = await queryOne<{ id: number; code: string; constituency_id: number }>(
-        'SELECT id, code, constituency_id FROM wards WHERE code = $1 LIMIT 1',
-        [rawCode]
-      )
-
-      if (!matched) {
-        planned.push(
-          skip({
-            row: rowNumber,
-            code: 'unmatched_record',
-            severity: 'error',
-            message: `No ward has the code "${rawCode}". Provide a name and constituency name to create it.`,
-            field: 'code',
-          })
-        )
-        continue
-      }
-
-      fileCodes.set(rawCode, rowNumber)
-    } else {
-      if (!constituencyName) {
-        planned.push(
-          skip({
-            row: rowNumber,
-            code: 'missing_field',
-            severity: 'error',
-            message: 'A row matched by name needs a constituency name',
-            field: 'constituency_name',
-          })
-        )
-        continue
-      }
-
-      const constituency = await queryOne<{
-        id: number
-        county_id: number
-        county_name: string | null
-      }>(
-        `SELECT c.id, c.county_id, co.name AS county_name
-           FROM constituencies c
-           LEFT JOIN counties co ON co.id = c.county_id
-          WHERE REGEXP_REPLACE(UPPER(TRIM(c.name)), '\\s+', ' ', 'g')
-              = REGEXP_REPLACE(UPPER(TRIM($1)), '\\s+', ' ', 'g')
-          LIMIT 1`,
-        [constituencyName]
-      )
-
-      if (!constituency) {
-        planned.push(
-          skip({
-            row: rowNumber,
-            code: 'unmatched_constituency',
-            severity: 'error',
-            message: `The constituency "${constituencyName}" of the file is not one of the constituencies of this platform`,
-            field: 'constituency_name',
-          })
-        )
-        continue
-      }
-
-      // The county of the file against the county of the constituency.
-      if (
-        countyName &&
-        constituency.county_name &&
-        normaliseName(countyName) !== normaliseName(constituency.county_name)
-      ) {
-        issues.push({
-          row: rowNumber,
-          code: 'parent_mismatch',
-          severity: 'warning',
-          message: `The county "${countyName}" of the file is not the county "${constituency.county_name}" of ${constituencyName}`,
-          field: 'county_name',
-        })
-      }
-
-      matched = await queryOne<{ id: number; code: string; constituency_id: number }>(
-        `SELECT id, code, constituency_id FROM wards
-          WHERE constituency_id = $1
-            AND REGEXP_REPLACE(UPPER(TRIM(name)), '\\s+', ' ', 'g')
-              = REGEXP_REPLACE(UPPER(TRIM($2)), '\\s+', ' ', 'g')
-          ORDER BY id
-          LIMIT 1`,
-        [constituency.id, name]
-      )
-
-      if (!matched) {
-        planned.push(
-          skip({
-            row: rowNumber,
-            code: 'unmatched_record',
-            severity: 'error',
-            message: `No ward named "${name}" exists in ${constituencyName}". Provide a code to create it or use an existing ward.`,
-            field: 'ward_name',
-          })
-        )
-        continue
-      }
-
-      fileCodes.set(matched.code, rowNumber)
-    }
-
-    // Only the fields the file carries are updated. The constituency is only
-    // touched when the file names one and it resolves, so an update by code
-    // never silently moves a ward to another constituency.
-    const entry: WardPlanEntry = {
-      index: entries.size,
-      row: rowNumber,
-      action: 'update',
-      existing_id: matched.id,
-    }
-    if (name !== undefined) entry.name = name
-    if (registeredVoters !== undefined) entry.registered_voters = registeredVoters
-    if (constituencyName !== undefined) {
-      const constituency = await queryOne<{ id: number }>(
-        `SELECT c.id
-           FROM constituencies c
-          WHERE REGEXP_REPLACE(UPPER(TRIM(c.name)), '\\s+', ' ', 'g')
-              = REGEXP_REPLACE(UPPER(TRIM($1)), '\\s+', ' ', 'g')
-          LIMIT 1`,
-        [constituencyName]
-      )
-      if (!constituency) {
-        planned.push(
-          skip({
-            row: rowNumber,
-            code: 'unmatched_constituency',
-            severity: 'error',
-            message: `The constituency "${constituencyName}" of the file is not one of the constituencies of this platform`,
-            field: 'constituency_name',
-          })
-        )
-        continue
-      }
-      entry.constituency_id = constituency.id
-    }
-
-    entries.set(rowNumber, entry)
-    planned.push({
-      row: rowNumber,
-      action: 'update',
-      code: matched.code,
-      name: name ?? null,
-      parent: constituencyName ?? null,
-      target_id: matched.id,
-      issues: [...issues],
-    })
-  }
-
-  return { entries, rows: planned }
-}
-
-/**
- * Import wards from a CSV.
- *
- * The file is planned first, exactly as the preview plans it, and the plan
- * is then written.
- */
-export async function importWardsFromCsv(
-  text: string,
-  actor: { userId: number; ipAddress?: string | null }
-): Promise<ImportSummary> {
-  const summary: ImportSummary = { created: 0, updated: 0, skipped: 0, errors: [] }
-  const plan = await planWardImport(text)
-
-  for (const row of plan.rows) {
-    if (row.action === 'skip') {
-      summary.skipped += 1
-      summary.errors.push({ row: row.row, message: importErrorMessage(row.issues) })
-      continue
-    }
-
-    const entry = plan.entries.get(row.row)
-    if (!entry) continue
-
-    try {
-      if (entry.action === 'create') {
-        await createWard(
-          {
-            code: entry.code!,
-            name: entry.name!,
-            constituency_id: entry.constituency_id!,
-            registered_voters: entry.registered_voters ?? 0,
-          },
-          actor
-        )
-        summary.created += 1
-      } else {
-        // The patient fields only: a column the file leaves out is not passed,
-        // so the ward keeps the value it already has.
-        await updateWard(
-          entry.existing_id!,
-          {
-            ...(entry.name !== undefined ? { name: entry.name } : {}),
-            ...(entry.constituency_id !== undefined
-              ? { constituency_id: entry.constituency_id }
-              : {}),
-            ...(entry.registered_voters !== undefined
-              ? { registered_voters: entry.registered_voters }
-              : {}),
-          },
-          actor
-        )
-        summary.updated += 1
-      }
-    } catch (error) {
-      summary.skipped += 1
-      summary.errors.push({
-        row: row.row,
-        message: error instanceof Error ? error.message : 'Could not save the ward',
-      })
-    }
-  }
-
-  return summary
-}
-
-/**
  * Read a polling station file and decide what every row would do, without
  * writing.
  *
@@ -1298,6 +1235,10 @@ async function planStationImport(text: string): Promise<StationPlan> {
     ])
     const wardName = pick(row, ['ward_name', 'ward'])
     const constituencyName = pick(row, ['constituency_name', 'constituency'])
+    const countyName = pick(row, ['county', 'county_name'])
+    // The official file does not carry a ward code. A file that does can name
+    // it, but a generated code is just as good for a created ward.
+    const wardCode = pick(row, ['ward_code', 'ward_iebc_code', 'iebc_ward_code'])
 
     const skip = (issue: ImportIssue): ImportRowPlan => {
       issues.push(issue)
@@ -1359,120 +1300,124 @@ async function planStationImport(text: string): Promise<StationPlan> {
 
     // Resolve the ward the file names, if it names one. A row matched by code
     // does not have to carry the ward: it only moves the station when the
-    // file says so.
-    let ward: { id: number; constituency_id: number; constituency_name: string | null } | null = null
+    // file says so. A ward, constituency or county the platform does not have
+    // yet is created from the county down when the station is written.
+    let ward: {
+      id: number
+      constituency_id: number
+    } | null = null
+
+    /** The hierarchy to create when the ward of the file does not exist. */
+    let wardToCreate: {
+      name: string
+      code?: string
+      constituency_id?: number
+      constituency_name: string
+      county_id?: number
+      county_name?: string
+    } | null = null
 
     if (wardName) {
-      const wardRows = await queryMany<{
-        id: number
-        constituency_id: number
-        constituency_name: string | null
-      }>(
-        `SELECT w.id, w.constituency_id, c.name AS constituency_name
-           FROM wards w
-           LEFT JOIN constituencies c ON c.id = w.constituency_id
-          WHERE REGEXP_REPLACE(UPPER(TRIM(w.name)), '\\s+', ' ', 'g')
-              = REGEXP_REPLACE(UPPER(TRIM($1)), '\\s+', ' ', 'g')
-          ORDER BY w.id`,
-        [wardName]
-      )
+      if (constituencyName) {
+        const county = countyName ? await findCountyByName(countyName) : null
+        let constituency = county
+          ? await findConstituencyByName(constituencyName, county.id)
+          : await findConstituencyByName(constituencyName)
 
-      if (wardRows.length > 0) {
-        if (constituencyName) {
-          ward =
-            wardRows.find(
-              (candidate) =>
-                normaliseName(candidate.constituency_name || '') === normaliseName(constituencyName)
-            ) || null
+        // A constituency of the same name under another county is still the
+        // constituency of the file's ward: the county of the file is reported
+        // but never duplicated.
+        if (!constituency && county) {
+          constituency = await findConstituencyByName(constituencyName)
+        }
+
+        if (constituency) {
+          if (
+            countyName &&
+            constituency.county_name &&
+            normaliseName(countyName) !== normaliseName(constituency.county_name)
+          ) {
+            issues.push({
+              row: rowNumber,
+              code: 'parent_mismatch',
+              severity: 'warning',
+              message: `The county "${countyName}" of the file is not the county "${constituency.county_name}" of ${constituencyName}`,
+              field: 'county_name',
+            })
+          }
+
+          ward = await queryOne<{
+            id: number
+            constituency_id: number
+          }>(
+            `SELECT w.id, w.constituency_id
+               FROM wards w
+              WHERE w.constituency_id = $1
+                AND REGEXP_REPLACE(UPPER(TRIM(w.name)), '\\s+', ' ', 'g')
+                  = REGEXP_REPLACE(UPPER(TRIM($2)), '\\s+', ' ', 'g')
+              ORDER BY w.id
+              LIMIT 1`,
+            [constituency.id, wardName]
+          )
+
           if (!ward) {
-            const other = wardRows[0]
-            planned.push(
-              skip({
-                row: rowNumber,
-                code: 'invalid_parent',
-                severity: 'error',
-                message: `The ward "${wardName}" is in ${other.constituency_name ?? 'another constituency'}, not in ${constituencyName}`,
-                field: 'ward_name',
-              })
-            )
-            continue
+            wardToCreate = {
+              name: wardName,
+              code: wardCode,
+              constituency_id: constituency.id,
+              constituency_name: constituencyName,
+              county_id: constituency.county_id,
+              county_name: constituency.county_name ?? countyName,
+            }
+          }
+        } else if (countyName) {
+          // Both the constituency and the ward are new. The import creates them
+          // under the county of the file, and creates the county when it too is
+          // new.
+          wardToCreate = {
+            name: wardName,
+            code: wardCode,
+            constituency_name: constituencyName,
+            county_name: countyName,
           }
         } else {
-          ward = wardRows[0]
-        }
-      } else {
-        // Try to auto-create the ward if we have enough information
-        if (!constituencyName) {
-          planned.push(
-            skip({
-              row: rowNumber,
-              code: 'unmatched_ward',
-              severity: 'error',
-              message: `The ward "${wardName}" was not found`,
-              field: 'ward_name',
-            })
-          )
-          continue
-        }
-
-        const constituency = await queryOne<{
-          id: number
-          county_id: number
-          county_name: string | null
-        }>(
-          `SELECT c.id, c.county_id, co.name AS county_name
-             FROM constituencies c
-             LEFT JOIN counties co ON co.id = c.county_id
-            WHERE REGEXP_REPLACE(UPPER(TRIM(c.name)), '\\s+', ' ', 'g')
-                = REGEXP_REPLACE(UPPER(TRIM($1)), '\\s+', ' ', 'g')
-            LIMIT 1`,
-          [constituencyName]
-        )
-
-        if (!constituency) {
           planned.push(
             skip({
               row: rowNumber,
               code: 'unmatched_constituency',
               severity: 'error',
-              message: `The constituency "${constituencyName}" was not found`,
+              message: `The constituency "${constituencyName}" was not found, and a new constituency needs a county`,
               field: 'constituency_name',
             })
           )
           continue
         }
-
-        // Check if ward code from IEBC might be in the row? We need to look up by name
-        // Try to find any ward with this name
-        const createdWard = await queryOne<{ id: number; constituency_id: number; constituency_name: string | null }>(
-          `SELECT w.id, w.constituency_id, c.name AS constituency_name
+      } else {
+        ward = await queryOne<{
+          id: number
+          constituency_id: number
+        }>(
+          `SELECT w.id, w.constituency_id
              FROM wards w
-             LEFT JOIN constituencies c ON c.id = w.constituency_id
-            WHERE w.constituency_id = $1
-              AND REGEXP_REPLACE(UPPER(TRIM(w.name)), '\\s+', ' ', 'g')
-                = REGEXP_REPLACE(UPPER(TRIM($2)), '\\s+', ' ', 'g')
+            WHERE REGEXP_REPLACE(UPPER(TRIM(w.name)), '\\s+', ' ', 'g')
+                = REGEXP_REPLACE(UPPER(TRIM($1)), '\\s+', ' ', 'g')
+            ORDER BY w.id
             LIMIT 1`,
-          [constituency.id, wardName]
+          [wardName]
         )
 
-        if (!createdWard) {
-          // We need a ward code to create it - look for it in common columns
-          const wardCode = pick(row, ['ward_code', 'ward_iebc_code', 'iebc_ward_code']) || 
-                          (code && code.length <= 50 ? undefined : undefined)
-          // Try to use a generated code or skip
+        if (!ward) {
           planned.push(
             skip({
               row: rowNumber,
               code: 'unmatched_ward',
               severity: 'error',
-              message: `The ward "${wardName}" was not found. Create it first or include ward details.`,
+              message: `The ward "${wardName}" was not found, and a new ward needs a constituency`,
               field: 'ward_name',
             })
           )
           continue
         }
-
-        ward = createdWard
       }
     }
 
@@ -1537,7 +1482,7 @@ async function planStationImport(text: string): Promise<StationPlan> {
           )
           continue
         }
-        if (!ward) {
+        if (!ward && !wardToCreate) {
           planned.push(
             skip({
               row: rowNumber,
@@ -1556,7 +1501,13 @@ async function planStationImport(text: string): Promise<StationPlan> {
           action: 'create',
           code,
           name,
-          ward_id: ward.id,
+          ward_id: ward?.id,
+          ward_name: wardToCreate?.name,
+          ward_code: wardToCreate?.code,
+          constituency_id: wardToCreate?.constituency_id,
+          constituency_name: wardToCreate?.constituency_name,
+          county_id: wardToCreate?.county_id,
+          county_name: wardToCreate?.county_name,
           latitude: latitude !== undefined && !Number.isNaN(latitude) ? latitude : undefined,
           longitude: longitude !== undefined && !Number.isNaN(longitude) ? longitude : undefined,
           registered_voters: registeredVoters,
@@ -1647,11 +1598,51 @@ export async function importPollingStationsFromCsv(
 
     try {
       if (entry.action === 'create') {
+        let wardId = entry.ward_id
+
+        // A ward the platform does not have is created from the county down:
+        // the county first, then the constituency, then the ward. A level that
+        // already exists is matched by name and keeps its code.
+        if (!wardId) {
+          if (!entry.ward_name || !entry.constituency_name) {
+            throw new LocationError(
+              'invalid_input',
+              'A new polling station needs a ward and a constituency'
+            )
+          }
+
+          let countyId = entry.county_id
+          if (!countyId) {
+            if (!entry.county_name) {
+              throw new LocationError('invalid_input', 'A new ward needs a county')
+            }
+            const county = await ensureCounty(entry.county_name)
+            countyId = county.id
+          }
+
+          let constituencyId = entry.constituency_id
+          if (!constituencyId) {
+            const constituency = await ensureConstituency(
+              entry.constituency_name,
+              countyId
+            )
+            constituencyId = constituency.id
+          }
+
+          const ward = await ensureWard(
+            entry.ward_name,
+            constituencyId,
+            countyId,
+            entry.ward_code
+          )
+          wardId = ward.id
+        }
+
         await createPollingStation(
           {
             code: entry.code!,
             name: entry.name!,
-            ward_id: entry.ward_id!,
+            ward_id: wardId,
             latitude: entry.latitude ?? null,
             longitude: entry.longitude ?? null,
             registered_voters: entry.registered_voters ?? 0,
@@ -1696,14 +1687,6 @@ export async function importPollingStationsFromCsv(
 }
 
 /**
- * Read a ward file and report what the import would do, without writing.
- */
-export async function previewWardsImport(text: string): Promise<ImportPreview> {
-  const plan = await planWardImport(text)
-  return summarisePreview('wards', plan.rows)
-}
-
-/**
  * Read a polling station file and report what the import would do, without
  * writing.
  */
@@ -1716,7 +1699,7 @@ export async function previewPollingStationsImport(text: string): Promise<Import
  * Count the rows of a plan.
  */
 function summarisePreview(
-  type: 'wards' | 'polling_stations',
+  type: 'polling_stations',
   rows: ImportRowPlan[]
 ): ImportPreview {
   const issues = rows.flatMap((row) => row.issues)

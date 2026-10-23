@@ -285,18 +285,27 @@ The rules the write path enforces:
   submissions or an agent, is not deleted.
 - Every change is written to the audit trail.
 
-**The bulk import** takes the official IEBC files as they are:
+**The bulk import** takes the official IEBC polling station file. It must
+carry the eight IEBC columns:
 
-| File | Columns |
+| Column | Meaning |
 |---|---|
-| `WARDS.csv` | ward_name, constituency_name, county_name, registered_voters |
-| `POLLING_STATIONS.csv` | station_name, station_code, ward_name, constituency_name, county_name, latitude, longitude, registered_voters |
+| `County` | County name |
+| `Constituency` | Constituency name |
+| `Ward` | Ward name |
+| `IEBC Code` | Polling station code |
+| `Polling Station` | Polling station name |
+| `Stream` | Stream of a station split into streams |
+| `Registration Centre` | Registration centre of the station |
+| `Registered Voters` | Registered voters for the stream |
 
-A ward is matched by its code, or by its name inside its constituency, and a
-polling station by its code, so running an import again updates the existing
-rows instead of duplicating them. A ward without a code gets one derived
-from its number. The names are compared without their case and without their
-extra spaces, so the official files match as they are.
+A station is matched by its code and stream, and by its name inside its ward
+as a fallback. A station, ward, constituency or county the platform does not
+have is created: the import builds the hierarchy from the county down before
+it writes the station. A level that already exists is matched by name and
+keeps its code, so running an import again updates the existing rows instead
+of duplicating them. The names are compared without their case and without
+their extra spaces, so the official files match as they are.
 
 **The preview** (the "Preview" button) reads the file with the same planner
 the import writes with, and writes nothing:
@@ -311,10 +320,11 @@ the import writes with, and writes nothing:
 
 Every problem is reported with the line of the file and a message that says
 what to do about it: a code that the file uses twice, a row without a name
-or without a code, a constituency or a ward that is not one of the platform,
-a ward that belongs to another constituency, a code that is too long. A
-warning, such as a county of the file that is not the county of the
-constituency, is reported as well, but the row is still written.
+or without a code, a new station without a ward or a constituency, a code
+that is too long. A warning, such as a county of the file that is not the
+county of the constituency, is reported as well, but the row is still
+written. A file that leaves out any of the eight required columns is refused
+with the names of the missing columns.
 
 **The placeholder wards** the geography seeder generates
 ("Constituency Ward 1", "Ward 2" …) are removed by the same screen once the
