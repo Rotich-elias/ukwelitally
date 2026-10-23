@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { query, queryOne } from '@/lib/db'
 import { withRole } from '@/middleware/auth'
 import { hashPassword } from '@/lib/auth'
@@ -42,6 +43,8 @@ async function handlePut(req: NextRequest, { params }: { params: { id: string } 
 
     let userAccount = null
     let observerAssignment = null
+    // Generated when an account is created; returned to the admin once.
+    let generatedPassword: string | null = null
 
     // If status is being changed to approved, create user account and assign polling station
     if (status === 'approved' && volunteer.status !== 'approved') {
@@ -66,8 +69,10 @@ async function handlePut(req: NextRequest, { params }: { params: { id: string } 
         )
       }
 
-      // Hash the ID number to use as password
-      const hashedPassword = await hashPassword(volunteer.id_number)
+      // Generate a strong random password for the observer account.
+      // It is shown to the admin once and never stored in plain text.
+      generatedPassword = 'Obs' + crypto.randomBytes(6).toString('hex')
+      const hashedPassword = await hashPassword(generatedPassword)
 
       // Create user account with role 'observer' for presidential results monitoring
       userAccount = await queryOne(
@@ -160,12 +165,16 @@ async function handlePut(req: NextRequest, { params }: { params: { id: string } 
       ]
     )
 
+    const accountCreated = status === 'approved' && volunteer.status !== 'approved'
     return NextResponse.json({
-      message: status === 'approved' && volunteer.status !== 'approved'
-        ? 'Volunteer approved and account created successfully. Login credentials sent to email.'
+      message: accountCreated
+        ? 'Volunteer approved and account created successfully. Share the login credentials shown here with the volunteer.'
         : 'Volunteer status updated successfully',
       volunteer: updatedVolunteer,
-      account_created: status === 'approved' && volunteer.status !== 'approved'
+      account_created: accountCreated,
+      ...(accountCreated && userAccount
+        ? { credentials: { email: volunteer.email, password: generatedPassword } }
+        : {}),
     })
   } catch (error: any) {
     console.error('Error updating volunteer status:', error)

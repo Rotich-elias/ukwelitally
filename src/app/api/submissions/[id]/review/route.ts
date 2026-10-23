@@ -66,6 +66,61 @@ async function handlePost(
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 })
     }
 
+    // A candidate may only review submissions that belong to their own team or
+    // fall inside their electoral scope. Without this check any authenticated
+    // candidate could review a rival's submission (IDOR).
+    if (user.role === 'candidate') {
+      const candidateProfile = await queryOne<{ id: number }>(
+        'SELECT id FROM candidates WHERE user_id = $1',
+        [user.userId]
+      )
+
+      if (!candidateProfile) {
+        return NextResponse.json({ error: 'Candidate profile not found' }, { status: 404 })
+      }
+
+      const inScope = await queryOne<{ allowed: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1 FROM submissions s
+           JOIN polling_stations ps ON ps.id = s.polling_station_id
+           JOIN wards w ON w.id = ps.ward_id
+           JOIN constituencies con ON con.id = w.constituency_id
+           JOIN candidates c ON c.id = $1
+           WHERE s.id = $2
+             AND (
+               s.candidate_id = c.id
+               OR s.scope_candidate_id = c.id
+               OR (
+                 c.position = 'president'
+               )
+               OR (
+                 c.position = 'governor' AND ps.county_id = c.county_id
+               )
+               OR (
+                 c.position = 'senator' AND ps.county_id = c.county_id
+               )
+               OR (
+                 c.position = 'women_rep' AND ps.county_id = c.county_id
+               )
+               OR (
+                 c.position = 'mp' AND con.id = c.constituency_id
+               )
+               OR (
+                 c.position = 'mca' AND w.id = c.ward_id
+               )
+             )
+         ) AS allowed`,
+        [candidateProfile.id, submissionId]
+      )
+
+      if (!inScope?.allowed) {
+        return NextResponse.json(
+          { error: 'You can only review submissions within your electoral scope.' },
+          { status: 403 }
+        )
+      }
+    }
+
     // An observer submission is an alternative result. It only becomes the
     // result of a station through the candidate's fallback decision, so the
     // generic review action is not available for it.

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne, queryMany } from '@/lib/db'
 import { withRole } from '@/middleware/auth'
+import { hashPassword } from '@/lib/auth'
 
 // GET /api/admin/volunteers - List volunteer registrations with filtering
 async function handleGet(req: NextRequest) {
@@ -114,8 +115,24 @@ async function handlePost(req: NextRequest) {
       )
     }
 
-    // Generate random password
+    // Enforce agent limits per polling station: max 1 primary and max 2 backups.
+    const targetStationId = polling_station_id || volunteer.polling_station_id
+    if (targetStationId) {
+      const primaryCount = await queryOne(
+        `SELECT COUNT(*)::int AS cnt FROM agents WHERE polling_station_id = $1 AND is_primary = TRUE`,
+        [targetStationId]
+      )
+      if (parseInt(primaryCount?.cnt) >= 1) {
+        return NextResponse.json(
+          { error: 'This polling station already has a primary agent. Assign this volunteer as a backup agent.' },
+          { status: 409 }
+        )
+      }
+    }
+
+    // Generate random password and hash it
     const password = 'Pass' + Math.floor(Math.random() * 9000 + 1000)
+    const hashedPassword = await hashPassword(password)
 
     // Start transaction
     const result = await query('BEGIN')
@@ -129,8 +146,7 @@ async function handlePost(req: NextRequest) {
         [
           volunteer.email,
           volunteer.phone,
-          // In a real app, you'd hash the password
-          password, // This should be hashed - using plain text for demo
+          hashedPassword,
           volunteer.full_name,
           'agent',
           volunteer.id_number,

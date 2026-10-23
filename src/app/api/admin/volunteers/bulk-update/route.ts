@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { query, queryOne, queryMany, transaction } from '@/lib/db'
 import { withRole } from '@/middleware/auth'
 import { hashPassword } from '@/lib/auth'
@@ -90,8 +91,9 @@ async function handlePost(req: NextRequest) {
             throw new Error(`A user with email ${volunteer.email} already exists`)
           }
 
-          // Hash the ID number to use as password
-          const hashedPassword = await hashPassword(volunteer.id_number)
+          // Generate a strong random password for the observer account.
+          const generatedPassword = 'Obs' + crypto.randomBytes(6).toString('hex')
+          const hashedPassword = await hashPassword(generatedPassword)
 
           // Create user account with role 'observer' for presidential results monitoring
           userAccount = await queryOne(
@@ -152,7 +154,8 @@ async function handlePost(req: NextRequest) {
           accountCreationResults.push({
             volunteer_id: volunteer.id,
             user_id: userAccount.id,
-            email: volunteer.email
+            email: volunteer.email,
+            password: generatedPassword
           })
         }
 

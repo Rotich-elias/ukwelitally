@@ -477,8 +477,8 @@ describe('the agent assignment route', () => {
   it('refuses a second primary agent at the same station', async () => {
     baseHandlers([
       {
-        match: /SELECT id FROM agents\s+WHERE candidate_id = \$1 AND polling_station_id = \$2 AND is_primary = TRUE/,
-        handler: () => [{ id: 5 }],
+        match: /SELECT COUNT\(\*\) as cnt FROM agents WHERE polling_station_id = \$1 AND is_primary = TRUE/,
+        handler: () => [{ cnt: 1 }],
       },
       {
         match: /SELECT id FROM users WHERE email = \$1 OR phone = \$2 OR id_number = \$3/,
@@ -497,5 +497,30 @@ describe('the agent assignment route', () => {
 
     expect(response.status).toBe(409)
     expect(body.error).toMatch(/primary agent/)
+  })
+
+  it('refuses a third backup agent at the same station', async () => {
+    baseHandlers([
+      {
+        match: /SELECT COUNT\(\*\) as cnt FROM agents WHERE polling_station_id = \$1 AND is_primary = FALSE/,
+        handler: () => [{ cnt: 2 }],
+      },
+      {
+        match: /SELECT id FROM users WHERE email = \$1 OR phone = \$2 OR id_number = \$3/,
+        handler: () => [],
+      },
+    ])
+
+    const response = await agentsPost(
+      request('/api/candidates/agents', CANDIDATE_USER, {
+        method: 'POST',
+        body: JSON.stringify({ ...payload(4447), is_primary: false }),
+        headers: { 'content-type': 'application/json' },
+      }) as any
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(409)
+    expect(body.error).toMatch(/backup agents/)
   })
 })

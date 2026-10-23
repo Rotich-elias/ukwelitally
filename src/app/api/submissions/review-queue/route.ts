@@ -16,23 +16,46 @@ async function handleGet(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const filter = searchParams.get('filter') || 'all' // all, pending, flagged, anomalies
 
-    let whereClause = ''
+    let statusClause = ''
     const params: any[] = []
 
     switch (filter) {
       case 'pending':
-        whereClause = "WHERE s.status = 'pending'"
+        statusClause = "s.status = 'pending'"
         break
       case 'flagged':
-        whereClause = "WHERE s.status = 'flagged'"
+        statusClause = "s.status = 'flagged'"
         break
       case 'anomalies':
-        whereClause = "WHERE s.has_discrepancy = TRUE"
+        statusClause = "s.has_discrepancy = TRUE"
         break
       case 'all':
-        whereClause = "WHERE s.status IN ('pending', 'flagged') OR s.has_discrepancy = TRUE"
+        statusClause = "(s.status IN ('pending', 'flagged') OR s.has_discrepancy = TRUE)"
         break
+      default:
+        statusClause = "(s.status IN ('pending', 'flagged') OR s.has_discrepancy = TRUE)"
     }
+
+    // A candidate only sees submissions from their own team or inside their
+    // electoral scope. An admin sees everything.
+    let scopeClause = ''
+    if (user.role === 'candidate') {
+      params.push(user.userId)
+      scopeClause = ` AND EXISTS (
+        SELECT 1 FROM candidates c2
+        WHERE c2.user_id = $${params.length}
+          AND (
+            s.candidate_id = c2.id
+            OR s.scope_candidate_id = c2.id
+            OR c2.position = 'president'
+            OR (c2.position IN ('governor','senator','women_rep') AND ps.county_id = c2.county_id)
+            OR (c2.position = 'mp' AND const.id = c2.constituency_id)
+            OR (c2.position = 'mca' AND w.id = c2.ward_id)
+          )
+      )`
+    }
+
+    const whereClause = `WHERE ${statusClause}${scopeClause}`
 
     const sql = `
       SELECT

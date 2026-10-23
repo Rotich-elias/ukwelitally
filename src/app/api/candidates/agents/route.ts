@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
 import { hashPassword, normalizePhoneNumber } from '@/lib/auth'
 import { getAssignmentScope, isStationInScope, describeScope } from '@/lib/agentScope'
+import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from '@/lib/jwtSecret'
 
@@ -87,6 +88,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden - Candidate access only' }, { status: 403 })
     }
 
+    // Throttle bulk agent creation so a compromised candidate account cannot
+    // be used to mass-create accounts.
+    const ip = getClientIp(request)
+    const limit = checkRateLimit(
+      rateLimitKey('agentCreate', ip),
+      RATE_LIMITS.agentCreate.limit,
+      RATE_LIMITS.agentCreate.windowMs
+    )
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many agents created. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
+      )
+    }
+
     // Get candidate profile
     const candidate = await queryOne(
       'SELECT id FROM candidates WHERE user_id = $1',
@@ -143,24 +159,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // A station has one primary agent per team. A second one is a
-    // conflicting assignment, so the candidate is asked to add a backup
-    // agent instead.
-    if (polling_station_id && is_primary !== false) {
-      const existingPrimary = await queryOne(
-        `SELECT id FROM agents
-          WHERE candidate_id = $1 AND polling_station_id = $2 AND is_primary = TRUE`,
-        [candidate.id, polling_station_id]
-      )
-
-      if (existingPrimary) {
-        return NextResponse.json(
-          {
-            error:
-              'This polling station already has a primary agent in your team. Add the agent as a backup agent instead.',
-          },
-          { status: 409 }
+    // Enforce limits: max 1 primary agent and max 2 backup agents per polling station (across all teams)
+    if (polling_station_id) {
+      if (is_primary !== false) {
+        const existingPrimary = await queryOne(
+          `SELECT COUNT(*) as cnt FROM agents WHERE polling_station_id = $1 AND is_primary = TRUE`,
+          [polling_station_id]
         )
+        if (parseInt(existingPrimary?.cnt) >= 1) {
+          return NextResponse.json(
+            { error: 'Only 1 primary agent allowed per polling station. Add the agent as a backup agent instead.' },
+            { status: 409 }
+          )
+        }
+      } else {
+        const existingBackups = await queryOne(
+          `SELECT COUNT(*) as cnt FROM agents WHERE polling_station_id = $1 AND is_primary = FALSE`,
+          [polling_station_id]
+        )
+        if (parseInt(existingBackups?.cnt) >= 2) {
+          return NextResponse.json(
+            { error: 'Maximum 2 backup agents allowed per polling station.' },
+            { status: 409 }
+          )
+        }
       }
     }
 
