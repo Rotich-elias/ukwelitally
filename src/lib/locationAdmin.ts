@@ -2117,6 +2117,31 @@ async function updateStationBatch(
 }
 
 /**
+ * Refuse a bulk import while the database still has the old row-level trigger.
+ *
+ * Migration 020 rolled the parent totals up once per station. Without the
+ * statement-level triggers of migration 024, a national file makes the
+ * database do that work tens of thousands of times and the request times out.
+ * Failing immediately with a clear message is better than a 504.
+ */
+async function assertBulkImportReady(): Promise<void> {
+  const trigger = await queryOne<{ is_statement: boolean }>(
+    `SELECT (tgtype & 1) = 0 AS is_statement
+       FROM pg_trigger
+      WHERE tgrelid = 'polling_stations'::regclass
+        AND tgname = 'trg_sync_registered_voters_ins'
+      LIMIT 1`
+  )
+
+  if (trigger && !trigger.is_statement) {
+    throw new LocationError(
+      'conflict',
+      'The database still has the per-row voter roll-up trigger. Apply migration 024_bulk_import_station_triggers.sql before importing a large file.'
+    )
+  }
+}
+
+/**
  * Import polling stations from a CSV.
  *
  * The file is planned first, exactly as the preview plans it, and the plan is
@@ -2128,6 +2153,7 @@ export async function importPollingStationsFromCsv(
   text: string,
   actor: { userId: number; ipAddress?: string | null }
 ): Promise<ImportSummary> {
+  await assertBulkImportReady()
   const cache = await loadLocationCache()
   const plan = planStationImport(text, cache)
   const summary: ImportSummary = { created: 0, updated: 0, skipped: 0, errors: [] }
