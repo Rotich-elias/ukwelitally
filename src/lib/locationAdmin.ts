@@ -92,8 +92,8 @@ export class LocationError extends Error {
   }
 }
 
-/** The widest code a ward can have (wards.code is VARCHAR(10)). */
-export const MAX_WARD_CODE_LENGTH = 10
+/** The widest code a ward can have (wards.code is VARCHAR(50), migration 023). */
+export const MAX_WARD_CODE_LENGTH = 50
 /** The widest code a polling station can have (polling_stations.code is VARCHAR(50)). */
 export const MAX_STATION_CODE_LENGTH = 50
 

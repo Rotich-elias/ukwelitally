@@ -73,10 +73,22 @@ Parklands Ward,Westlands,Nairobi,28000
 Kangemi Ward,Westlands,Nairobi,22000
 ```
 
+**Optional Code Column:**
+
+Add an `iebc_code` (or `code` / `ward_code`) column to match a ward by its
+official code instead of its name. Ward codes may be up to **50 characters**
+long. The code identifies an existing ward; it is not changed by the import.
+
+```csv
+ward_name,constituency_name,county_name,code,registered_voters
+Karura Ward,Westlands,Nairobi,28149074203401,25000
+```
+
 **Alternative Column Names Supported:**
 - `ward` or `name` instead of `ward_name`
 - `constituency` instead of `constituency_name`
 - `county` instead of `county_name`
+- `iebc_code` or `ward_code` instead of `code`
 - `voters` instead of `registered_voters`
 
 ---

@@ -458,6 +458,9 @@ const IMPORT_HANDLERS: QueryHandler[] = [
       const code = String(params?.[0] ?? '')
       if (code === 'W0001') return [{ id: 2660, code: 'W0001', constituency_id: 628 }]
       if (code === 'W0002') return [{ id: 2661, code: 'W0002', constituency_id: 628 }]
+      if (code === '28149074203401') {
+        return [{ id: 2662, code: '28149074203401', constituency_id: 628 }]
+      }
       return []
     },
   },
@@ -852,10 +855,24 @@ describe('the dry run of the CSV import', () => {
     expect(body.rows[0].target_id).toBe(2660)
   })
 
+  it('accepts a ward code longer than the old 10 character limit', async () => {
+    const csv = [
+      'ward_name,constituency_name,code',
+      'Kayole,Test Constituency,28149074203401',
+    ].join('\n')
+
+    const response = await importPost(importRequest('wards', true, csv) as any)
+    const body = await response.json()
+
+    expect(body.skip).toBe(0)
+    expect(body.update).toBe(1)
+    expect(body.rows[0].code).toBe('28149074203401')
+  })
+
   it('reports a code that is too long', async () => {
     const csv = [
       'ward_name,constituency_name,code',
-      `Kayole,Test Constituency,${'W'.repeat(11)}`,
+      `Kayole,Test Constituency,${'W'.repeat(51)}`,
     ].join('\n')
 
     const response = await importPost(importRequest('wards', true, csv) as any)
@@ -865,7 +882,7 @@ describe('the dry run of the CSV import', () => {
 
     const issue = body.issues.find((entry: any) => entry.code === 'invalid_code')
     expect(issue.row).toBe(2)
-    expect(issue.message).toContain('10 characters')
+    expect(issue.message).toContain('50 characters')
   })
 
   it('does not warn about a county that the file writes with extra spaces', async () => {
