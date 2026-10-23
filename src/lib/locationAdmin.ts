@@ -793,9 +793,10 @@ interface WardPlanEntry {
 interface StationPlanEntry {
   index: number
   row: number
-  action: 'update'
+  action: 'update' | 'create'
   /** The station that exists and is updated. */
-  existing_id: number
+  existing_id?: number
+  code?: string
   /** The fields present in the file. */
   name?: string
   ward_id?: number
@@ -1460,20 +1461,70 @@ async function planStationImport(text: string): Promise<StationPlan> {
     }
 
     if (!existing) {
-      planned.push(
-        skip({
+      if (code) {
+        if (!name) {
+          planned.push(
+            skip({
+              row: rowNumber,
+              code: 'missing_field',
+              severity: 'error',
+              message: 'A new polling station needs a name',
+              field: 'station_name',
+            })
+          )
+          continue
+        }
+        if (!ward) {
+          planned.push(
+            skip({
+              row: rowNumber,
+              code: 'missing_field',
+              severity: 'error',
+              message: 'A new polling station needs a ward',
+              field: 'ward_name',
+            })
+          )
+          continue
+        }
+
+        const entry: StationPlanEntry = {
+          index: entries.size,
           row: rowNumber,
-          code: 'unmatched_record',
-          severity: 'error',
-          message: code
-            ? `No polling station has the code "${code}"${
-                stream ? ` and stream ${stream}` : ''
-              }. The import only updates stations that already exist.`
-            : `No polling station named "${name}" exists in "${wardName}". The import only updates stations that already exist.`,
-          field: code ? 'station_code' : 'station_name',
+          action: 'create',
+          code,
+          name,
+          ward_id: ward.id,
+          latitude: latitude !== undefined && !Number.isNaN(latitude) ? latitude : undefined,
+          longitude: longitude !== undefined && !Number.isNaN(longitude) ? longitude : undefined,
+          registered_voters: registeredVoters,
+          stream: stream ?? null,
+          registration_centre: registrationCentre ?? null,
+        }
+
+        entries.set(rowNumber, entry)
+        planned.push({
+          row: rowNumber,
+          action: 'create',
+          code,
+          name,
+          parent: wardName ?? null,
+          target_id: null,
+          issues: [...issues],
         })
-      )
-      continue
+        fileKeys.set(fileKey, rowNumber)
+        continue
+      } else {
+        planned.push(
+          skip({
+            row: rowNumber,
+            code: 'unmatched_record',
+            severity: 'error',
+            message: `No polling station named "${name}" exists in "${wardName}". The import only updates stations that already exist.`,
+            field: code ? 'station_code' : 'station_name',
+          })
+        )
+        continue
+      }
     }
 
     fileKeys.set(fileKey, rowNumber)
@@ -1532,26 +1583,43 @@ export async function importPollingStationsFromCsv(
     if (!entry) continue
 
     try {
-      // Only the fields the file carries are passed, so a column the file
-      // leaves out keeps the value the station already has.
-      await updatePollingStation(
-        entry.existing_id,
-        {
-          ...(entry.name !== undefined ? { name: entry.name } : {}),
-          ...(entry.ward_id !== undefined ? { ward_id: entry.ward_id } : {}),
-          ...(entry.latitude !== undefined ? { latitude: entry.latitude } : {}),
-          ...(entry.longitude !== undefined ? { longitude: entry.longitude } : {}),
-          ...(entry.registered_voters !== undefined
-            ? { registered_voters: entry.registered_voters }
-            : {}),
-          ...(entry.stream !== undefined ? { stream: entry.stream } : {}),
-          ...(entry.registration_centre !== undefined
-            ? { registration_centre: entry.registration_centre }
-            : {}),
-        },
-        actor
-      )
-      summary.updated += 1
+      if (entry.action === 'create') {
+        await createPollingStation(
+          {
+            code: entry.code!,
+            name: entry.name!,
+            ward_id: entry.ward_id!,
+            latitude: entry.latitude ?? null,
+            longitude: entry.longitude ?? null,
+            registered_voters: entry.registered_voters ?? 0,
+            stream: entry.stream ?? null,
+            registration_centre: entry.registration_centre ?? null,
+          },
+          actor
+        )
+        summary.created += 1
+      } else {
+        // Only the fields the file carries are passed, so a column the file
+        // leaves out keeps the value the station already has.
+        await updatePollingStation(
+          entry.existing_id!,
+          {
+            ...(entry.name !== undefined ? { name: entry.name } : {}),
+            ...(entry.ward_id !== undefined ? { ward_id: entry.ward_id } : {}),
+            ...(entry.latitude !== undefined ? { latitude: entry.latitude } : {}),
+            ...(entry.longitude !== undefined ? { longitude: entry.longitude } : {}),
+            ...(entry.registered_voters !== undefined
+              ? { registered_voters: entry.registered_voters }
+              : {}),
+            ...(entry.stream !== undefined ? { stream: entry.stream } : {}),
+            ...(entry.registration_centre !== undefined
+              ? { registration_centre: entry.registration_centre }
+              : {}),
+          },
+          actor
+        )
+        summary.updated += 1
+      }
     } catch (error) {
       summary.skipped += 1
       summary.errors.push({
@@ -1593,6 +1661,7 @@ function summarisePreview(
     type,
     total_rows: rows.length,
     valid_rows: rows.filter((row) => row.action !== 'skip').length,
+    create: rows.filter((row) => row.action === 'create').length,
     update: rows.filter((row) => row.action === 'update').length,
     skip: rows.filter((row) => row.action === 'skip').length,
     error_rows: rows.filter((row) =>

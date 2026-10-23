@@ -98,7 +98,7 @@ async function handlePost(req: NextRequest) {
       return NextResponse.json({
         success: true,
         dry_run: true,
-        message: `${preview.total_rows} row(s) read: ${preview.update} to update, ${preview.skip} to skip${
+        message: `${preview.total_rows} row(s) read: ${preview.create ?? 0} to create, ${preview.update ?? 0} to update, ${preview.skip} to skip${
           preview.error_rows ? ` (${preview.error_rows} with errors)` : ''
         }. Nothing was written.`,
         ...preview,
@@ -116,8 +116,8 @@ async function handlePost(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Import finished: ${summary.updated} updated, ${summary.skipped} skipped`,
-      total_rows: summary.updated + summary.skipped,
+      message: `Import finished: ${summary.created} created, ${summary.updated} updated, ${summary.skipped} skipped`,
+      total_rows: summary.created + summary.updated + summary.skipped,
       ...summary,
     })
   } catch (error) {

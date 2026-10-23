@@ -679,7 +679,7 @@ describe('the dry run of the CSV import', () => {
     expect(issue.message).toContain('W9999')
   })
 
-  it('refuses a polling station the platform does not have', async () => {
+  it('creates a polling station the platform does not have', async () => {
     const csv = [
       'station_name,station_code,ward_name,constituency_name',
       'Nowhere Hall,PS999999,Test Ward,Test Constituency',
@@ -690,12 +690,9 @@ describe('the dry run of the CSV import', () => {
     )
     const body = await response.json()
 
-    expect(body.skip).toBe(1)
-    expect(body.error_rows).toBe(1)
-
-    const issue = body.issues.find((entry: any) => entry.code === 'unmatched_record')
-    expect(issue.row).toBe(2)
-    expect(issue.message).toContain('PS999999')
+    expect(body.create).toBe(1)
+    expect(body.rows[0].action).toBe('create')
+    expect(body.rows[0].code).toBe('PS999999')
   })
 
   it('matches a ward by its name when the file carries no code', async () => {
