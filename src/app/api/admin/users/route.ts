@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
-import { hashPassword, normalizePhoneNumber } from '@/lib/auth'
+import { hashPassword, normalizeEmail, normalizePhoneNumber } from '@/lib/auth'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from '@/lib/jwtSecret'
 import { validateCandidateLocation } from '@/lib/candidateLocation'
@@ -88,13 +88,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
     }
 
-    // Normalize phone
+    // Normalize email and phone
+    const normalizedEmail = normalizeEmail(email)
     const normalizedPhone = normalizePhoneNumber(phone)
 
     // Check if user exists
     const existingUser = await queryOne(
       'SELECT id FROM users WHERE email = $1 OR phone = $2 OR id_number = $3',
-      [email, normalizedPhone, id_number]
+      [normalizedEmail, normalizedPhone, id_number]
     )
 
     if (existingUser) {
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
       `INSERT INTO users (email, phone, password_hash, full_name, role, id_number, verified, active)
        VALUES ($1, $2, $3, $4, $5, $6, true, true)
        RETURNING id, email, phone, full_name, role, verified, active, created_at`,
-      [email, normalizedPhone, passwordHash, full_name, role, id_number]
+      [normalizedEmail, normalizedPhone, passwordHash, full_name, role, id_number]
     )
 
     if (!newUser) {
@@ -282,10 +283,13 @@ export async function PUT(request: NextRequest) {
     const params: any[] = []
     let paramIndex = 1
 
-    if (email && email !== currentUser.email) {
-      updates.push(`email = $${paramIndex}`)
-      params.push(email)
-      paramIndex++
+    if (email) {
+      const normalizedEmail = normalizeEmail(email)
+      if (normalizedEmail !== currentUser.email) {
+        updates.push(`email = $${paramIndex}`)
+        params.push(normalizedEmail)
+        paramIndex++
+      }
     }
 
     if (phone && phone !== currentUser.phone) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
-import { hashPassword, normalizePhoneNumber } from '@/lib/auth'
+import { hashPassword, normalizeEmail, normalizePhoneNumber } from '@/lib/auth'
 import { getAssignmentScope, isStationInScope, describeScope } from '@/lib/agentScope'
 import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
 import jwt from 'jsonwebtoken'
@@ -143,13 +143,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Normalize phone
+    // Normalize email and phone
+    const normalizedEmail = normalizeEmail(email)
     const normalizedPhone = normalizePhoneNumber(phone)
 
     // Check if user exists
     const existingUser = await queryOne(
       'SELECT id FROM users WHERE email = $1 OR phone = $2 OR id_number = $3',
-      [email, normalizedPhone, id_number]
+      [normalizedEmail, normalizedPhone, id_number]
     )
 
     if (existingUser) {
@@ -194,7 +195,7 @@ export async function POST(request: NextRequest) {
       `INSERT INTO users (email, phone, password_hash, full_name, role, id_number, verified, active)
        VALUES ($1, $2, $3, $4, 'agent', $5, true, true)
        RETURNING id, email, phone, full_name, role, created_at`,
-      [email, normalizedPhone, passwordHash, full_name, id_number]
+      [normalizedEmail, normalizedPhone, passwordHash, full_name, id_number]
     )
 
     if (!newUser) {

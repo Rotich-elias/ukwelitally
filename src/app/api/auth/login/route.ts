@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryOne, query } from '@/lib/db'
-import { verifyPassword, generateToken, sanitizeUser } from '@/lib/auth'
+import { verifyPassword, generateToken, sanitizeUser, normalizeEmail } from '@/lib/auth'
 import { loginSchema } from '@/lib/validation'
 import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
 import { User } from '@/types/database'
@@ -9,10 +9,38 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    // Throttle repeated login attempts per client to slow brute force attacks.
+    // Parse request body. A malformed body is a client error, not a 500.
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    }
+
+    // Validate input
+    const validationResult = loginSchema.safeParse(body)
+    if (!validationResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Validation failed',
+          details: validationResult.error.errors,
+        },
+        { status: 400 }
+      )
+    }
+
+    const { password } = validationResult.data
+    const email = normalizeEmail(validationResult.data.email)
+
+    // Throttle repeated login attempts to slow brute force attacks.
+    //
+    // The key includes the account, not just the IP: on localhost every
+    // request reports the same address ("unknown"), so an IP-only bucket let
+    // a handful of mistakes on one account lock every account on the machine
+    // out for 15 minutes.
     const ip = getClientIp(request)
     const limit = checkRateLimit(
-      rateLimitKey('login', ip),
+      rateLimitKey('login', `${ip}:${email}`),
       RATE_LIMITS.login.limit,
       RATE_LIMITS.login.windowMs
     )
@@ -30,26 +58,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Parse request body
-    const body = await request.json()
-
-    // Validate input
-    const validationResult = loginSchema.safeParse(body)
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: validationResult.error.errors,
-        },
-        { status: 400 }
-      )
-    }
-
-    const { email, password } = validationResult.data
-
-    // Find user by email
+    // Find user by email. The lower() comparison also matches legacy rows
+    // that were stored before email addresses were normalized on creation.
     const user = await queryOne<User>(
-      'SELECT * FROM users WHERE email = $1',
+      'SELECT * FROM users WHERE email = $1 OR lower(email) = $1',
       [email]
     )
 

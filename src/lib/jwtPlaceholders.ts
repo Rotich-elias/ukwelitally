@@ -27,3 +27,20 @@ export function isPlaceholderSecret(secret: string | null | undefined): boolean 
 
   return JWT_PLACEHOLDER_SECRETS.has(trimmed)
 }
+
+/**
+ * Return the secret exactly as it must be used for signing and verification,
+ * or null when it is missing or still a placeholder.
+ *
+ * Trimming matters: the Node helpers in src/lib/auth.ts trim JWT_SECRET before
+ * signing, so the Edge middleware has to trim it the same way. Without this a
+ * trailing space in .env produces a token that verifies in the API but not in
+ * middleware, and the user is bounced straight back to /login after a
+ * successful login.
+ */
+export function resolveJwtSecretForEdge(
+  secret: string | null | undefined
+): string | null {
+  if (isPlaceholderSecret(secret)) return null
+  return secret!.trim()
+}

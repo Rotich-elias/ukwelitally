@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { verifyJwtEdge } from '@/lib/jwt-edge'
-import { isPlaceholderSecret } from '@/lib/jwtPlaceholders'
+import { resolveJwtSecretForEdge } from '@/lib/jwtPlaceholders'
 
 /**
  * Route protection for dashboard pages.
@@ -50,10 +50,15 @@ export async function middleware(req: NextRequest) {
   // exactly as it does in the API routes. The check has to be inline
   // because this module runs on the Edge runtime, where node:crypto (and
   // therefore src/lib/jwtSecret.ts) is not available.
-  const secret = process.env.JWT_SECRET
-  if (!secret || isPlaceholderSecret(secret)) {
-    // Without a secret the token cannot be validated, so fail closed.
-    return NextResponse.redirect(new URL('/login', req.url))
+  const secret = resolveJwtSecretForEdge(process.env.JWT_SECRET)
+  if (!secret) {
+    // Without a secret the token cannot be validated, so fail closed and drop
+    // the cookie that can never be verified.
+    const loginUrl = new URL('/login', req.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    const response = NextResponse.redirect(loginUrl)
+    response.cookies.delete(SESSION_COOKIE)
+    return response
   }
 
   const payload = await verifyJwtEdge(token, secret)

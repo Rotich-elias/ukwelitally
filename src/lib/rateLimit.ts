@@ -34,6 +34,7 @@ function cleanupExpiredBuckets() {
  */
 export function getClientIp(req: {
   headers: { get(name: string): string | null }
+  ip?: string
 }): string {
   const forwardedFor = req.headers.get('x-forwarded-for')
   if (forwardedFor) {
@@ -43,7 +44,16 @@ export function getClientIp(req: {
     if (first) return first
   }
 
-  return req.headers.get('x-real-ip') || 'unknown'
+  const realIp = req.headers.get('x-real-ip')
+  if (realIp) return realIp
+
+  // NextRequest exposes the connection address on platforms that provide it
+  // (for example Vercel). Local `next dev` leaves it undefined, which is why
+  // callers that need per-client buckets should key on more than the IP.
+  const directIp = req.ip?.trim()
+  if (directIp) return directIp
+
+  return 'unknown'
 }
 
 export interface RateLimitResult {

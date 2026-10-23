@@ -18,8 +18,9 @@ import {
   generateToken,
   verifyToken,
   sanitizeUser,
+  normalizeEmail,
 } from '@/lib/auth'
-import { isPlaceholderSecret } from '@/lib/jwtPlaceholders'
+import { isPlaceholderSecret, resolveJwtSecretForEdge } from '@/lib/jwtPlaceholders'
 
 describe('hashPassword / verifyPassword', () => {
   it('verifies a correct password', async () => {
@@ -68,6 +69,16 @@ describe('isValidKenyanPhone', () => {
   it('rejects invalid numbers', () => {
     expect(isValidKenyanPhone('12345')).toBe(false)
     expect(isValidKenyanPhone('+25412345678')).toBe(false)
+  })
+})
+
+describe('normalizeEmail', () => {
+  it('lowercases and trims an address', () => {
+    expect(normalizeEmail('  User@Example.COM  ')).toBe('user@example.com')
+  })
+
+  it('leaves an already normalized address unchanged', () => {
+    expect(normalizeEmail('user@example.com')).toBe('user@example.com')
   })
 })
 
@@ -184,6 +195,20 @@ describe('isPlaceholderSecret', () => {
 
   it('does not treat a real secret as a placeholder', () => {
     expect(isPlaceholderSecret('a-real-secret-for-this-test')).toBe(false)
+  })
+})
+
+describe('resolveJwtSecretForEdge', () => {
+  it('returns the trimmed secret used for signing', () => {
+    expect(resolveJwtSecretForEdge('  a-real-secret-for-this-test  ')).toBe(
+      'a-real-secret-for-this-test'
+    )
+  })
+
+  it('rejects missing and placeholder secrets', () => {
+    expect(resolveJwtSecretForEdge(undefined)).toBeNull()
+    expect(resolveJwtSecretForEdge('   ')).toBeNull()
+    expect(resolveJwtSecretForEdge('your-secret-key-here')).toBeNull()
   })
 })
 

@@ -83,6 +83,16 @@ export function normalizePhoneNumber(phone: string): string {
   return normalized
 }
 
+// Normalize an email address for storage and lookup.
+//
+// Postgres compares text case-sensitively, so an address stored as
+// "User@Example.com" does not match a login for "user@example.com". Every
+// account creation path and the login lookup go through this helper so the
+// two always agree.
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase()
+}
+
 // Validate email
 export function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

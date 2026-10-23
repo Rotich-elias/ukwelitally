@@ -64,7 +64,20 @@ describe('getClientIp', () => {
     expect(getClientIp(req({ 'x-real-ip': '198.51.100.7' }))).toBe('198.51.100.7')
   })
 
-  it('returns unknown when no header is present', () => {
+  it('falls back to the request ip', () => {
+    expect(getClientIp({ ...req({}), ip: '192.0.2.10' })).toBe('192.0.2.10')
+  })
+
+  it('prefers proxy headers over the request ip', () => {
+    expect(
+      getClientIp({
+        ...req({ 'x-forwarded-for': '203.0.113.5' }),
+        ip: '192.0.2.10',
+      })
+    ).toBe('203.0.113.5')
+  })
+
+  it('returns unknown when no header or ip is present', () => {
     expect(getClientIp(req({}))).toBe('unknown')
   })
 })

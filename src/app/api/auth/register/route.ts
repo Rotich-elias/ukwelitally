@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { query, queryOne } from '@/lib/db'
-import { hashPassword, normalizePhoneNumber, sanitizeUser, generateToken } from '@/lib/auth'
+import { hashPassword, normalizeEmail, normalizePhoneNumber, sanitizeUser, generateToken } from '@/lib/auth'
 import { registerUserSchema } from '@/lib/validation'
 import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
 import { User } from '@/types/database'
@@ -81,13 +81,14 @@ export async function POST(request: NextRequest) {
 
     const data = validationResult.data
 
-    // Normalize phone number
+    // Normalize email and phone number
+    const email = normalizeEmail(data.email)
     const normalizedPhone = normalizePhoneNumber(data.phone)
 
     // Check if user already exists
     const existingUser = await queryOne<User>(
       'SELECT id FROM users WHERE email = $1 OR phone = $2 OR id_number = $3',
-      [data.email, normalizedPhone, data.id_number]
+      [email, normalizedPhone, data.id_number]
     )
 
     if (existingUser) {
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, email, phone, full_name, role, verified, active, created_at`,
       [
-        data.email,
+        email,
         normalizedPhone,
         passwordHash,
         data.full_name,

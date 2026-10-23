@@ -3,7 +3,7 @@ import { UserRole, Position, SubmissionType } from '@/types/database'
 
 // User registration schema
 export const registerUserSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().trim().toLowerCase().email('Invalid email address'),
   phone: z.string().regex(/^(\+254|0)(7|1)\d{8}$/, 'Invalid Kenyan phone number'),
   password: z
     .string()
@@ -18,7 +18,7 @@ export const registerUserSchema = z.object({
 
 // Login schema
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().trim().toLowerCase().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
 })
 
