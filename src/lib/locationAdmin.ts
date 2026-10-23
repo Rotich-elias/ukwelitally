@@ -761,6 +761,7 @@ export interface ImportPreview {
   type: 'wards' | 'polling_stations'
   total_rows: number
   valid_rows: number
+  create?: number
   update: number
   skip: number
   error_rows: number
