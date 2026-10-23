@@ -67,6 +67,13 @@ export default function LoginPage() {
       <div className="max-w-md w-full relative z-10">
         {/* Logo/Brand */}
         <div className="text-center mb-8">
+          <img
+            src="/icons/icon-192x192.png"
+            alt="UkweliTally logo"
+            width={80}
+            height={80}
+            className="mx-auto mb-4 h-20 w-20 rounded-2xl shadow-lg shadow-blue-500/20"
+          />
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
             UkweliTally
           </h1>
