@@ -2125,15 +2125,18 @@ async function updateStationBatch(
  * Failing immediately with a clear message is better than a 504.
  */
 async function assertBulkImportReady(): Promise<void> {
-  const trigger = await queryOne<{ is_statement: boolean }>(
-    `SELECT (tgtype & 1) = 0 AS is_statement
+  const trigger = await queryOne<{ has_row_level: boolean }>(
+    `SELECT bool_or((tgtype & 1) = 1) AS has_row_level
        FROM pg_trigger
       WHERE tgrelid = 'polling_stations'::regclass
-        AND tgname = 'trg_sync_registered_voters_ins'
-      LIMIT 1`
+        AND tgname IN (
+          'trg_sync_registered_voters_ins',
+          'trg_sync_registered_voters_upd',
+          'trg_sync_registered_voters_del'
+        )`
   )
 
-  if (trigger && !trigger.is_statement) {
+  if (trigger?.has_row_level) {
     throw new LocationError(
       'conflict',
       'The database still has the per-row voter roll-up trigger. Apply migration 024_bulk_import_station_triggers.sql before importing a large file.'
