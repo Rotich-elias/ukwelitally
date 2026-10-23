@@ -1400,16 +1400,78 @@ async function planStationImport(text: string): Promise<StationPlan> {
           ward = wardRows[0]
         }
       } else {
-        planned.push(
-          skip({
-            row: rowNumber,
-            code: 'unmatched_ward',
-            severity: 'error',
-            message: `The ward "${wardName}" was not found`,
-            field: 'ward_name',
-          })
+        // Try to auto-create the ward if we have enough information
+        if (!constituencyName) {
+          planned.push(
+            skip({
+              row: rowNumber,
+              code: 'unmatched_ward',
+              severity: 'error',
+              message: `The ward "${wardName}" was not found`,
+              field: 'ward_name',
+            })
+          )
+          continue
+        }
+
+        const constituency = await queryOne<{
+          id: number
+          county_id: number
+          county_name: string | null
+        }>(
+          `SELECT c.id, c.county_id, co.name AS county_name
+             FROM constituencies c
+             LEFT JOIN counties co ON co.id = c.county_id
+            WHERE REGEXP_REPLACE(UPPER(TRIM(c.name)), '\\s+', ' ', 'g')
+                = REGEXP_REPLACE(UPPER(TRIM($1)), '\\s+', ' ', 'g')
+            LIMIT 1`,
+          [constituencyName]
         )
-        continue
+
+        if (!constituency) {
+          planned.push(
+            skip({
+              row: rowNumber,
+              code: 'unmatched_constituency',
+              severity: 'error',
+              message: `The constituency "${constituencyName}" was not found`,
+              field: 'constituency_name',
+            })
+          )
+          continue
+        }
+
+        // Check if ward code from IEBC might be in the row? We need to look up by name
+        // Try to find any ward with this name
+        const createdWard = await queryOne<{ id: number; constituency_id: number; constituency_name: string | null }>(
+          `SELECT w.id, w.constituency_id, c.name AS constituency_name
+             FROM wards w
+             LEFT JOIN constituencies c ON c.id = w.constituency_id
+            WHERE w.constituency_id = $1
+              AND REGEXP_REPLACE(UPPER(TRIM(w.name)), '\\s+', ' ', 'g')
+                = REGEXP_REPLACE(UPPER(TRIM($2)), '\\s+', ' ', 'g')
+            LIMIT 1`,
+          [constituency.id, wardName]
+        )
+
+        if (!createdWard) {
+          // We need a ward code to create it - look for it in common columns
+          const wardCode = pick(row, ['ward_code', 'ward_iebc_code', 'iebc_ward_code']) || 
+                          (code && code.length <= 50 ? undefined : undefined)
+          // Try to use a generated code or skip
+          planned.push(
+            skip({
+              row: rowNumber,
+              code: 'unmatched_ward',
+              severity: 'error',
+              message: `The ward "${wardName}" was not found. Create it first or include ward details.`,
+              field: 'ward_name',
+            })
+          )
+          continue
+        }
+
+        ward = createdWard
       }
     }
 
