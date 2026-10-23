@@ -526,235 +526,222 @@ function importHandler(db: FakeDb): QueryHandler {
     handler: (text: string, params: any[] = []) => {
       const sql = text.replace(/\s+/g, ' ').trim()
 
-      if (sql.startsWith('SELECT id, name FROM counties')) {
-        const name = norm(params[0])
-        return db.counties.filter((county) => norm(county.name) === name)
-      }
-
-      if (sql.startsWith('SELECT c.id, c.county_id, c.name, co.name AS county_name')) {
-        const name = norm(params[0])
-        const countyId = params.length > 1 ? Number(params[1]) : undefined
-        const constituency = db.constituencies.find(
-          (candidate) =>
-            norm(candidate.name) === name &&
-            (countyId === undefined || candidate.county_id === countyId)
-        )
-        if (!constituency) return []
-        const county = db.counties.find(
-          (candidate) => candidate.id === constituency.county_id
-        )
-        return [
-          {
-            id: constituency.id,
-            county_id: constituency.county_id,
-            name: constituency.name,
-            county_name: county?.name ?? null,
-          },
-        ]
-      }
-
-      if (sql.startsWith('SELECT w.id, w.constituency_id FROM wards w')) {
-        if (sql.includes('w.constituency_id = $1')) {
-          const [constituencyId, wardName] = params
-          const ward = db.wards.find(
-            (candidate) =>
-              candidate.constituency_id === Number(constituencyId) &&
-              norm(candidate.name) === norm(wardName)
-          )
-          return ward ? [{ id: ward.id, constituency_id: ward.constituency_id }] : []
-        }
-        const ward = db.wards.find(
-          (candidate) => norm(candidate.name) === norm(params[0])
-        )
-        return ward ? [{ id: ward.id, constituency_id: ward.constituency_id }] : []
-      }
-
-      if (sql.startsWith('SELECT id, code FROM polling_stations WHERE code = $1 AND COALESCE')) {
-        const [code, stream] = params
-        const station = db.stations.find(
-          (candidate) =>
-            candidate.code === String(code) &&
-            (candidate.stream ?? '') === String(stream ?? '')
-        )
-        return station ? [{ id: station.id, code: station.code }] : []
-      }
-
-      if (sql.startsWith('SELECT id, code FROM polling_stations WHERE ward_id = $1')) {
-        const [wardId, name, stream] = params
-        const station = db.stations.find(
-          (candidate) =>
-            candidate.ward_id === Number(wardId) &&
-            norm(candidate.name) === norm(name) &&
-            (candidate.stream ?? '') === String(stream ?? '')
-        )
-        return station ? [{ id: station.id, code: station.code }] : []
-      }
-
-      if (sql.startsWith('SELECT id FROM counties WHERE code = $1')) {
-        return db.counties.filter((county) => county.code === String(params[0]))
-      }
-
-      if (sql.startsWith('SELECT id FROM constituencies WHERE code = $1')) {
-        return db.constituencies.filter(
-          (constituency) => constituency.code === String(params[0])
-        )
-      }
-
-      if (sql.startsWith('SELECT id FROM wards WHERE code = $1')) {
-        return db.wards.filter((ward) => ward.code === String(params[0]))
-      }
-
-      if (sql.startsWith('INSERT INTO counties')) {
-        const [name, code] = params
-        const county = { id: db.nextCounty, name: String(name), code: String(code) }
-        db.nextCounty += 1
-        db.counties.push(county)
-        return [county]
-      }
-
-      if (sql.startsWith('INSERT INTO constituencies')) {
-        const [name, code, countyId] = params
-        const constituency = {
-          id: db.nextConstituency,
-          name: String(name),
-          code: String(code),
-          county_id: Number(countyId),
-        }
-        db.nextConstituency += 1
-        db.constituencies.push(constituency)
-        return [constituency]
-      }
-
-      if (sql.startsWith('INSERT INTO wards')) {
-        const [name, code, constituencyId, countyId] = params
-        const ward = {
-          id: db.nextWard,
-          name: String(name),
-          code: String(code),
-          constituency_id: Number(constituencyId),
-          county_id: Number(countyId),
-        }
-        db.nextWard += 1
-        db.wards.push(ward)
-        return [ward]
-      }
-
-      if (sql.startsWith('SELECT id, constituency_id, county_id FROM wards WHERE constituency_id = $1')) {
-        const [constituencyId, wardName] = params
-        const ward = db.wards.find(
-          (candidate) =>
-            candidate.constituency_id === Number(constituencyId) &&
-            norm(candidate.name) === norm(wardName)
-        )
-        return ward
-          ? [
-              {
-                id: ward.id,
-                constituency_id: ward.constituency_id,
-                county_id: ward.county_id,
-              },
-            ]
-          : []
-      }
-
-      if (sql.startsWith('SELECT id, constituency_id, county_id FROM wards WHERE id = $1')) {
-        const ward = db.wards.find((candidate) => candidate.id === Number(params[0]))
-        return ward
-          ? [
-              {
-                id: ward.id,
-                constituency_id: ward.constituency_id,
-                county_id: ward.county_id,
-              },
-            ]
-          : []
-      }
-
-      if (sql.startsWith('SELECT id FROM polling_stations WHERE code = $1 AND COALESCE')) {
-        const [code, stream] = params
-        return db.stations
-          .filter(
-            (station) =>
-              station.code === String(code) &&
-              (station.stream ?? '') === String(stream ?? '')
-          )
-          .map((station) => ({ id: station.id }))
-      }
-
-      if (sql.startsWith('INSERT INTO polling_stations')) {
-        const [
-          code,
-          name,
-          wardId,
-          constituencyId,
-          countyId,
-          latitude,
-          longitude,
-          voters,
-          radius,
-          stream,
-          registrationCentre,
-        ] = params
-        const station: FakeStation = {
-          id: db.nextStation,
-          code: String(code),
-          name: String(name),
-          ward_id: Number(wardId),
-          constituency_id: Number(constituencyId),
-          county_id: Number(countyId),
-          latitude: latitude === null ? null : Number(latitude),
-          longitude: longitude === null ? null : Number(longitude),
-          registered_voters: Number(voters),
-          location_radius: Number(radius),
-          stream: stream === null ? null : String(stream),
-          registration_centre:
-            registrationCentre === null ? null : String(registrationCentre),
-        }
-        db.nextStation += 1
-        db.stations.push(station)
-        return [station]
+      // The four reads that fill the import cache.
+      if (sql.startsWith('SELECT id, name, code FROM counties')) {
+        return db.counties.map(({ id, name, code }) => ({ id, name, code }))
       }
 
       if (
         sql.startsWith(
-          'SELECT id, code, name, ward_id, constituency_id, county_id, latitude, longitude, registered_voters, location_radius, stream, registration_centre FROM polling_stations WHERE id = $1'
+          'SELECT c.id, c.county_id, c.name, c.code, co.name AS county_name'
         )
       ) {
-        return db.stations.filter((station) => station.id === Number(params[0]))
+        return db.constituencies.map((constituency) => {
+          const county = db.counties.find(
+            (candidate) => candidate.id === constituency.county_id
+          )
+          return {
+            id: constituency.id,
+            county_id: constituency.county_id,
+            name: constituency.name,
+            code: constituency.code,
+            county_name: county?.name ?? null,
+          }
+        })
       }
 
-      if (sql.startsWith('UPDATE polling_stations')) {
-        const [
-          code,
-          name,
-          wardId,
-          constituencyId,
-          countyId,
-          latitude,
-          longitude,
-          voters,
-          radius,
-          stream,
-          registrationCentre,
-          id,
-        ] = params
-        const station = db.stations.find((candidate) => candidate.id === Number(id))
-        if (!station) return []
-        Object.assign(station, {
-          code: String(code),
+      if (
+        sql.startsWith(
+          'SELECT id, constituency_id, county_id, name, code FROM wards'
+        )
+      ) {
+        return db.wards.map(
+          ({ id, constituency_id, county_id, name, code }) => ({
+            id,
+            constituency_id,
+            county_id,
+            name,
+            code,
+          })
+        )
+      }
+
+      if (
+        sql.startsWith(
+          'SELECT id, code, name, ward_id, constituency_id, county_id, latitude, longitude, registered_voters, location_radius, stream, registration_centre FROM polling_stations'
+        )
+      ) {
+        return db.stations.map((station) => ({ ...station }))
+      }
+
+      if (sql.startsWith("SELECT set_config('ukwelitally.bulk_import'")) {
+        return [{ set_config: 'on' }]
+      }
+
+      // The hierarchy is inserted top down with UNNEST.
+      if (sql.startsWith('INSERT INTO counties')) {
+        const [names, codes] = params as [string[], string[]]
+        const created: FakeCounty[] = names.map((name, index) => ({
+          id: db.nextCounty++,
           name: String(name),
-          ward_id: Number(wardId),
-          constituency_id: Number(constituencyId),
-          county_id: Number(countyId),
-          latitude: latitude === null ? null : Number(latitude),
-          longitude: longitude === null ? null : Number(longitude),
-          registered_voters: Number(voters),
-          location_radius: Number(radius),
-          stream: stream === null ? null : String(stream),
-          registration_centre:
-            registrationCentre === null ? null : String(registrationCentre),
-        })
-        return [station]
+          code: String(codes[index]),
+        }))
+        db.counties.push(...created)
+        return created
+      }
+
+      if (sql.startsWith('INSERT INTO constituencies')) {
+        const [names, codes, countyIds] = params as [
+          string[],
+          string[],
+          number[]
+        ]
+        const created: FakeConstituency[] = names.map((name, index) => ({
+          id: db.nextConstituency++,
+          name: String(name),
+          code: String(codes[index]),
+          county_id: Number(countyIds[index]),
+        }))
+        db.constituencies.push(...created)
+        return created
+      }
+
+      if (sql.startsWith('INSERT INTO wards')) {
+        const [names, codes, constituencyIds, countyIds] = params as [
+          string[],
+          string[],
+          number[],
+          number[]
+        ]
+        const created: FakeWard[] = names.map((name, index) => ({
+          id: db.nextWard++,
+          name: String(name),
+          code: String(codes[index]),
+          constituency_id: Number(constituencyIds[index]),
+          county_id: Number(countyIds[index]),
+        }))
+        db.wards.push(...created)
+        return created
+      }
+
+      if (sql.startsWith('INSERT INTO polling_stations')) {
+        const [
+          codes,
+          names,
+          wardIds,
+          constituencyIds,
+          countyIds,
+          latitudes,
+          longitudes,
+          voters,
+          radii,
+          streams,
+          centres,
+        ] = params as [
+          string[],
+          string[],
+          number[],
+          number[],
+          number[],
+          Array<number | null>,
+          Array<number | null>,
+          number[],
+          number[],
+          Array<string | null>,
+          Array<string | null>
+        ]
+
+        const returned: Array<{ code: string; stream: string | null }> = []
+        for (let index = 0; index < codes.length; index += 1) {
+          const code = String(codes[index])
+          const stream =
+            streams[index] === null ? null : String(streams[index])
+          const conflict = db.stations.some(
+            (station) =>
+              station.code === code && (station.stream ?? '') === (stream ?? '')
+          )
+          if (conflict) continue
+
+          const station: FakeStation = {
+            id: db.nextStation++,
+            code,
+            name: String(names[index]),
+            ward_id: Number(wardIds[index]),
+            constituency_id: Number(constituencyIds[index]),
+            county_id: Number(countyIds[index]),
+            latitude:
+              latitudes[index] === null ? null : Number(latitudes[index]),
+            longitude:
+              longitudes[index] === null ? null : Number(longitudes[index]),
+            registered_voters: Number(voters[index]),
+            location_radius: Number(radii[index]),
+            stream,
+            registration_centre:
+              centres[index] === null ? null : String(centres[index]),
+          }
+          db.stations.push(station)
+          returned.push({ code: station.code, stream: station.stream })
+        }
+        return returned
+      }
+
+      if (sql.startsWith('UPDATE polling_stations AS ps')) {
+        const [
+          ids,
+          codes,
+          names,
+          wardIds,
+          constituencyIds,
+          countyIds,
+          latitudes,
+          longitudes,
+          voters,
+          streams,
+          centres,
+        ] = params as [
+          number[],
+          string[],
+          string[],
+          number[],
+          number[],
+          number[],
+          Array<number | null>,
+          Array<number | null>,
+          number[],
+          Array<string | null>,
+          Array<string | null>
+        ]
+
+        const updated: FakeStation[] = []
+        for (let index = 0; index < ids.length; index += 1) {
+          const station = db.stations.find(
+            (candidate) => candidate.id === Number(ids[index])
+          )
+          if (!station) continue
+
+          Object.assign(station, {
+            code: String(codes[index]),
+            name: String(names[index]),
+            ward_id: Number(wardIds[index]),
+            constituency_id: Number(constituencyIds[index]),
+            county_id: Number(countyIds[index]),
+            latitude:
+              latitudes[index] === null ? null : Number(latitudes[index]),
+            longitude:
+              longitudes[index] === null ? null : Number(longitudes[index]),
+            registered_voters: Number(voters[index]),
+            stream:
+              streams[index] === null ? null : String(streams[index]),
+            registration_centre:
+              centres[index] === null ? null : String(centres[index]),
+          })
+          updated.push(station)
+        }
+        return updated
+      }
+
+      if (sql.startsWith('SELECT * FROM sync_registered_voters_from_stations()')) {
+        return []
       }
 
       return []

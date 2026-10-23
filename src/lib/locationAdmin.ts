@@ -129,218 +129,40 @@ function codeSeed(name: string): string {
 }
 
 /**
- * A code that no row of the table uses yet.
+ * The codes to try for a name.
  *
  * The name gives the readable part; when two names share a prefix (or the
  * readable part is taken) a hash of the full name keeps the code unique. Codes
  * are generated only for records the import creates: a record that already
  * exists is matched by name and keeps its code.
  */
-async function uniqueCode(
-  table: 'counties' | 'constituencies' | 'wards',
-  name: string,
-  maxLength: number
-): Promise<string> {
+function codeCandidates(name: string, maxLength: number): string[] {
   const seed = codeSeed(name) || 'AREA'
   const hash = shortHash(name)
   const candidates: string[] = []
   const hashed = `${seed.slice(0, Math.max(1, maxLength - hash.length - 1))}-${hash}`
   candidates.push(seed.slice(0, maxLength), hashed.slice(0, maxLength))
-  for (let suffix = 2; suffix <= 99; suffix += 1) {
+  for (let suffix = 2; suffix <= 999; suffix += 1) {
     const tail = `-${suffix}`
     candidates.push(`${seed.slice(0, Math.max(1, maxLength - tail.length))}${tail}`)
   }
+  return candidates
+}
 
-  for (const candidate of candidates) {
-    const existing = await queryOne<{ id: number }>(
-      `SELECT id FROM ${table} WHERE code = $1 LIMIT 1`,
-      [candidate]
-    )
-    if (!existing) return candidate
+/**
+ * A code that no row of the table uses yet, chosen from the codes already in
+ * memory. The import loads the used codes once instead of asking the database
+ * for every new county, constituency and ward.
+ */
+function nextUniqueCode(name: string, used: Set<string>, maxLength: number): string {
+  for (const candidate of codeCandidates(name, maxLength)) {
+    if (!used.has(candidate)) {
+      used.add(candidate)
+      return candidate
+    }
   }
 
   throw new LocationError('invalid_input', `Could not make a unique code for "${name}"`)
-}
-
-async function findCountyByName(
-  name: string
-): Promise<{ id: number; name: string } | null> {
-  return queryOne<{ id: number; name: string }>(
-    `SELECT id, name FROM counties
-      WHERE REGEXP_REPLACE(UPPER(TRIM(name)), '\\s+', ' ', 'g')
-          = REGEXP_REPLACE(UPPER(TRIM($1)), '\\s+', ' ', 'g')
-      ORDER BY id
-      LIMIT 1`,
-    [name]
-  )
-}
-
-async function findConstituencyByName(
-  name: string,
-  countyId?: number
-): Promise<{ id: number; county_id: number; name: string; county_name: string | null } | null> {
-  const params: any[] = [name]
-  let countyFilter = ''
-  if (countyId !== undefined) {
-    params.push(countyId)
-    countyFilter = 'AND c.county_id = $2'
-  }
-
-  return queryOne<{
-    id: number
-    county_id: number
-    name: string
-    county_name: string | null
-  }>(
-    `SELECT c.id, c.county_id, c.name, co.name AS county_name
-       FROM constituencies c
-       LEFT JOIN counties co ON co.id = c.county_id
-      WHERE REGEXP_REPLACE(UPPER(TRIM(c.name)), '\\s+', ' ', 'g')
-          = REGEXP_REPLACE(UPPER(TRIM($1)), '\\s+', ' ', 'g')
-        ${countyFilter}
-      ORDER BY c.id
-      LIMIT 1`,
-    params
-  )
-}
-
-/** A county, created when the file names one the platform does not have. */
-async function ensureCounty(name: string): Promise<{ id: number; name: string }> {
-  const existing = await findCountyByName(name)
-  if (existing) return existing
-
-  const displayName = name.trim().replace(/\s+/g, ' ')
-  const code = await uniqueCode('counties', displayName, MAX_COUNTY_CODE_LENGTH)
-
-  try {
-    const created = await queryOne<{ id: number; name: string }>(
-      `INSERT INTO counties (name, code)
-       VALUES ($1, $2)
-       RETURNING id, name`,
-      [displayName, code]
-    )
-    if (created) return created
-  } catch {
-    // Another import may have created it between the read and the write.
-  }
-
-  const found = await findCountyByName(displayName)
-  if (!found) {
-    throw new LocationError('invalid_input', `Could not create the county "${displayName}"`)
-  }
-  return found
-}
-
-/**
- * A constituency, created under its county when the file names one the
- * platform does not have.
- */
-async function ensureConstituency(
-  name: string,
-  countyId: number
-): Promise<{ id: number; county_id: number; name: string; county_name: string | null }> {
-  const existing = await findConstituencyByName(name, countyId)
-  if (existing) return existing
-
-  const displayName = name.trim().replace(/\s+/g, ' ')
-  const code = await uniqueCode('constituencies', displayName, MAX_CONSTITUENCY_CODE_LENGTH)
-
-  try {
-    const created = await queryOne<{ id: number; county_id: number; name: string }>(
-      `INSERT INTO constituencies (name, code, county_id)
-       VALUES ($1, $2, $3)
-       RETURNING id, county_id, name`,
-      [displayName, code, countyId]
-    )
-    if (created) return { ...created, county_name: null }
-  } catch {
-    // Another import may have created it between the read and the write.
-  }
-
-  const found = await findConstituencyByName(displayName, countyId)
-  if (!found) {
-    throw new LocationError(
-      'invalid_input',
-      `Could not create the constituency "${displayName}"`
-    )
-  }
-  return found
-}
-
-/**
- * A ward, created under its constituency when the file names one the platform
- * does not have.
- */
-async function ensureWard(
-  name: string,
-  constituencyId: number,
-  countyId: number,
-  preferredCode?: string | null
-): Promise<{ id: number; constituency_id: number; county_id: number }> {
-  const displayName = name.trim().replace(/\s+/g, ' ')
-
-  const existing = await queryOne<{
-    id: number
-    constituency_id: number
-    county_id: number
-  }>(
-    `SELECT id, constituency_id, county_id FROM wards
-      WHERE constituency_id = $1
-        AND REGEXP_REPLACE(UPPER(TRIM(name)), '\\s+', ' ', 'g')
-          = REGEXP_REPLACE(UPPER(TRIM($2)), '\\s+', ' ', 'g')
-      ORDER BY id
-      LIMIT 1`,
-    [constituencyId, displayName]
-  )
-  if (existing) return existing
-
-  let code = (preferredCode || '').trim()
-  if (code && code.length <= MAX_WARD_CODE_LENGTH) {
-    const taken = await queryOne<{ id: number }>(
-      'SELECT id FROM wards WHERE code = $1 LIMIT 1',
-      [code]
-    )
-    if (taken) code = ''
-  } else {
-    code = ''
-  }
-  if (!code) {
-    code = await uniqueCode('wards', displayName, MAX_WARD_CODE_LENGTH)
-  }
-
-  try {
-    const created = await queryOne<{
-      id: number
-      constituency_id: number
-      county_id: number
-    }>(
-      `INSERT INTO wards (name, code, constituency_id, county_id)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, constituency_id, county_id`,
-      [displayName, code, constituencyId, countyId]
-    )
-    if (created) return created
-  } catch {
-    // Another import may have created it between the read and the write.
-  }
-
-  const found = await queryOne<{
-    id: number
-    constituency_id: number
-    county_id: number
-  }>(
-    `SELECT id, constituency_id, county_id FROM wards
-      WHERE constituency_id = $1
-        AND REGEXP_REPLACE(UPPER(TRIM(name)), '\\s+', ' ', 'g')
-          = REGEXP_REPLACE(UPPER(TRIM($2)), '\\s+', ' ', 'g')
-      ORDER BY id
-      LIMIT 1`,
-    [constituencyId, displayName]
-  )
-  if (!found) {
-    throw new LocationError('invalid_input', `Could not create the ward "${displayName}"`)
-  }
-  return found
 }
 
 /**
@@ -952,6 +774,8 @@ export type ImportIssueSeverity = 'error' | 'warning'
 export type ImportIssueCode =
   | 'missing_field'
   | 'duplicate_code'
+  | 'duplicate_station'
+  | 'code_mismatch'
   | 'unmatched_constituency'
   | 'unmatched_ward'
   | 'unmatched_record'
@@ -1001,6 +825,199 @@ export interface ImportPreview {
   warning_rows: number
   issues: ImportIssue[]
   rows: ImportRowPlan[]
+}
+
+/* -------------------------------------------------------------------------- */
+/*                         The in-memory location cache                       */
+/* -------------------------------------------------------------------------- */
+
+interface CachedCounty {
+  id: number
+  name: string
+  code: string
+}
+
+interface CachedConstituency {
+  id: number
+  county_id: number
+  name: string
+  code: string
+  county_name: string | null
+}
+
+interface CachedWard {
+  id: number
+  constituency_id: number
+  county_id: number
+  name: string
+  code: string
+}
+
+interface CachedStation {
+  id: number
+  code: string
+  name: string
+  ward_id: number
+  constituency_id: number
+  county_id: number
+  latitude: number | null
+  longitude: number | null
+  registered_voters: number
+  location_radius: number
+  stream: string | null
+  registration_centre: string | null
+}
+
+/**
+ * The whole electoral geography, read once before a file is planned.
+ *
+ * A national file carries tens of thousands of stations. Looking each name up
+ * in the database while planning turns the import into hundreds of thousands
+ * of round trips, which is what made the request time out. The cache is small
+ * enough to hold in memory (a few tens of megabytes) and makes planning a
+ * purely local operation.
+ */
+interface LocationCache {
+  counties: CachedCounty[]
+  constituencies: CachedConstituency[]
+  wards: CachedWard[]
+  stations: CachedStation[]
+  countiesByName: Map<string, CachedCounty>
+  constituenciesByName: Map<string, CachedConstituency[]>
+  constituenciesByCountyName: Map<string, CachedConstituency>
+  wardsByConstituencyName: Map<string, CachedWard>
+  wardsById: Map<number, CachedWard>
+  wardsByName: Map<string, CachedWard[]>
+  stationsById: Map<number, CachedStation>
+  stationsByCodeStream: Map<string, CachedStation>
+  stationsByWardNameStream: Map<string, CachedStation>
+  countyCodes: Set<string>
+  constituencyCodes: Set<string>
+  wardCodes: Set<string>
+}
+
+function countyNameKey(name: string): string {
+  return normaliseName(name)
+}
+
+function constituencyKey(countyId: number, name: string): string {
+  return `${countyId}::${normaliseName(name)}`
+}
+
+function wardKey(constituencyId: number, name: string): string {
+  return `${constituencyId}::${normaliseName(name)}`
+}
+
+function stationCodeKey(code: string, stream: string | null): string {
+  return `${code}::${stream ?? ''}`
+}
+
+function stationNameKey(
+  wardId: number,
+  name: string,
+  stream: string | null
+): string {
+  return `${wardId}::${normaliseName(name)}::${stream ?? ''}`
+}
+
+/**
+ * Read counties, constituencies, wards and polling stations once.
+ *
+ * The four reads run in parallel. Everything the import needs to match a row
+ * is indexed by the same normalised names the planner uses.
+ */
+async function loadLocationCache(): Promise<LocationCache> {
+  const [counties, constituencies, wards, stationRows] = await Promise.all([
+    queryMany<CachedCounty>('SELECT id, name, code FROM counties ORDER BY id'),
+    queryMany<CachedConstituency>(
+      `SELECT c.id, c.county_id, c.name, c.code, co.name AS county_name
+         FROM constituencies c
+         LEFT JOIN counties co ON co.id = c.county_id
+        ORDER BY c.id`
+    ),
+    queryMany<CachedWard>(
+      'SELECT id, constituency_id, county_id, name, code FROM wards ORDER BY id'
+    ),
+    queryMany<
+      Omit<CachedStation, 'latitude' | 'longitude'> & {
+        latitude: number | string | null
+        longitude: number | string | null
+      }
+    >(
+      `SELECT id, code, name, ward_id, constituency_id, county_id, latitude, longitude,
+              registered_voters, location_radius, stream, registration_centre
+         FROM polling_stations ORDER BY id`
+    ),
+  ])
+
+  const cache: LocationCache = {
+    counties,
+    constituencies,
+    wards,
+    stations: [],
+    countiesByName: new Map(),
+    constituenciesByName: new Map(),
+    constituenciesByCountyName: new Map(),
+    wardsByConstituencyName: new Map(),
+    wardsById: new Map(),
+    wardsByName: new Map(),
+    stationsById: new Map(),
+    stationsByCodeStream: new Map(),
+    stationsByWardNameStream: new Map(),
+    countyCodes: new Set(),
+    constituencyCodes: new Set(),
+    wardCodes: new Set(),
+  }
+
+  for (const county of counties) {
+    cache.countiesByName.set(countyNameKey(county.name), county)
+    cache.countyCodes.add(county.code)
+  }
+
+  for (const constituency of constituencies) {
+    const key = countyNameKey(constituency.name)
+    const list = cache.constituenciesByName.get(key) ?? []
+    list.push(constituency)
+    cache.constituenciesByName.set(key, list)
+    cache.constituenciesByCountyName.set(
+      constituencyKey(constituency.county_id, constituency.name),
+      constituency
+    )
+    cache.constituencyCodes.add(constituency.code)
+  }
+
+  for (const ward of wards) {
+    const key = countyNameKey(ward.name)
+    const list = cache.wardsByName.get(key) ?? []
+    list.push(ward)
+    cache.wardsByName.set(key, list)
+    cache.wardsByConstituencyName.set(
+      wardKey(ward.constituency_id, ward.name),
+      ward
+    )
+    cache.wardsById.set(ward.id, ward)
+    cache.wardCodes.add(ward.code)
+  }
+
+  for (const station of stationRows) {
+    const cached: CachedStation = {
+      ...station,
+      latitude: station.latitude === null ? null : Number(station.latitude),
+      longitude: station.longitude === null ? null : Number(station.longitude),
+    }
+    cache.stations.push(cached)
+    cache.stationsById.set(cached.id, cached)
+    cache.stationsByCodeStream.set(
+      stationCodeKey(cached.code, cached.stream),
+      cached
+    )
+    cache.stationsByWardNameStream.set(
+      stationNameKey(cached.ward_id, cached.name, cached.stream),
+      cached
+    )
+  }
+
+  return cache
 }
 
 /** A row of a polling station file, resolved against the database. */
@@ -1201,13 +1218,15 @@ function normaliseName(value: string): string {
  * of a station. A station is matched by its IEBC code and its stream together;
  * when the file carries no code it is matched by its name inside the ward.
  */
-async function planStationImport(text: string): Promise<StationPlan> {
+function planStationImport(text: string, cache: LocationCache): StationPlan {
   const rows = parseCsv(text)
   const entries = new Map<number, StationPlanEntry>()
   const planned: ImportRowPlan[] = []
 
   /** The codes of the file with their stream, and the line each one is on. */
   const fileKeys = new Map<string, number>()
+  /** The station names of the file inside a ward, and the line each one is on. */
+  const fileStationKeys = new Map<string, number>()
 
   for (let index = 0; index < rows.length; index += 1) {
     const row = rows[index]
@@ -1302,10 +1321,7 @@ async function planStationImport(text: string): Promise<StationPlan> {
     // does not have to carry the ward: it only moves the station when the
     // file says so. A ward, constituency or county the platform does not have
     // yet is created from the county down when the station is written.
-    let ward: {
-      id: number
-      constituency_id: number
-    } | null = null
+    let ward: CachedWard | null = null
 
     /** The hierarchy to create when the ward of the file does not exist. */
     let wardToCreate: {
@@ -1319,16 +1335,23 @@ async function planStationImport(text: string): Promise<StationPlan> {
 
     if (wardName) {
       if (constituencyName) {
-        const county = countyName ? await findCountyByName(countyName) : null
+        const county = countyName
+          ? cache.countiesByName.get(normaliseName(countyName))
+          : undefined
+
         let constituency = county
-          ? await findConstituencyByName(constituencyName, county.id)
-          : await findConstituencyByName(constituencyName)
+          ? cache.constituenciesByCountyName.get(
+              constituencyKey(county.id, constituencyName)
+            )
+          : cache.constituenciesByName.get(normaliseName(constituencyName))?.[0]
 
         // A constituency of the same name under another county is still the
         // constituency of the file's ward: the county of the file is reported
         // but never duplicated.
         if (!constituency && county) {
-          constituency = await findConstituencyByName(constituencyName)
+          constituency = cache.constituenciesByName.get(
+            normaliseName(constituencyName)
+          )?.[0]
         }
 
         if (constituency) {
@@ -1346,19 +1369,10 @@ async function planStationImport(text: string): Promise<StationPlan> {
             })
           }
 
-          ward = await queryOne<{
-            id: number
-            constituency_id: number
-          }>(
-            `SELECT w.id, w.constituency_id
-               FROM wards w
-              WHERE w.constituency_id = $1
-                AND REGEXP_REPLACE(UPPER(TRIM(w.name)), '\\s+', ' ', 'g')
-                  = REGEXP_REPLACE(UPPER(TRIM($2)), '\\s+', ' ', 'g')
-              ORDER BY w.id
-              LIMIT 1`,
-            [constituency.id, wardName]
-          )
+          ward =
+            cache.wardsByConstituencyName.get(
+              wardKey(constituency.id, wardName)
+            ) ?? null
 
           if (!ward) {
             wardToCreate = {
@@ -1378,7 +1392,8 @@ async function planStationImport(text: string): Promise<StationPlan> {
             name: wardName,
             code: wardCode,
             constituency_name: constituencyName,
-            county_name: countyName,
+            county_id: county?.id,
+            county_name: county?.name ?? countyName,
           }
         } else {
           planned.push(
@@ -1393,18 +1408,8 @@ async function planStationImport(text: string): Promise<StationPlan> {
           continue
         }
       } else {
-        ward = await queryOne<{
-          id: number
-          constituency_id: number
-        }>(
-          `SELECT w.id, w.constituency_id
-             FROM wards w
-            WHERE REGEXP_REPLACE(UPPER(TRIM(w.name)), '\\s+', ' ', 'g')
-                = REGEXP_REPLACE(UPPER(TRIM($1)), '\\s+', ' ', 'g')
-            ORDER BY w.id
-            LIMIT 1`,
-          [wardName]
-        )
+        ward =
+          cache.wardsByName.get(normaliseName(wardName))?.[0] ?? null
 
         if (!ward) {
           planned.push(
@@ -1442,30 +1447,97 @@ async function planStationImport(text: string): Promise<StationPlan> {
       }
     }
 
-    // Match by the code and the stream, then by name inside the ward the file
-    // names. A row with a code but no stream matches the station row that also
-    // has no stream.
-    let existing: { id: number; code: string } | null = null
+    // Match by the code and the stream first, then by name inside the ward the
+    // file names. A row with a code but no stream matches the station row that
+    // also has no stream.
+    let existing: CachedStation | null = null
 
     if (code) {
-      existing = await queryOne<{ id: number; code: string }>(
-        `SELECT id, code FROM polling_stations
-          WHERE code = $1 AND COALESCE(stream, '') = COALESCE($2, '')
-          ORDER BY id
-          LIMIT 1`,
-        [code, stream ?? null]
+      existing =
+        cache.stationsByCodeStream.get(stationCodeKey(code, stream ?? null)) ??
+        null
+    }
+
+    if (!existing && name && ward) {
+      const byName = cache.stationsByWardNameStream.get(
+        stationNameKey(ward.id, name, stream ?? null)
       )
-    } else if (ward && name) {
-      existing = await queryOne<{ id: number; code: string }>(
-        `SELECT id, code FROM polling_stations
-          WHERE ward_id = $1
-            AND COALESCE(stream, '') = COALESCE($3, '')
-            AND REGEXP_REPLACE(UPPER(TRIM(name)), '\\s+', ' ', 'g')
-              = REGEXP_REPLACE(UPPER(TRIM($2)), '\\s+', ' ', 'g')
-          ORDER BY id
-          LIMIT 1`,
-        [ward.id, name, stream ?? null]
+      if (byName) {
+        if (code && byName.code !== code) {
+          issues.push({
+            row: rowNumber,
+            code: 'code_mismatch',
+            severity: 'warning',
+            message: `The station "${name}" in "${wardName}" already has the code "${byName.code}"; the code "${code}" of the file is not written`,
+            field: 'iebc_code',
+          })
+        }
+        existing = byName
+      }
+    }
+
+    // The ward the row writes into. A row matched by code but with no ward of
+    // its own keeps the ward the station already has.
+    const targetWardKey = ward
+      ? `id:${ward.id}`
+      : wardToCreate
+        ? wardToCreate.constituency_id !== undefined
+          ? `constituency:${wardToCreate.constituency_id}::${normaliseName(
+              wardToCreate.name
+            )}`
+          : `new:${normaliseName(wardToCreate.county_name ?? '')}::${normaliseName(
+              wardToCreate.constituency_name
+            )}::${normaliseName(wardToCreate.name)}`
+        : existing
+          ? `id:${existing.ward_id}`
+          : null
+
+    // Two rows of the file cannot write the same station name and stream into
+    // the same ward: the unique index on (ward_id, name, stream) would reject
+    // the second one.
+    if (name && targetWardKey) {
+      const stationKey = `${targetWardKey}::${normaliseName(name)}::${
+        stream ?? ''
+      }`
+      const first = fileStationKeys.get(stationKey)
+      if (first !== undefined) {
+        planned.push(
+          skip({
+            row: rowNumber,
+            code: 'duplicate_station',
+            severity: 'error',
+            message: `The station "${name}"${
+              stream ? ` and stream ${stream}` : ''
+            } is already used by row ${first}`,
+            field: 'polling_station',
+          })
+        )
+        continue
+      }
+    }
+
+    // A code that names one station cannot be used to rename another station
+    // onto a name that already belongs to a different station in the same
+    // ward.
+    if (existing && name && !wardToCreate) {
+      const targetWardId = ward?.id ?? existing.ward_id
+      const byName = cache.stationsByWardNameStream.get(
+        stationNameKey(targetWardId, name, stream ?? null)
       )
+      if (byName && byName.id !== existing.id) {
+        planned.push(
+          skip({
+            row: rowNumber,
+            code: 'duplicate_station',
+            severity: 'error',
+            message: `The station "${name}"${
+              stream ? ` and stream ${stream}` : ''
+            } already exists with the code "${byName.code}" in that ward`,
+            field: 'polling_station',
+          })
+        )
+        continue
+      }
     }
 
     if (!existing) {
@@ -1525,7 +1597,13 @@ async function planStationImport(text: string): Promise<StationPlan> {
           target_id: null,
           issues: [...issues],
         })
-        fileKeys.set(fileKey, rowNumber)
+        if (code) fileKeys.set(fileKey, rowNumber)
+        if (name && targetWardKey) {
+          fileStationKeys.set(
+            `${targetWardKey}::${normaliseName(name)}::${stream ?? ''}`,
+            rowNumber
+          )
+        }
         continue
       } else {
         planned.push(
@@ -1541,7 +1619,13 @@ async function planStationImport(text: string): Promise<StationPlan> {
       }
     }
 
-    fileKeys.set(fileKey, rowNumber)
+    if (code) fileKeys.set(fileKey, rowNumber)
+    if (name && targetWardKey) {
+      fileStationKeys.set(
+        `${targetWardKey}::${normaliseName(name)}::${stream ?? ''}`,
+        rowNumber
+      )
+    }
 
     // Only the fields the file carries are updated.
     const entry: StationPlanEntry = {
@@ -1552,6 +1636,14 @@ async function planStationImport(text: string): Promise<StationPlan> {
     }
     if (name !== undefined) entry.name = name
     if (ward) entry.ward_id = ward.id
+    if (wardToCreate) {
+      entry.ward_name = wardToCreate.name
+      entry.ward_code = wardToCreate.code
+      entry.constituency_id = wardToCreate.constituency_id
+      entry.constituency_name = wardToCreate.constituency_name
+      entry.county_id = wardToCreate.county_id
+      entry.county_name = wardToCreate.county_name
+    }
     if (latitude !== undefined && !Number.isNaN(latitude)) entry.latitude = latitude
     if (longitude !== undefined && !Number.isNaN(longitude)) entry.longitude = longitude
     if (registeredVoters !== undefined) entry.registered_voters = registeredVoters
@@ -1573,18 +1665,473 @@ async function planStationImport(text: string): Promise<StationPlan> {
   return { entries, rows: planned }
 }
 
+/** A polling station the import is going to write. */
+interface StationWrite {
+  row: number
+  action: 'create' | 'update'
+  existing_id?: number
+  code: string
+  name: string
+  ward_id?: number
+  ward_name?: string
+  ward_code?: string
+  constituency_id?: number
+  constituency_name?: string
+  county_id?: number
+  county_name?: string
+  latitude: number | null
+  longitude: number | null
+  registered_voters: number
+  stream: string | null
+  registration_centre: string | null
+}
+
+/**
+ * How many stations one statement writes.
+ *
+ * A national file has roughly 46,000 rows. Batches of 1,000 keep every
+ * statement below the parameter limits and small enough to leave the memory
+ * of the function stable, while still reducing the round trips from tens of
+ * thousands to a few dozen.
+ */
+const BULK_BATCH_SIZE = 1000
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const batches: T[][] = []
+  for (let index = 0; index < items.length; index += size) {
+    batches.push(items.slice(index, index + size))
+  }
+  return batches
+}
+
+/** Turn one planned row into the values the bulk writer needs. */
+function buildStationWrite(
+  entry: StationPlanEntry,
+  cache: LocationCache
+): StationWrite | null {
+  if (entry.action === 'create') {
+    if (!entry.code || !entry.name) return null
+
+    return {
+      row: entry.row,
+      action: 'create',
+      code: entry.code,
+      name: entry.name,
+      ward_id: entry.ward_id,
+      ward_name: entry.ward_name,
+      ward_code: entry.ward_code,
+      constituency_id: entry.constituency_id,
+      constituency_name: entry.constituency_name,
+      county_id: entry.county_id,
+      county_name: entry.county_name,
+      latitude: entry.latitude ?? null,
+      longitude: entry.longitude ?? null,
+      registered_voters: entry.registered_voters ?? 0,
+      stream: entry.stream ?? null,
+      registration_centre: entry.registration_centre ?? null,
+    }
+  }
+
+  if (entry.existing_id === undefined) return null
+  const current = cache.stationsById.get(entry.existing_id)
+  if (!current) return null
+
+  // Only the fields the file carries change; the rest keep the value the
+  // station already has.
+  const write: StationWrite = {
+    row: entry.row,
+    action: 'update',
+    existing_id: current.id,
+    code: current.code,
+    name: entry.name ?? current.name,
+    ward_id: entry.ward_id,
+    ward_name: entry.ward_name,
+    ward_code: entry.ward_code,
+    constituency_id: entry.constituency_id,
+    constituency_name: entry.constituency_name,
+    county_id: entry.county_id,
+    county_name: entry.county_name,
+    latitude: entry.latitude ?? current.latitude,
+    longitude: entry.longitude ?? current.longitude,
+    registered_voters: entry.registered_voters ?? current.registered_voters,
+    stream: entry.stream !== undefined ? entry.stream : current.stream,
+    registration_centre:
+      entry.registration_centre !== undefined
+        ? entry.registration_centre
+        : current.registration_centre,
+  }
+
+  // A row that does not name a ward keeps the station where it is.
+  if (entry.ward_id === undefined && entry.ward_name === undefined) {
+    write.ward_id = current.ward_id
+    write.constituency_id = current.constituency_id
+    write.county_id = current.county_id
+  }
+
+  return write
+}
+
+/**
+ * Create the counties, constituencies and wards the file needs.
+ *
+ * The levels are inserted in bulk, top down, and the cache is updated with
+ * the new ids so every station row can be resolved without another query. The
+ * number of distinct hierarchy rows is small (47 counties, 290 constituencies
+ * and about 1,450 wards for the whole country), so three statements are enough.
+ */
+async function ensureHierarchy(
+  client: PoolClient,
+  cache: LocationCache,
+  writes: StationWrite[]
+): Promise<void> {
+  const targets = writes.filter(
+    (write) => write.ward_id === undefined && write.ward_name !== undefined
+  )
+
+  const countyById = new Map(cache.counties.map((county) => [county.id, county]))
+  const constituencyById = new Map(
+    cache.constituencies.map((constituency) => [constituency.id, constituency])
+  )
+  const countyIdsByName = new Map(
+    cache.counties.map((county) => [normaliseName(county.name), county.id])
+  )
+  const constituencyIdsByKey = new Map(
+    cache.constituencies.map((constituency) => [
+      constituencyKey(constituency.county_id, constituency.name),
+      constituency.id,
+    ])
+  )
+  const wardIdsByKey = new Map(
+    cache.wards.map((ward) => [wardKey(ward.constituency_id, ward.name), ward.id])
+  )
+
+  const resolveCountyId = (target: StationWrite): number | undefined =>
+    target.county_id ??
+    (target.county_name
+      ? countyIdsByName.get(normaliseName(target.county_name))
+      : undefined)
+
+  const resolveConstituencyId = (
+    target: StationWrite
+  ): number | undefined => {
+    if (target.constituency_id !== undefined) return target.constituency_id
+    const countyId = resolveCountyId(target)
+    if (countyId === undefined || !target.constituency_name) return undefined
+    return constituencyIdsByKey.get(
+      constituencyKey(countyId, target.constituency_name)
+    )
+  }
+
+  // Counties named by a row whose county is not on the platform.
+  const countiesToCreate = new Map<string, string>()
+  for (const target of targets) {
+    if (target.county_id !== undefined || !target.county_name) continue
+    const displayName = target.county_name.trim().replace(/\s+/g, ' ')
+    const key = normaliseName(displayName)
+    if (!cache.countiesByName.has(key)) {
+      countiesToCreate.set(key, displayName)
+    }
+  }
+
+  if (countiesToCreate.size > 0) {
+    const entries = [...countiesToCreate.values()]
+    const codes = entries.map((name) =>
+      nextUniqueCode(name, cache.countyCodes, MAX_COUNTY_CODE_LENGTH)
+    )
+
+    const result = await client.query<CachedCounty>(
+      `INSERT INTO counties (name, code)
+       SELECT * FROM UNNEST($1::text[], $2::text[])
+       RETURNING id, name, code`,
+      [entries, codes]
+    )
+
+    for (const county of result.rows) {
+      const key = normaliseName(county.name)
+      cache.counties.push(county)
+      cache.countiesByName.set(key, county)
+      countyById.set(county.id, county)
+      countyIdsByName.set(key, county.id)
+    }
+  }
+
+  // Constituencies named by a row whose constituency is not under its county.
+  const constituenciesToCreate = new Map<
+    string,
+    { name: string; countyId: number }
+  >()
+  for (const target of targets) {
+    if (target.constituency_id !== undefined || !target.constituency_name) continue
+
+    const countyId =
+      target.county_id ??
+      (target.county_name
+        ? countyIdsByName.get(normaliseName(target.county_name))
+        : undefined)
+    if (countyId === undefined) {
+      throw new LocationError(
+        'invalid_input',
+        `The row ${target.row} names a new constituency but no county`
+      )
+    }
+
+    const displayName = target.constituency_name.trim().replace(/\s+/g, ' ')
+    const key = constituencyKey(countyId, displayName)
+    if (!constituencyIdsByKey.has(key)) {
+      constituenciesToCreate.set(key, { name: displayName, countyId })
+    }
+  }
+
+  if (constituenciesToCreate.size > 0) {
+    const entries = [...constituenciesToCreate.values()]
+    const names = entries.map((entry) => entry.name)
+    const countyIds = entries.map((entry) => entry.countyId)
+    const codes = names.map((name) =>
+      nextUniqueCode(name, cache.constituencyCodes, MAX_CONSTITUENCY_CODE_LENGTH)
+    )
+
+    const result = await client.query<CachedConstituency>(
+      `INSERT INTO constituencies (name, code, county_id)
+       SELECT * FROM UNNEST($1::text[], $2::text[], $3::int[])
+       RETURNING id, county_id, name, code`,
+      [names, codes, countyIds]
+    )
+
+    for (const constituency of result.rows) {
+      const created: CachedConstituency = {
+        ...constituency,
+        county_name: countyById.get(constituency.county_id)?.name ?? null,
+      }
+      const key = constituencyKey(created.county_id, created.name)
+      cache.constituencies.push(created)
+      cache.constituenciesByName.set(normaliseName(created.name), [
+        ...(cache.constituenciesByName.get(normaliseName(created.name)) ?? []),
+        created,
+      ])
+      cache.constituenciesByCountyName.set(key, created)
+      constituencyById.set(created.id, created)
+      constituencyIdsByKey.set(key, created.id)
+    }
+  }
+
+  // Wards named by a row whose ward is not under its constituency.
+  const wardsToCreate = new Map<
+    string,
+    {
+      name: string
+      constituencyId: number
+      countyId: number
+      preferredCode?: string
+    }
+  >()
+  for (const target of targets) {
+    if (!target.ward_name) continue
+
+    const constituencyId = resolveConstituencyId(target)
+    if (constituencyId === undefined) {
+      throw new LocationError(
+        'invalid_input',
+        `The row ${target.row} names a constituency that could not be resolved`
+      )
+    }
+
+    const constituency = constituencyById.get(constituencyId)
+    const countyId = target.county_id ?? constituency?.county_id
+    if (countyId === undefined) {
+      throw new LocationError(
+        'invalid_input',
+        `The row ${target.row} names a ward without a county`
+      )
+    }
+
+    const displayName = target.ward_name.trim().replace(/\s+/g, ' ')
+    const key = wardKey(constituencyId, displayName)
+    if (!wardIdsByKey.has(key)) {
+      wardsToCreate.set(key, {
+        name: displayName,
+        constituencyId,
+        countyId,
+        preferredCode: target.ward_code,
+      })
+    }
+  }
+
+  if (wardsToCreate.size > 0) {
+    const entries = [...wardsToCreate.values()]
+    const names = entries.map((entry) => entry.name)
+    const constituencyIds = entries.map((entry) => entry.constituencyId)
+    const countyIds = entries.map((entry) => entry.countyId)
+    const codes = entries.map((entry) => {
+      const preferred = (entry.preferredCode || '').trim()
+      if (
+        preferred &&
+        preferred.length <= MAX_WARD_CODE_LENGTH &&
+        !cache.wardCodes.has(preferred)
+      ) {
+        cache.wardCodes.add(preferred)
+        return preferred
+      }
+      return nextUniqueCode(entry.name, cache.wardCodes, MAX_WARD_CODE_LENGTH)
+    })
+
+    const result = await client.query<CachedWard>(
+      `INSERT INTO wards (name, code, constituency_id, county_id)
+       SELECT * FROM UNNEST($1::text[], $2::text[], $3::int[], $4::int[])
+       RETURNING id, name, code, constituency_id, county_id`,
+      [names, codes, constituencyIds, countyIds]
+    )
+
+    for (const ward of result.rows) {
+      const key = wardKey(ward.constituency_id, ward.name)
+      cache.wards.push(ward)
+      cache.wardsByConstituencyName.set(key, ward)
+      cache.wardsById.set(ward.id, ward)
+      wardIdsByKey.set(key, ward.id)
+    }
+  }
+
+  // Point each row at the ward it named, whether that ward existed already or
+  // was just created.
+  for (const target of targets) {
+    if (!target.ward_name) continue
+    const constituencyId = resolveConstituencyId(target)
+    if (constituencyId === undefined) {
+      throw new LocationError(
+        'invalid_input',
+        `The row ${target.row} names a constituency that could not be resolved`
+      )
+    }
+    const wardId = wardIdsByKey.get(
+      wardKey(constituencyId, target.ward_name)
+    )
+    if (wardId === undefined) {
+      throw new LocationError(
+        'invalid_input',
+        `The row ${target.row} names a ward that could not be resolved`
+      )
+    }
+    target.ward_id = wardId
+  }
+
+  // Every write now has a ward. The constituency and county always follow it,
+  // so the bulk statements cannot write a station into a ward of another area.
+  for (const write of writes) {
+    if (write.ward_id === undefined) {
+      throw new LocationError(
+        'invalid_input',
+        `The row ${write.row} does not name a ward`
+      )
+    }
+    const ward = cache.wardsById.get(write.ward_id)
+    if (!ward) {
+      throw new LocationError(
+        'invalid_input',
+        `The ward of row ${write.row} could not be resolved`
+      )
+    }
+    write.constituency_id = ward.constituency_id
+    write.county_id = ward.county_id
+  }
+}
+
+/** Insert one batch of new stations and report which codes it wrote. */
+async function insertStationBatch(
+  client: PoolClient,
+  batch: StationWrite[]
+): Promise<Set<string>> {
+  const result = await client.query<{ code: string; stream: string | null }>(
+    `INSERT INTO polling_stations (
+       code, name, ward_id, constituency_id, county_id,
+       latitude, longitude, registered_voters, location_radius,
+       stream, registration_centre
+     )
+     SELECT * FROM UNNEST(
+       $1::text[], $2::text[], $3::int[], $4::int[], $5::int[],
+       $6::numeric[], $7::numeric[], $8::int[], $9::int[],
+       $10::text[], $11::text[]
+     )
+     ON CONFLICT DO NOTHING
+     RETURNING code, stream`,
+    [
+      batch.map((write) => write.code),
+      batch.map((write) => write.name),
+      batch.map((write) => write.ward_id),
+      batch.map((write) => write.constituency_id),
+      batch.map((write) => write.county_id),
+      batch.map((write) => write.latitude),
+      batch.map((write) => write.longitude),
+      batch.map((write) => write.registered_voters),
+      batch.map(() => 500),
+      batch.map((write) => write.stream),
+      batch.map((write) => write.registration_centre),
+    ]
+  )
+
+  return new Set(
+    result.rows.map((row) => stationCodeKey(row.code, row.stream))
+  )
+}
+
+/** Update one batch of existing stations. */
+async function updateStationBatch(
+  client: PoolClient,
+  batch: StationWrite[]
+): Promise<number> {
+  const result = await client.query(
+    `UPDATE polling_stations AS ps
+        SET code = v.code,
+            name = v.name,
+            ward_id = v.ward_id,
+            constituency_id = v.constituency_id,
+            county_id = v.county_id,
+            latitude = v.latitude,
+            longitude = v.longitude,
+            registered_voters = v.registered_voters,
+            stream = v.stream,
+            registration_centre = v.registration_centre
+       FROM (
+         SELECT * FROM UNNEST(
+           $1::int[], $2::text[], $3::text[], $4::int[], $5::int[], $6::int[],
+           $7::numeric[], $8::numeric[], $9::int[], $10::text[], $11::text[]
+         ) AS t(id, code, name, ward_id, constituency_id, county_id,
+                 latitude, longitude, registered_voters, stream,
+                 registration_centre)
+       ) AS v
+      WHERE ps.id = v.id`,
+    [
+      batch.map((write) => write.existing_id),
+      batch.map((write) => write.code),
+      batch.map((write) => write.name),
+      batch.map((write) => write.ward_id),
+      batch.map((write) => write.constituency_id),
+      batch.map((write) => write.county_id),
+      batch.map((write) => write.latitude),
+      batch.map((write) => write.longitude),
+      batch.map((write) => write.registered_voters),
+      batch.map((write) => write.stream),
+      batch.map((write) => write.registration_centre),
+    ]
+  )
+
+  return result.rowCount ?? batch.length
+}
+
 /**
  * Import polling stations from a CSV.
  *
- * The file is planned first, exactly as the preview plans it, and the plan
- * is then written.
+ * The file is planned first, exactly as the preview plans it, and the plan is
+ * then written in batches. The whole write is one transaction: a file either
+ * lands completely or not at all. The voter totals are rolled up once, after
+ * the last batch, instead of once per station.
  */
 export async function importPollingStationsFromCsv(
   text: string,
   actor: { userId: number; ipAddress?: string | null }
 ): Promise<ImportSummary> {
+  const cache = await loadLocationCache()
+  const plan = planStationImport(text, cache)
   const summary: ImportSummary = { created: 0, updated: 0, skipped: 0, errors: [] }
-  const plan = await planStationImport(text)
+  const writes: StationWrite[] = []
 
   for (const row of plan.rows) {
     if (row.action === 'skip') {
@@ -1596,91 +2143,74 @@ export async function importPollingStationsFromCsv(
     const entry = plan.entries.get(row.row)
     if (!entry) continue
 
-    try {
-      if (entry.action === 'create') {
-        let wardId = entry.ward_id
-
-        // A ward the platform does not have is created from the county down:
-        // the county first, then the constituency, then the ward. A level that
-        // already exists is matched by name and keeps its code.
-        if (!wardId) {
-          if (!entry.ward_name || !entry.constituency_name) {
-            throw new LocationError(
-              'invalid_input',
-              'A new polling station needs a ward and a constituency'
-            )
-          }
-
-          let countyId = entry.county_id
-          if (!countyId) {
-            if (!entry.county_name) {
-              throw new LocationError('invalid_input', 'A new ward needs a county')
-            }
-            const county = await ensureCounty(entry.county_name)
-            countyId = county.id
-          }
-
-          let constituencyId = entry.constituency_id
-          if (!constituencyId) {
-            const constituency = await ensureConstituency(
-              entry.constituency_name,
-              countyId
-            )
-            constituencyId = constituency.id
-          }
-
-          const ward = await ensureWard(
-            entry.ward_name,
-            constituencyId,
-            countyId,
-            entry.ward_code
-          )
-          wardId = ward.id
-        }
-
-        await createPollingStation(
-          {
-            code: entry.code!,
-            name: entry.name!,
-            ward_id: wardId,
-            latitude: entry.latitude ?? null,
-            longitude: entry.longitude ?? null,
-            registered_voters: entry.registered_voters ?? 0,
-            stream: entry.stream ?? null,
-            registration_centre: entry.registration_centre ?? null,
-          },
-          actor
-        )
-        summary.created += 1
-      } else {
-        // Only the fields the file carries are passed, so a column the file
-        // leaves out keeps the value the station already has.
-        await updatePollingStation(
-          entry.existing_id!,
-          {
-            ...(entry.name !== undefined ? { name: entry.name } : {}),
-            ...(entry.ward_id !== undefined ? { ward_id: entry.ward_id } : {}),
-            ...(entry.latitude !== undefined ? { latitude: entry.latitude } : {}),
-            ...(entry.longitude !== undefined ? { longitude: entry.longitude } : {}),
-            ...(entry.registered_voters !== undefined
-              ? { registered_voters: entry.registered_voters }
-              : {}),
-            ...(entry.stream !== undefined ? { stream: entry.stream } : {}),
-            ...(entry.registration_centre !== undefined
-              ? { registration_centre: entry.registration_centre }
-              : {}),
-          },
-          actor
-        )
-        summary.updated += 1
-      }
-    } catch (error) {
+    const write = buildStationWrite(entry, cache)
+    if (!write) {
       summary.skipped += 1
       summary.errors.push({
         row: row.row,
-        message: error instanceof Error ? error.message : 'Could not save the station',
+        message: 'The station could not be resolved',
       })
+      continue
     }
+    writes.push(write)
+  }
+
+  if (writes.length > 0) {
+    let created = 0
+    let updated = 0
+
+    await transaction(async (client) => {
+      // The row-level roll-up is the expensive part of a large import. The
+      // transaction-local flag makes the station triggers do nothing while the
+      // batches are written; the file is rolled up once below.
+      await client.query(
+        `SELECT set_config('ukwelitally.bulk_import', 'on', true)`
+      )
+
+      await ensureHierarchy(client, cache, writes)
+
+      const creates = writes.filter((write) => write.action === 'create')
+      const updates = writes.filter((write) => write.action === 'update')
+
+      for (const batch of chunk(creates, BULK_BATCH_SIZE)) {
+        const inserted = await insertStationBatch(client, batch)
+        for (const write of batch) {
+          if (inserted.has(stationCodeKey(write.code, write.stream))) {
+            created += 1
+          } else {
+            summary.skipped += 1
+            summary.errors.push({
+              row: write.row,
+              message: `The station "${write.name}"${
+                write.stream ? ` and stream ${write.stream}` : ''
+              } already exists`,
+            })
+          }
+        }
+      }
+
+      for (const batch of chunk(updates, BULK_BATCH_SIZE)) {
+        updated += await updateStationBatch(client, batch)
+      }
+
+      await client.query('SELECT * FROM sync_registered_voters_from_stations()')
+    })
+
+    summary.created = created
+    summary.updated = updated
+
+    await recordAudit({
+      userId: actor.userId,
+      action: 'polling_stations_imported',
+      entityType: 'polling_station',
+      newValues: {
+        created,
+        updated,
+        skipped: summary.skipped,
+        total_rows: plan.rows.length,
+      },
+      ipAddress: actor.ipAddress,
+    })
   }
 
   return summary
@@ -1691,7 +2221,8 @@ export async function importPollingStationsFromCsv(
  * writing.
  */
 export async function previewPollingStationsImport(text: string): Promise<ImportPreview> {
-  const plan = await planStationImport(text)
+  const cache = await loadLocationCache()
+  const plan = planStationImport(text, cache)
   return summarisePreview('polling_stations', plan.rows)
 }
 

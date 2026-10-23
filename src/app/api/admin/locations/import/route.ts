@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/middleware/auth'
 import { auditRequestContext } from '@/lib/audit'
-import { query } from '@/lib/db'
 import {
   importPollingStationsFromCsv,
   previewPollingStationsImport,
   prunePlaceholderWards,
   findPlaceholderWards,
   missingStationHeaders,
+  LocationError,
 } from '@/lib/locationAdmin'
 
 export const dynamic = 'force-dynamic'
+// A national file is planned and written in bulk, but still needs more than
+// the platform's default function duration. 60s is accepted on every Vercel
+// plan (the larger limits are plan specific).
+export const maxDuration = 60
 
 /** The header of the official IEBC polling-station file. */
 const REQUIRED_HEADER =
@@ -118,11 +122,9 @@ async function handlePost(req: NextRequest) {
       })
     }
 
+    // The import writes the whole file in one transaction and rolls the
+    // parent voter totals up once, just before it commits.
     const summary = await importPollingStationsFromCsv(text, actor)
-
-    // Roll parent registered voters up from polling stations so the
-    // county/constituency/ward totals stay consistent after an import.
-    await query('SELECT * FROM sync_registered_voters_from_stations()')
 
     return NextResponse.json({
       success: true,
@@ -132,6 +134,14 @@ async function handlePost(req: NextRequest) {
     })
   } catch (error) {
     console.error('Error importing locations:', error)
+
+    if (error instanceof LocationError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code, details: error.details },
+        { status: 400 }
+      )
+    }
+
     return NextResponse.json({ error: 'Failed to import the locations' }, { status: 500 })
   }
 }
