@@ -64,7 +64,6 @@ export default function AgentDashboard() {
   const [submissionWindow, setSubmissionWindow] = useState<SubmissionWindowState | null>(null)
 
   const [formData, setFormData] = useState({
-    registered_voters: '',
     total_votes_cast: '',
     rejected_votes: '',
     revision_reason: '',
@@ -306,7 +305,7 @@ export default function AgentDashboard() {
         body: JSON.stringify({
           submission_id: submissionId,
           position: agentInfo.candidate_position,
-          registered_voters: parseInt(formData.registered_voters),
+          registered_voters: agentInfo.registered_voters,
           total_votes_cast: parseInt(formData.total_votes_cast),
           valid_votes: validVotes,
           rejected_votes: parseInt(formData.rejected_votes),
@@ -330,7 +329,6 @@ export default function AgentDashboard() {
 
       // Reset form
       setFormData({
-        registered_voters: '',
         total_votes_cast: '',
         rejected_votes: '',
         revision_reason: '',
@@ -590,12 +588,17 @@ export default function AgentDashboard() {
                     <h3 className="text-sm font-semibold text-blue-400 mb-3">Station Statistics</h3>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-xs text-dark-400 mb-1">Registered Voters</label>
+                        <label className="block text-xs text-dark-400 mb-1">
+                          Registered Voters{' '}
+                          <span className="text-blue-400">(station record)</span>
+                        </label>
                         <input
                           type="number"
-                          value={formData.registered_voters}
-                          onChange={(e) => setFormData({ ...formData, registered_voters: e.target.value })}
-                          className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+                          value={agentInfo?.registered_voters ?? ''}
+                          readOnly
+                          aria-readonly="true"
+                          title="Filled from the polling station record"
+                          className="w-full px-3 py-2 bg-dark-800/60 border border-dark-700 rounded text-dark-300 text-sm cursor-not-allowed"
                           placeholder="0"
                           required
                           min="0"
