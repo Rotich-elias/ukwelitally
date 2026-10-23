@@ -1,26 +1,27 @@
 // Service Worker for UkweliTally PWA
-const CACHE_NAME = 'ukwelitally-v1'
+//
+// The cache exists for offline use, not to pin a deployment. Page
+// navigations therefore go to the network first: a new deployment is picked
+// up on the next load instead of being hidden behind an old cached page.
+// Cached pages are only a fallback for a user who is offline.
+const CACHE_NAME = 'ukwelitally-v2'
 const OFFLINE_URL = '/offline'
 
-// Assets to cache on install
-const STATIC_ASSETS = [
-  '/',
-  '/offline',
-  '/manifest.json',
-]
+// Assets to cache on install. The start page is not precached: it is
+// network-first, so precaching it would only serve a stale build.
+const STATIC_ASSETS = ['/offline', '/manifest.json']
 
-// Install event - cache static assets
+// Install event - cache the offline shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Opened cache')
       return cache.addAll(STATIC_ASSETS)
     })
   )
   self.skipWaiting()
 })
 
-// Activate event - clean up old caches
+// Activate event - remove the caches of earlier versions
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -37,56 +38,65 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
+// Put a successful response in the cache without delaying the response.
+function cacheResponse(request, response) {
+  if (!response || !response.ok) return response
+  const responseClone = response.clone()
+  caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone))
+  return response
+}
+
 // Fetch event - serve from cache or network
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
+  const request = event.request
+
+  // Only GET requests of this origin can be cached.
+  if (!request.url.startsWith(self.location.origin)) return
+  if (request.method !== 'GET') return
+
+  // API requests are network-first: a stale response is worse than none.
+  if (request.url.includes('/api/')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => cacheResponse(request, response))
+        .catch(() => caches.match(request))
+    )
     return
   }
 
-  // Handle API requests differently (network-first)
-  if (event.request.url.includes('/api/')) {
+  // A page navigation is network-first, so a deployment is seen immediately
+  // by a user who is online. The cached page is only for offline use.
+  if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // Clone response and cache it
-          const responseClone = response.clone()
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone)
-          })
-          return response
-        })
-        .catch(() => {
-          // Return cached response if available
-          return caches.match(event.request)
+      fetch(request)
+        .then((response) => cacheResponse(request, response))
+        .catch(async () => {
+          return (await caches.match(request)) || caches.match(OFFLINE_URL)
         })
     )
     return
   }
 
-  // Handle page navigation (cache-first with network fallback)
+  // The files under /_next/static/ carry a content hash in their name, so a
+  // given URL never changes: serving the cached copy is safe.
+  if (request.url.includes('/_next/static/')) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached
+        return fetch(request).then((response) => cacheResponse(request, response))
+      })
+    )
+    return
+  }
+
+  // Everything else (icons, images) is served from the cache when present and
+  // refreshed in the background for the next load.
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return (
-        response ||
-        fetch(event.request)
-          .then((response) => {
-            // Cache successful responses
-            if (response.status === 200) {
-              const responseClone = response.clone()
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, responseClone)
-              })
-            }
-            return response
-          })
-          .catch(() => {
-            // Return offline page for navigation requests
-            if (event.request.mode === 'navigate') {
-              return caches.match(OFFLINE_URL)
-            }
-          })
-      )
+    caches.match(request).then((cached) => {
+      const network = fetch(request)
+        .then((response) => cacheResponse(request, response))
+        .catch(() => cached)
+      return cached || network
     })
   )
 })
@@ -105,7 +115,7 @@ async function syncPendingSubmissions() {
     console.log('Syncing pending submissions...')
     // Implementation would go here
   } catch (error) {
-    console.error('Error syncing submissions:', error)
+    console.error('Error syncing pending submissions:', error)
   }
 }
 
@@ -125,7 +135,5 @@ self.addEventListener('push', (event) => {
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  event.waitUntil(
-    clients.openWindow(event.notification.data.url || '/')
-  )
+  event.waitUntil(clients.openWindow(event.notification.data.url || '/'))
 })
