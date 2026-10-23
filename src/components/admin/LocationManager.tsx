@@ -56,6 +56,70 @@ interface WardOption {
 
 type Tab = 'wards' | 'stations' | 'import'
 
+type ImportPhase = 'idle' | 'uploading' | 'processing'
+
+/** A byte count as a short size for the progress line, e.g. "1.2 MB". */
+function formatBytes(bytes: number): string {
+  if (!bytes) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  const exponent = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1
+  )
+  const value = bytes / 1024 ** exponent
+  return `${exponent === 0 || value >= 10 ? Math.round(value) : value.toFixed(1)} ${
+    units[exponent]
+  }`
+}
+
+/**
+ * Upload a CSV and report how much of it has been sent.
+ *
+ * `fetch` cannot report the progress of the request body, but the import
+ * screen shows an upload percentage, so the request is made with XHR. The
+ * route answers with JSON, so the body is parsed here and the error message
+ * of the route is surfaced when the request fails.
+ */
+function uploadImport(
+  form: FormData,
+  token: string,
+  onProgress: (loaded: number, total: number) => void
+): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', '/api/admin/locations/import')
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    xhr.timeout = 15 * 60 * 1000
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(event.loaded, event.total)
+    }
+
+    xhr.onload = () => {
+      let body: any = null
+      try {
+        body = xhr.responseText ? JSON.parse(xhr.responseText) : null
+      } catch {
+        body = null
+      }
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(body)
+        return
+      }
+
+      reject(new Error(body?.error || `The import failed (HTTP ${xhr.status})`))
+    }
+
+    xhr.onerror = () =>
+      reject(new Error('Could not reach the server. Check your connection and try again.'))
+    xhr.ontimeout = () => reject(new Error('The import timed out'))
+    xhr.onabort = () => reject(new Error('The import was cancelled'))
+
+    xhr.send(form)
+  })
+}
+
 export default function LocationManager() {
   const [tab, setTab] = useState<Tab>('wards')
   const [wards, setWards] = useState<Ward[]>([])
@@ -75,7 +139,17 @@ export default function LocationManager() {
   const [importType, setImportType] = useState('wards')
   const [importFile, setImportFile] = useState<File | null>(null)
   const [importResult, setImportResult] = useState<any>(null)
-  const [importing, setImporting] = useState(false)
+  const [importPhase, setImportPhase] = useState<ImportPhase>('idle')
+  const [uploadProgress, setUploadProgress] = useState<{
+    loaded: number
+    total: number
+  } | null>(null)
+
+  const importing = importPhase !== 'idle'
+  const uploadPercent =
+    uploadProgress && uploadProgress.total > 0
+      ? Math.min(100, Math.round((uploadProgress.loaded / uploadProgress.total) * 100))
+      : 0
 
   const token = () => localStorage.getItem('token') || ''
 
@@ -166,34 +240,35 @@ export default function LocationManager() {
       return
     }
 
-    setImporting(true)
+    const uploadsFile = importType !== 'prune_placeholders' && importFile !== null
+    setImportPhase(uploadsFile ? 'uploading' : 'processing')
+    setUploadProgress(
+      uploadsFile && importFile ? { loaded: 0, total: importFile.size } : null
+    )
     setError(null)
     setNotice(null)
     try {
       const form = new FormData()
       form.append('type', importType)
       form.append('dry_run', dryRun ? 'true' : 'false')
-      if (importFile) form.append('file', importFile)
+      if (uploadsFile && importFile) form.append('file', importFile)
 
-      const response = await fetch('/api/admin/locations/import', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token()}` },
-        body: form,
+      const body = await uploadImport(form, token(), (loaded, total) => {
+        setUploadProgress({ loaded, total })
+        // The bytes are on the server; the rest is the database work.
+        if (total > 0 && loaded >= total) setImportPhase('processing')
       })
-      const body = await response.json()
-      if (!response.ok) {
-        throw new Error(body.error || 'The import failed')
-      }
 
       setImportResult(body)
       if (!dryRun) {
-        setNotice(body.message || 'Import finished')
+        setNotice(body?.message || 'Import finished')
         await loadLocations()
       }
     } catch (err: any) {
       setError(err.message || 'The import failed')
     } finally {
-      setImporting(false)
+      setImportPhase('idle')
+      setUploadProgress(null)
     }
   }
 
@@ -321,6 +396,49 @@ export default function LocationManager() {
               {importing ? 'Working...' : 'Run import'}
             </button>
           </div>
+
+          {importing && (
+            <div className="space-y-2" role="status" aria-live="polite">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span className="text-dark-300">
+                  {importPhase === 'uploading'
+                    ? `Uploading ${importFile?.name || 'CSV'}…`
+                    : 'Upload complete. Processing the rows…'}
+                </span>
+                {importPhase === 'uploading' &&
+                  uploadProgress &&
+                  uploadProgress.total > 0 && (
+                    <span className="text-dark-400 font-medium tabular-nums">
+                      {uploadPercent}% · {formatBytes(uploadProgress.loaded)} of{' '}
+                      {formatBytes(uploadProgress.total)}
+                    </span>
+                  )}
+              </div>
+              <div
+                className="h-2 w-full overflow-hidden rounded-full bg-dark-800"
+                role="progressbar"
+                aria-label="CSV upload progress"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={
+                  importPhase === 'uploading' ? uploadPercent : undefined
+                }
+              >
+                <div
+                  className={`h-full rounded-full bg-blue-500 ${
+                    importPhase === 'processing'
+                      ? 'w-full animate-pulse'
+                      : 'transition-all duration-300'
+                  }`}
+                  style={
+                    importPhase === 'uploading'
+                      ? { width: `${uploadPercent}%` }
+                      : undefined
+                  }
+                />
+              </div>
+            </div>
+          )}
 
           {importResult && (
             <div className="bg-dark-900/50 border border-dark-700 rounded-lg p-4 text-sm">
