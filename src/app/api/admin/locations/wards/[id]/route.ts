@@ -30,22 +30,7 @@ async function handlePut(req: NextRequest, context?: any) {
       return NextResponse.json({ error: 'Invalid ward id' }, { status: 400 })
     }
 
-    const body = await req.json()
-    const input: Partial<WardInput> = {}
-    if (body?.code !== undefined) input.code = body.code
-    if (body?.name !== undefined) input.name = body.name
-    if (body?.constituency_id !== undefined) {
-      input.constituency_id = parseInt(body.constituency_id)
-    }
-    if (body?.registered_voters !== undefined) {
-      input.registered_voters =
-        body.registered_voters === null ? null : parseInt(body.registered_voters)
-    }
-
-    const { ipAddress } = auditRequestContext(req)
-    const ward = await updateWard(id, input, { userId: user.userId, ipAddress })
-
-    return NextResponse.json({ success: true, message: 'Ward updated', ward })
+    return NextResponse.json({ error: 'Updates to wards must be done via CSV import' }, { status: 403 })
   } catch (error) {
     if (error instanceof LocationError) {
       return NextResponse.json(
@@ -71,10 +56,10 @@ async function handleDelete(req: NextRequest, context?: any) {
       return NextResponse.json({ error: 'Invalid ward id' }, { status: 400 })
     }
 
-    const { ipAddress } = auditRequestContext(req)
-    const result = await deleteWard(id, { userId: user.userId, ipAddress })
-
-    return NextResponse.json({ success: true, message: 'Ward deleted', ...result })
+    return NextResponse.json(
+      { error: 'Deleting wards is disabled. Use the CSV import to manage the electoral geography.' },
+      { status: 403 }
+    )
   } catch (error) {
     if (error instanceof LocationError) {
       return NextResponse.json(

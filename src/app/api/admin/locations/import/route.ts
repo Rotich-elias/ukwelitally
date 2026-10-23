@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/middleware/auth'
 import { auditRequestContext } from '@/lib/audit'
+import { query } from '@/lib/db'
 import {
   importWardsFromCsv,
   importPollingStationsFromCsv,
@@ -28,13 +29,16 @@ export const dynamic = 'force-dynamic'
  *   POLLING_STATIONS.csv station_name, station_code, ward_name, constituency_name,
  *                        county_name, latitude, longitude, registered_voters
  *
- * A ward is matched by its code, or by its name inside its constituency, so
- * re-running an import updates the existing rows instead of duplicating them.
+ * The electoral geography is only ever updated, never created: a row that
+ * matches no existing ward or polling station is skipped with an error. A
+ * ward is matched by its code, or by its name inside its constituency. A
+ * polling station is matched by its code, or by its name inside its ward.
+ * Only the columns the file carries are written, so a column left out keeps
+ * the value the record already has.
  *
  * The dry run reads the file with the same planner the import writes with, so
- * the preview reports the rows that would be created, the rows that would be
- * updated and the rows that would be skipped, with the reason of each one.
- * It only reads: nothing is written.
+ * the preview reports the rows that would be updated and the rows that would
+ * be skipped, with the reason of each one. It only reads: nothing is written.
  */
 async function handlePost(req: NextRequest) {
   try {
@@ -94,8 +98,8 @@ async function handlePost(req: NextRequest) {
       return NextResponse.json({
         success: true,
         dry_run: true,
-        message: `${preview.total_rows} row(s) read: ${preview.create} to create, ${preview.update} to update, ${preview.skip} to skip${
-          preview.error_rows ? `, ${preview.error_rows} with errors` : ''
+        message: `${preview.total_rows} row(s) read: ${preview.update} to update, ${preview.skip} to skip${
+          preview.error_rows ? ` (${preview.error_rows} with errors)` : ''
         }. Nothing was written.`,
         ...preview,
       })
@@ -106,10 +110,14 @@ async function handlePost(req: NextRequest) {
         ? await importWardsFromCsv(text, actor)
         : await importPollingStationsFromCsv(text, actor)
 
+    // Roll parent registered voters up from polling stations so the
+    // county/constituency/ward totals stay consistent after an import.
+    await query('SELECT * FROM sync_registered_voters_from_stations()')
+
     return NextResponse.json({
       success: true,
-      message: `Import finished: ${summary.created} created, ${summary.updated} updated, ${summary.skipped} skipped`,
-      total_rows: summary.created + summary.updated + summary.skipped,
+      message: `Import finished: ${summary.updated} updated, ${summary.skipped} skipped`,
+      total_rows: summary.updated + summary.skipped,
       ...summary,
     })
   } catch (error) {

@@ -56,17 +56,6 @@ interface WardOption {
 
 type Tab = 'wards' | 'stations' | 'import'
 
-const EMPTY_FORM = {
-  code: '',
-  name: '',
-  constituency_id: '',
-  ward_id: '',
-  latitude: '',
-  longitude: '',
-  registered_voters: '',
-  location_radius: '500',
-}
-
 export default function LocationManager() {
   const [tab, setTab] = useState<Tab>('wards')
   const [wards, setWards] = useState<Ward[]>([])
@@ -82,10 +71,6 @@ export default function LocationManager() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-
-  const [editing, setEditing] = useState<Ward | Station | null>(null)
-  const [form, setForm] = useState({ ...EMPTY_FORM })
-  const [saving, setSaving] = useState(false)
 
   const [importType, setImportType] = useState('wards')
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -175,115 +160,6 @@ export default function LocationManager() {
     loadLocations()
   }, [loadLocations])
 
-  const openCreate = (kind: 'ward' | 'station') => {
-    setEditing({ id: 0 } as any)
-    setForm({
-      ...EMPTY_FORM,
-      constituency_id: constituencyId || '',
-      ward_id: wardId || '',
-    })
-    setError(null)
-    setNotice(null)
-  }
-
-  const openEdit = (record: Ward | Station) => {
-    setEditing(record)
-    setForm({
-      code: record.code,
-      name: record.name,
-      constituency_id: String((record as Ward).constituency_id ?? ''),
-      ward_id: String((record as Station).ward_id ?? ''),
-      latitude: (record as Station).latitude?.toString() ?? '',
-      longitude: (record as Station).longitude?.toString() ?? '',
-      registered_voters: String(record.registered_voters ?? 0),
-      location_radius: String((record as Station).location_radius ?? 500),
-    })
-    setError(null)
-    setNotice(null)
-  }
-
-  const isStation = (record: Ward | Station) => 'ward_id' in record
-
-  const save = async () => {
-    if (!editing) return
-    setSaving(true)
-    setError(null)
-    setNotice(null)
-
-    try {
-      const station = isStation(editing)
-      const url = station
-        ? `/api/admin/locations/polling-stations/${editing.id || ''}`.replace(/\/$/, '')
-        : `/api/admin/locations/wards/${editing.id || ''}`.replace(/\/$/, '')
-
-      const payload = station
-        ? {
-            code: form.code,
-            name: form.name,
-            ward_id: parseInt(form.ward_id),
-            latitude: form.latitude === '' ? null : parseFloat(form.latitude),
-            longitude: form.longitude === '' ? null : parseFloat(form.longitude),
-            registered_voters: parseInt(form.registered_voters || '0'),
-            location_radius: parseInt(form.location_radius || '500'),
-          }
-        : {
-            code: form.code,
-            name: form.name,
-            constituency_id: parseInt(form.constituency_id),
-            registered_voters: parseInt(form.registered_voters || '0'),
-          }
-
-      const response = await fetch(url, {
-        method: editing.id ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token()}`,
-        },
-        body: JSON.stringify(payload),
-      })
-
-      const body = await response.json()
-      if (!response.ok) {
-        throw new Error(body.error || 'Could not save the record')
-      }
-
-      setNotice(body.message || 'Saved')
-      setEditing(null)
-      await loadLocations()
-    } catch (err: any) {
-      setError(err.message || 'Could not save the record')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const remove = async (record: Ward | Station) => {
-    const station = isStation(record)
-    const label = station ? 'polling station' : 'ward'
-    if (!window.confirm(`Delete this ${label}?`)) return
-
-    setError(null)
-    setNotice(null)
-    try {
-      const url = station
-        ? `/api/admin/locations/polling-stations/${record.id}`
-        : `/api/admin/locations/wards/${record.id}`
-
-      const response = await fetch(url, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token()}` },
-      })
-      const body = await response.json()
-      if (!response.ok) {
-        throw new Error(body.error || 'Could not delete the record')
-      }
-      setNotice(body.message || 'Deleted')
-      await loadLocations()
-    } catch (err: any) {
-      setError(err.message || 'Could not delete the record')
-    }
-  }
-
   const runImport = async (dryRun: boolean) => {
     if (importType !== 'prune_placeholders' && !importFile) {
       setError('Choose a CSV file first')
@@ -371,12 +247,15 @@ export default function LocationManager() {
       {tab === 'import' ? (
         <div className="glass-effect rounded-xl p-6 space-y-5">
           <div>
-            <h3 className="text-lg font-semibold text-white mb-1">Bulk import</h3>
+            <h3 className="text-lg font-semibold text-white mb-1">Bulk import (update only)</h3>
             <p className="text-sm text-dark-300">
-              Load the official IEBC files. A ward is matched by its code, or by
-              its name inside its constituency, and a polling station by its
-              code, so running the import again updates the existing records
-              instead of duplicating them.
+              Load an official IEBC file to update the existing wards and polling
+              stations. The geography is never created here: a row that matches no
+              existing record is skipped with an error. A ward is matched by its
+              code, or by its name inside its constituency; a polling station by
+              its code, or by its name inside its ward. Only the columns the file
+              carries are written, so a column you leave out keeps its current
+              value.
             </p>
           </div>
 
@@ -454,7 +333,6 @@ export default function LocationManager() {
                   {(
                     [
                       ['Rows read', importResult.total_rows],
-                      ['To create', importResult.create],
                       ['To update', importResult.update],
                       ['To skip', importResult.skip],
                       ['With errors', importResult.error_rows],
@@ -467,10 +345,9 @@ export default function LocationManager() {
                   ))}
                 </div>
               )}
-              {importResult.created !== undefined && (
+              {importResult.updated !== undefined && (
                 <p className="text-dark-300">
-                  Created: {importResult.created} · Updated: {importResult.updated} · Skipped:{' '}
-                  {importResult.skipped}
+                  Updated: {importResult.updated} · Skipped: {importResult.skipped}
                 </p>
               )}
               {importResult.removed !== undefined && (
@@ -582,14 +459,10 @@ export default function LocationManager() {
               />
 
               <button
-                onClick={() => {
-                  const isStation = tab === 'stations'
-                  if (isStation) openCreate('station')
-                  else openCreate('ward')
-                }}
+                onClick={() => setTab('import')}
                 className="btn-primary text-sm py-2"
               >
-                + Add {tab === 'stations' ? 'polling station' : 'ward'}
+                Update via CSV import
               </button>
             </div>
           </div>
@@ -654,19 +527,8 @@ export default function LocationManager() {
                               ? Number((record as Station).submission_count || 0)
                               : Number((record as Ward).station_count || 0)}
                           </td>
-                          <td className="px-5 py-3 text-right space-x-2">
-                            <button
-                              onClick={() => openEdit(record)}
-                              className="text-xs text-blue-400 hover:text-blue-300"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => remove(record)}
-                              className="text-xs text-red-400 hover:text-red-300"
-                            >
-                              Delete
-                            </button>
+                          <td className="px-5 py-3 text-right">
+                            <span className="text-xs text-dark-500">via CSV import</span>
                           </td>
                         </tr>
                       )
@@ -677,152 +539,6 @@ export default function LocationManager() {
             </div>
           </div>
         </>
-      )}
-
-      {/* Edit modal */}
-      {editing && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-lg w-full">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">
-                {editing.id
-                  ? `Edit ${isStation(editing) ? 'polling station' : 'ward'}`
-                  : `Add ${isStation(editing) ? 'polling station' : 'ward'}`}
-              </h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-dark-200 mb-1">Code</label>
-                  <input
-                    type="text"
-                    value={form.code}
-                    onChange={(e) => setForm({ ...form, code: e.target.value })}
-                    className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-dark-200 mb-1">Name</label>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
-                  />
-                </div>
-
-                {isStation(editing) ? (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-dark-200 mb-1">
-                        Ward
-                      </label>
-                      <select
-                        value={form.ward_id}
-                        onChange={(e) => setForm({ ...form, ward_id: e.target.value })}
-                        className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
-                      >
-                        <option value="">Select a ward</option>
-                        {wardOptions.map((ward) => (
-                          <option key={ward.id} value={ward.id}>
-                            {ward.name}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-dark-500 mt-1">
-                        Pick a county and a constituency first to fill the list.
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-dark-200 mb-1">
-                          Latitude
-                        </label>
-                        <input
-                          type="number"
-                          step="any"
-                          value={form.latitude}
-                          onChange={(e) => setForm({ ...form, latitude: e.target.value })}
-                          className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-dark-200 mb-1">
-                          Longitude
-                        </label>
-                        <input
-                          type="number"
-                          step="any"
-                          value={form.longitude}
-                          onChange={(e) => setForm({ ...form, longitude: e.target.value })}
-                          className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-dark-200 mb-1">
-                          Radius (m)
-                        </label>
-                        <input
-                          type="number"
-                          value={form.location_radius}
-                          onChange={(e) =>
-                            setForm({ ...form, location_radius: e.target.value })
-                          }
-                          className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
-                        />
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div>
-                    <label className="block text-sm font-medium text-dark-200 mb-1">
-                      Constituency
-                    </label>
-                    <select
-                      value={form.constituency_id}
-                      onChange={(e) => setForm({ ...form, constituency_id: e.target.value })}
-                      className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
-                    >
-                      <option value="">Select a constituency</option>
-                      {filteredConstituencies.map((constituency) => (
-                        <option key={constituency.id} value={constituency.id}>
-                          {constituency.name}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-dark-500 mt-1">
-                      The county follows the constituency.
-                    </p>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-dark-200 mb-1">
-                    Registered voters
-                  </label>
-                  <input
-                    type="number"
-                    value={form.registered_voters}
-                    onChange={(e) => setForm({ ...form, registered_voters: e.target.value })}
-                    className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6 pt-4 border-t border-dark-700">
-                <button onClick={save} disabled={saving} className="flex-1 btn-primary text-sm py-2">
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  onClick={() => setEditing(null)}
-                  className="px-5 py-2 bg-dark-700 hover:bg-dark-600 text-white rounded-lg text-sm"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   )

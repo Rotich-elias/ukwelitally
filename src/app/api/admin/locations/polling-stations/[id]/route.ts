@@ -30,34 +30,7 @@ async function handlePut(req: NextRequest, context?: any) {
       return NextResponse.json({ error: 'Invalid polling station id' }, { status: 400 })
     }
 
-    const body = await req.json()
-    const input: Partial<PollingStationInput> = {}
-    if (body?.code !== undefined) input.code = body.code
-    if (body?.name !== undefined) input.name = body.name
-    if (body?.ward_id !== undefined) input.ward_id = parseInt(body.ward_id)
-    if (body?.latitude !== undefined) {
-      input.latitude = body.latitude === null ? null : parseFloat(body.latitude)
-    }
-    if (body?.longitude !== undefined) {
-      input.longitude = body.longitude === null ? null : parseFloat(body.longitude)
-    }
-    if (body?.registered_voters !== undefined) {
-      input.registered_voters =
-        body.registered_voters === null ? null : parseInt(body.registered_voters)
-    }
-    if (body?.location_radius !== undefined) {
-      input.location_radius =
-        body.location_radius === null ? null : parseInt(body.location_radius)
-    }
-
-    const { ipAddress } = auditRequestContext(req)
-    const station = await updatePollingStation(id, input, { userId: user.userId, ipAddress })
-
-    return NextResponse.json({
-      success: true,
-      message: 'Polling station updated',
-      station,
-    })
+    return NextResponse.json({ error: 'Updates to polling stations must be done via CSV import' }, { status: 403 })
   } catch (error) {
     if (error instanceof LocationError) {
       return NextResponse.json(
@@ -86,10 +59,10 @@ async function handleDelete(req: NextRequest, context?: any) {
       return NextResponse.json({ error: 'Invalid polling station id' }, { status: 400 })
     }
 
-    const { ipAddress } = auditRequestContext(req)
-    const result = await deletePollingStation(id, { userId: user.userId, ipAddress })
-
-    return NextResponse.json({ success: true, message: 'Polling station deleted', ...result })
+    return NextResponse.json(
+      { error: 'Deleting polling stations is disabled. Use the CSV import to manage the electoral geography.' },
+      { status: 403 }
+    )
   } catch (error) {
     if (error instanceof LocationError) {
       return NextResponse.json(

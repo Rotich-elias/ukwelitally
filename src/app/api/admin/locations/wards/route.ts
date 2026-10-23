@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/middleware/auth'
-import { auditRequestContext } from '@/lib/audit'
-import {
-  listWards,
-  createWard,
-  LocationError,
-  type WardInput,
-} from '@/lib/locationAdmin'
+import { listWards } from '@/lib/locationAdmin'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,28 +45,14 @@ async function handlePost(req: NextRequest) {
       return NextResponse.json({ error: 'Admin access only' }, { status: 403 })
     }
 
-    const body = await req.json()
-    const input: WardInput = {
-      code: body?.code,
-      name: body?.name,
-      constituency_id: parseInt(body?.constituency_id),
-      registered_voters:
-        body?.registered_voters === undefined || body?.registered_voters === null
-          ? 0
-          : parseInt(body.registered_voters),
-    }
-
-    const { ipAddress } = auditRequestContext(req)
-    const ward = await createWard(input, { userId: user.userId, ipAddress })
-
-    return NextResponse.json({ success: true, message: 'Ward created', ward }, { status: 201 })
+    // The electoral geography is reference data that the official IEBC files
+    // own. It is only ever updated through a CSV import, never created here,
+    // so a stray request cannot invent a ward.
+    return NextResponse.json(
+      { error: 'Creating wards is disabled. Use the CSV import to update the electoral geography.' },
+      { status: 403 }
+    )
   } catch (error) {
-    if (error instanceof LocationError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code, details: error.details },
-        { status: error.code === 'duplicate_code' ? 409 : 400 }
-      )
-    }
     console.error('Error creating ward:', error)
     return NextResponse.json({ error: 'Failed to create the ward' }, { status: 500 })
   }

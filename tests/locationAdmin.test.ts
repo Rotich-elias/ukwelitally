@@ -176,7 +176,7 @@ function baseHandlers(overrides: QueryHandler[] = []) {
       ],
     },
     {
-      match: /SELECT id, code, name, ward_id, constituency_id, county_id, latitude, longitude,\s+registered_voters, location_radius\s+FROM polling_stations WHERE id = \$1/,
+      match: /SELECT id, code, name, ward_id, constituency_id, county_id, latitude, longitude,\s+registered_voters, location_radius, stream, registration_centre\s+FROM polling_stations WHERE id = \$1/,
       handler: () => [
         {
           id: 4447,
@@ -189,6 +189,8 @@ function baseHandlers(overrides: QueryHandler[] = []) {
           longitude: 39.7,
           registered_voters: 900,
           location_radius: 500,
+          stream: null,
+          registration_centre: null,
         },
       ],
     },
@@ -277,7 +279,7 @@ describe('the ward endpoints', () => {
     expect(body.wards).toBeDefined()
   })
 
-  it('creates a ward with the county of its constituency', async () => {
+  it('refuses a direct ward creation and points to CSV import', async () => {
     const response = await wardsPost(
       request('/api/admin/locations/wards', ADMIN, {
         method: 'POST',
@@ -290,58 +292,13 @@ describe('the ward endpoints', () => {
         headers: { 'content-type': 'application/json' },
       }) as any
     )
-
-    expect(response.status).toBe(201)
-
-    const insert = executed.find((entry) => /INSERT INTO wards/.test(entry.text))
-    expect(insert?.params?.[3]).toBe(201) // the county of the constituency
-  })
-
-  it('refuses a duplicate code', async () => {
-    baseHandlers([
-      {
-        match: /SELECT id FROM wards WHERE code = \$1/,
-        handler: () => [{ id: 5 }],
-      },
-    ])
-
-    const response = await wardsPost(
-      request('/api/admin/locations/wards', ADMIN, {
-        method: 'POST',
-        body: JSON.stringify({ code: 'W0001', name: 'Test Ward', constituency_id: 628 }),
-        headers: { 'content-type': 'application/json' },
-      }) as any
-    )
     const body = await response.json()
 
-    expect(response.status).toBe(409)
-    expect(body.code).toBe('duplicate_code')
+    expect(response.status).toBe(403)
+    expect(body.error).toMatch(/CSV import/)
   })
 
-  it('refuses a ward without a name', async () => {
-    const response = await wardsPost(
-      request('/api/admin/locations/wards', ADMIN, {
-        method: 'POST',
-        body: JSON.stringify({ code: 'W9002', name: '', constituency_id: 628 }),
-        headers: { 'content-type': 'application/json' },
-      }) as any
-    )
-
-    expect(response.status).toBe(400)
-  })
-
-  it('moves the polling stations with the ward', async () => {
-    baseHandlers([
-      {
-        match: /SELECT id, code, name, constituency_id, county_id, registered_voters FROM wards WHERE id = \$1/,
-        handler: () => [WARD],
-      },
-      {
-        match: /SELECT id, county_id FROM constituencies WHERE id = \$1/,
-        handler: () => [{ id: 700, county_id: 800 }],
-      },
-    ])
-
+  it('refuses a direct ward update and points to CSV import', async () => {
     const response = await wardPut(
       request('/api/admin/locations/wards/2660', ADMIN, {
         method: 'PUT',
@@ -350,43 +307,21 @@ describe('the ward endpoints', () => {
       }) as any,
       { params: { id: '2660' } }
     )
+    const body = await response.json()
 
-    expect(response.status).toBe(200)
-
-    const stationUpdate = executed.find((entry) =>
-      /UPDATE polling_stations/.test(entry.text)
-    )
-    expect(stationUpdate).toBeDefined()
-    expect(stationUpdate?.params?.[0]).toBe(700)
-    expect(stationUpdate?.params?.[1]).toBe(800)
+    expect(response.status).toBe(403)
+    expect(body.error).toMatch(/CSV import/)
   })
 
-  it('refuses to delete a ward that still has polling stations', async () => {
-    baseHandlers([
-      {
-        match: /SELECT COUNT\(\*\) AS total FROM polling_stations WHERE ward_id = \$1/,
-        handler: () => [{ total: 4 }],
-      },
-    ])
-
+  it('refuses a ward deletion and points to CSV import', async () => {
     const response = await wardDelete(
       request('/api/admin/locations/wards/2660', ADMIN, { method: 'DELETE' }) as any,
       { params: { id: '2660' } }
     )
     const body = await response.json()
 
-    expect(response.status).toBe(409)
-    expect(body.code).toBe('has_dependents')
-  })
-
-  it('deletes a ward that nothing depends on', async () => {
-    const response = await wardDelete(
-      request('/api/admin/locations/wards/2660', ADMIN, { method: 'DELETE' }) as any,
-      { params: { id: '2660' } }
-    )
-
-    expect(response.status).toBe(200)
-    expect(executed.some((entry) => /DELETE FROM wards/.test(entry.text))).toBe(true)
+    expect(response.status).toBe(403)
+    expect(body.error).toMatch(/CSV import/)
   })
 })
 
@@ -403,7 +338,7 @@ describe('the polling station endpoints', () => {
     expect(response.status).toBe(403)
   })
 
-  it('creates a polling station in a ward', async () => {
+  it('refuses a direct polling station creation and points to CSV import', async () => {
     const response = await stationsPost(
       request('/api/admin/locations/polling-stations', ADMIN, {
         method: 'POST',
@@ -417,42 +352,14 @@ describe('the polling station endpoints', () => {
         headers: { 'content-type': 'application/json' },
       }) as any
     )
+    const body = await response.json()
 
-    expect(response.status).toBe(201)
-
-    const insert = executed.find((entry) => /INSERT INTO polling_stations/.test(entry.text))
-    // The constituency and the county follow the ward.
-    expect(insert?.params?.[3]).toBe(628)
-    expect(insert?.params?.[4]).toBe(201)
+    expect(response.status).toBe(403)
+    expect(body.error).toMatch(/CSV import/)
+    expect(executed.some((entry) => /INSERT INTO polling_stations/.test(entry.text))).toBe(false)
   })
 
-  it('refuses a duplicate code', async () => {
-    baseHandlers([
-      {
-        match: /SELECT id FROM polling_stations WHERE code = \$1/,
-        handler: () => [{ id: 5 }],
-      },
-    ])
-
-    const response = await stationsPost(
-      request('/api/admin/locations/polling-stations', ADMIN, {
-        method: 'POST',
-        body: JSON.stringify({ code: 'PS000001', name: 'New Station', ward_id: 2660 }),
-        headers: { 'content-type': 'application/json' },
-      }) as any
-    )
-
-    expect(response.status).toBe(409)
-  })
-
-  it('refuses to delete a polling station that has submissions', async () => {
-    baseHandlers([
-      {
-        match: /SELECT COUNT\(\*\) AS total FROM submissions WHERE polling_station_id = \$1/,
-        handler: () => [{ total: 2 }],
-      },
-    ])
-
+  it('refuses a polling station deletion and points to CSV import', async () => {
     const response = await stationDelete(
       request('/api/admin/locations/polling-stations/4447', ADMIN, {
         method: 'DELETE',
@@ -461,36 +368,11 @@ describe('the polling station endpoints', () => {
     )
     const body = await response.json()
 
-    expect(response.status).toBe(409)
-    expect(body.code).toBe('has_dependents')
+    expect(response.status).toBe(403)
+    expect(body.error).toMatch(/CSV import/)
   })
 
-  it('refuses to delete a polling station that still has an agent', async () => {
-    baseHandlers([
-      {
-        match: /SELECT COUNT\(\*\) AS total FROM agents WHERE polling_station_id = \$1/,
-        handler: () => [{ total: 1 }],
-      },
-    ])
-
-    const response = await stationDelete(
-      request('/api/admin/locations/polling-stations/4447', ADMIN, {
-        method: 'DELETE',
-      }) as any,
-      { params: { id: '4447' } }
-    )
-
-    expect(response.status).toBe(409)
-  })
-
-  it('moves a polling station to another ward', async () => {
-    baseHandlers([
-      {
-        match: /SELECT id, constituency_id, county_id FROM wards WHERE id = \$1/,
-        handler: () => [{ id: 2661, constituency_id: 700, county_id: 800 }],
-      },
-    ])
-
+  it('refuses a direct polling station update and points to CSV import', async () => {
     const response = await stationPut(
       request('/api/admin/locations/polling-stations/4447', ADMIN, {
         method: 'PUT',
@@ -499,13 +381,10 @@ describe('the polling station endpoints', () => {
       }) as any,
       { params: { id: '4447' } }
     )
+    const body = await response.json()
 
-    expect(response.status).toBe(200)
-
-    const update = executed.find((entry) => /UPDATE polling_stations/.test(entry.text))
-    expect(update?.params?.[2]).toBe(2661)
-    expect(update?.params?.[3]).toBe(700)
-    expect(update?.params?.[4]).toBe(800)
+    expect(response.status).toBe(403)
+    expect(body.error).toMatch(/CSV import/)
   })
 })
 
@@ -547,7 +426,8 @@ describe('LocationError', () => {
 /**
  * The handlers the planner of the import uses. The planner only reads, so
  * these are the lookups of the constituencies, of the wards and of the
- * codes.
+ * polling stations. The import updates only: the wards and the stations the
+ * file names have to exist already.
  */
 const IMPORT_HANDLERS: QueryHandler[] = [
   {
@@ -564,12 +444,31 @@ const IMPORT_HANDLERS: QueryHandler[] = [
     },
   },
   {
-    match: /COALESCE\(MAX\(SUBSTRING\(code FROM 2\)::int\), 0\) \+ 1 AS next/,
-    handler: () => [{ next: 1193 }],
+    match: /SELECT c\.id\s+FROM constituencies c/,
+    handler: (_text, params) => {
+      const name = String(params?.[0] ?? '').toUpperCase()
+      if (name === 'TEST CONSTITUENCY') return [{ id: 628 }]
+      if (name === 'OTHER CONSTITUENCY') return [{ id: 700 }]
+      return []
+    },
   },
   {
-    match: /SELECT id, code FROM wards/,
-    handler: () => [],
+    match: /SELECT id, code, constituency_id FROM wards WHERE code = \$1/,
+    handler: (_text, params) => {
+      const code = String(params?.[0] ?? '')
+      if (code === 'W0001') return [{ id: 2660, code: 'W0001', constituency_id: 628 }]
+      if (code === 'W0002') return [{ id: 2661, code: 'W0002', constituency_id: 628 }]
+      return []
+    },
+  },
+  {
+    match: /SELECT id, code, constituency_id FROM wards\s+WHERE constituency_id = \$1/,
+    handler: (_text, params) => {
+      const name = String(params?.[1] ?? '').toUpperCase()
+      if (name === 'KAYOLE') return [{ id: 2660, code: 'W0001', constituency_id: Number(params?.[0]) }]
+      if (name === 'KILIMANI') return [{ id: 2661, code: 'W0002', constituency_id: Number(params?.[0]) }]
+      return []
+    },
   },
   {
     match: /SELECT w\.id, w\.constituency_id, c\.name AS constituency_name/,
@@ -584,6 +483,18 @@ const IMPORT_HANDLERS: QueryHandler[] = [
       return []
     },
   },
+  {
+    match: /SELECT id, code FROM polling_stations\s+WHERE code = \$1 AND COALESCE\(stream, ''\)/,
+    handler: (_text, params) => {
+      const code = String(params?.[0] ?? '')
+      if (code === 'PS000001') return [{ id: 4447, code: 'PS000001' }]
+      return []
+    },
+  },
+  {
+    match: /SELECT id, code FROM polling_stations\s+WHERE ward_id = \$1/,
+    handler: (_text, params) => [{ id: 4447, code: 'PS000001' }],
+  },
 ]
 
 const WARDS_CSV = [
@@ -593,8 +504,8 @@ const WARDS_CSV = [
 ].join('\n')
 
 const STATIONS_CSV = [
-  'station_name,station_code,ward_name,constituency_name,latitude,longitude,registered_voters',
-  'Kayole Hall,PS000001,Test Ward,Test Constituency,-1.26,36.8,850',
+  'County\tConstituency\tWard\tIEBC Code\tPolling Station\tStream\tRegistration Centre\tRegistered Voters',
+  'Nairobi\tTest Constituency\tTest Ward\tPS000001\tKayole Hall\t1\tKayole Primary\t450',
 ].join('\n')
 
 /** A request that imports a file, with or without writing it. */
@@ -638,7 +549,7 @@ describe('the dry run of the CSV import', () => {
     expect(response.status).toBe(403)
   })
 
-  it('reports what a valid ward file would do', async () => {
+  it('reports what a valid ward file would update', async () => {
     const response = await importPost(importRequest('wards', true, WARDS_CSV) as any)
     const body = await response.json()
 
@@ -646,16 +557,15 @@ describe('the dry run of the CSV import', () => {
     expect(body.dry_run).toBe(true)
     expect(body.total_rows).toBe(2)
     expect(body.valid_rows).toBe(2)
-    expect(body.create).toBe(2)
-    expect(body.update).toBe(0)
+    expect(body.update).toBe(2)
     expect(body.skip).toBe(0)
     expect(body.error_rows).toBe(0)
-    expect(body.rows[0].action).toBe('create')
-    expect(body.rows[0].code).toBe('W1193')
-    expect(body.rows[1].code).toBe('W1194')
+    expect(body.rows[0].action).toBe('update')
+    expect(body.rows[0].code).toBe('W0001')
+    expect(body.rows[1].code).toBe('W0002')
   })
 
-  it('reports what a valid polling station file would do', async () => {
+  it('reports what a valid polling station file would update', async () => {
     const response = await importPost(
       importRequest('polling_stations', true, STATIONS_CSV) as any
     )
@@ -663,10 +573,66 @@ describe('the dry run of the CSV import', () => {
 
     expect(response.status).toBe(200)
     expect(body.total_rows).toBe(1)
-    expect(body.create).toBe(1)
+    expect(body.update).toBe(1)
     expect(body.skip).toBe(0)
     expect(body.rows[0].code).toBe('PS000001')
     expect(body.rows[0].parent).toBe('Test Ward')
+  })
+
+  it('reads the official tab-separated eight-column file', async () => {
+    const csv = [
+      'County\tConstituency\tWard\tIEBC Code\tPolling Station\tStream\tRegistration Centre\tRegistered Voters',
+      'Nairobi\tTest Constituency\tTest Ward\tPS000001\tKayole Hall\t1\tKayole Primary\t450',
+    ].join('\n')
+
+    const response = await importPost(
+      importRequest('polling_stations', true, csv) as any
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.update).toBe(1)
+    expect(body.skip).toBe(0)
+    expect(body.rows[0].code).toBe('PS000001')
+  })
+
+  it('keeps the streams of a station apart', async () => {
+    const csv = [
+      'County\tConstituency\tWard\tIEBC Code\tPolling Station\tStream\tRegistration Centre\tRegistered Voters',
+      'Nairobi\tTest Constituency\tTest Ward\tPS000001\tKayole Hall\t1\tKayole Primary\t450',
+      'Nairobi\tTest Constituency\tTest Ward\tPS000001\tKayole Hall\t2\tKayole Primary\t430',
+    ].join('\n')
+
+    const response = await importPost(
+      importRequest('polling_stations', true, csv) as any
+    )
+    const body = await response.json()
+
+    // The code repeats, but the stream differs, so neither row is a duplicate.
+    expect(body.update).toBe(2)
+    expect(body.skip).toBe(0)
+    expect(body.error_rows).toBe(0)
+  })
+
+  it('refuses the same code and stream twice', async () => {
+    const csv = [
+      'County\tConstituency\tWard\tIEBC Code\tPolling Station\tStream\tRegistration Centre\tRegistered Voters',
+      'Nairobi\tTest Constituency\tTest Ward\tPS000001\tKayole Hall\t1\tKayole Primary\t450',
+      'Nairobi\tTest Constituency\tTest Ward\tPS000001\tKayole Hall\t1\tKayole Primary\t450',
+    ].join('\n')
+
+    const response = await importPost(
+      importRequest('polling_stations', true, csv) as any
+    )
+    const body = await response.json()
+
+    expect(body.skip).toBe(1)
+    expect(body.error_rows).toBe(1)
+
+    const issue = body.issues.find((entry: any) => entry.code === 'duplicate_code')
+    expect(issue.row).toBe(3)
+    expect(issue.message).toContain('PS000001')
+    expect(issue.message).toContain('stream 1')
   })
 
   it('writes nothing to the database', async () => {
@@ -676,11 +642,77 @@ describe('the dry run of the CSV import', () => {
     expect(writes()).toEqual([])
   })
 
+  it('refuses a ward the platform does not have', async () => {
+    const csv = [
+      'ward_name,constituency_name,county_name',
+      'Nowhere,Test Constituency,Nairobi',
+    ].join('\n')
+
+    const response = await importPost(importRequest('wards', true, csv) as any)
+    const body = await response.json()
+
+    expect(body.update).toBe(0)
+    expect(body.skip).toBe(1)
+    expect(body.error_rows).toBe(1)
+
+    const issue = body.issues.find((entry: any) => entry.code === 'unmatched_record')
+    expect(issue.row).toBe(2)
+    expect(issue.severity).toBe('error')
+  })
+
+  it('refuses a ward code the platform does not have', async () => {
+    const csv = [
+      'ward_name,constituency_name,code',
+      'Kayole,Test Constituency,W9999',
+    ].join('\n')
+
+    const response = await importPost(importRequest('wards', true, csv) as any)
+    const body = await response.json()
+
+    expect(body.skip).toBe(1)
+
+    const issue = body.issues.find((entry: any) => entry.code === 'unmatched_record')
+    expect(issue.row).toBe(2)
+    expect(issue.message).toContain('W9999')
+  })
+
+  it('refuses a polling station the platform does not have', async () => {
+    const csv = [
+      'station_name,station_code,ward_name,constituency_name',
+      'Nowhere Hall,PS999999,Test Ward,Test Constituency',
+    ].join('\n')
+
+    const response = await importPost(
+      importRequest('polling_stations', true, csv) as any
+    )
+    const body = await response.json()
+
+    expect(body.skip).toBe(1)
+    expect(body.error_rows).toBe(1)
+
+    const issue = body.issues.find((entry: any) => entry.code === 'unmatched_record')
+    expect(issue.row).toBe(2)
+    expect(issue.message).toContain('PS999999')
+  })
+
+  it('matches a ward by its name when the file carries no code', async () => {
+    const csv = [
+      'ward_name,constituency_name,county_name',
+      'Kayole,Test Constituency,Nairobi',
+    ].join('\n')
+
+    const response = await importPost(importRequest('wards', true, csv) as any)
+    const body = await response.json()
+
+    expect(body.update).toBe(1)
+    expect(body.rows[0].target_id).toBe(2660)
+  })
+
   it('reports a code that is used twice in the file', async () => {
     const csv = [
       'ward_name,constituency_name,county_name,code',
-      'Kayole,Test Constituency,Nairobi,W500',
-      'Kilimani,Test Constituency,Nairobi,W500',
+      'Kayole,Test Constituency,Nairobi,W0001',
+      'Kilimani,Test Constituency,Nairobi,W0001',
     ].join('\n')
 
     const response = await importPost(importRequest('wards', true, csv) as any)
@@ -693,11 +725,11 @@ describe('the dry run of the CSV import', () => {
     const issue = body.issues.find((entry: any) => entry.code === 'duplicate_code')
     expect(issue.row).toBe(3)
     expect(issue.severity).toBe('error')
-    expect(issue.message).toContain('W500')
+    expect(issue.message).toContain('W0001')
     expect(issue.message).toContain('row 2')
   })
 
-  it('reports a row without a name', async () => {
+  it('reports a row without a name or a code', async () => {
     const csv = [
       'ward_name,constituency_name,county_name',
       ',Test Constituency,Nairobi',
@@ -711,13 +743,13 @@ describe('the dry run of the CSV import', () => {
 
     const issue = body.issues.find((entry: any) => entry.code === 'missing_field')
     expect(issue.row).toBe(2)
-    expect(issue.field).toBe('ward_name')
+    expect(issue.field).toBe('code')
   })
 
-  it('reports a row without a code', async () => {
+  it('reports a station row without a name or a code', async () => {
     const csv = [
       'station_name,station_code,ward_name,constituency_name',
-      'Kayole Hall,,Test Ward,Test Constituency',
+      ',,Test Ward,Test Constituency',
     ].join('\n')
 
     const response = await importPost(
@@ -807,19 +839,16 @@ describe('the dry run of the CSV import', () => {
   })
 
   it('reports a ward that exists already as an update', async () => {
-    baseHandlers([
-      {
-        match: /SELECT id, code FROM wards/,
-        handler: () => [{ id: 2660, code: 'W0001' }],
-      },
-      ...IMPORT_HANDLERS,
-    ])
-
-    const response = await importPost(importRequest('wards', true, WARDS_CSV) as any)
+    const response = await importPost(
+      importRequest(
+        'wards',
+        true,
+        ['ward_name,constituency_name,code', 'Kayole,Test Constituency,W0001'].join('\n')
+      ) as any
+    )
     const body = await response.json()
 
-    expect(body.update).toBe(2)
-    expect(body.create).toBe(0)
+    expect(body.update).toBe(1)
     expect(body.rows[0].target_id).toBe(2660)
   })
 
@@ -874,14 +903,12 @@ describe('the real CSV import', () => {
     const body = await response.json()
 
     expect(response.status).toBe(200)
-    expect(body.created).toBe(preview.create)
     expect(body.updated).toBe(preview.update)
     expect(body.skipped).toBe(preview.skip)
 
-    const inserts = executed.filter((entry) => /INSERT INTO wards/.test(entry.text))
-    expect(inserts).toHaveLength(2)
-    expect(inserts[0].params?.[0]).toBe('W1193')
-    expect(inserts[0].params?.[3]).toBe(201) // the county of the constituency
+    const updates = executed.filter((entry) => /UPDATE wards/.test(entry.text))
+    expect(updates).toHaveLength(2)
+    expect(executed.filter((entry) => /INSERT INTO wards/.test(entry.text))).toHaveLength(0)
   })
 
   it('writes the polling stations the preview reports', async () => {
@@ -895,68 +922,72 @@ describe('the real CSV import', () => {
     )
     const body = await response.json()
 
-    expect(body.created).toBe(preview.create)
+    expect(body.updated).toBe(preview.update)
     expect(body.skipped).toBe(preview.skip)
 
-    const inserts = executed.filter((entry) => /INSERT INTO polling_stations/.test(entry.text))
-    expect(inserts).toHaveLength(1)
-    expect(inserts[0].params?.[0]).toBe('PS000001')
-    expect(inserts[0].params?.[2]).toBe(2660) // the ward of the file
-    expect(inserts[0].params?.[3]).toBe(628) // the constituency follows the ward
+    const updates = executed.filter((entry) => /UPDATE polling_stations/.test(entry.text))
+    expect(updates).toHaveLength(1)
+    expect(executed.filter((entry) => /INSERT INTO polling_stations/.test(entry.text))).toHaveLength(0)
+  })
+
+  it('only writes the columns the file carries', async () => {
+    // The file carries the code and the registered voters, but no name and no
+    // constituency: the name and the constituency of the matched ward must be
+    // kept.
+    const csv = [
+      'code,registered_voters',
+      'W0001,1500',
+    ].join('\n')
+
+    const response = await importPost(importRequest('wards', false, csv) as any)
+    const body = await response.json()
+
+    expect(body.updated).toBe(1)
+
+    const update = executed.find((entry) => /UPDATE wards/.test(entry.text))
+    expect(update?.params?.[0]).toBe('W0001') // the code the ward already has
+    expect(update?.params?.[1]).toBe('Changamwe Ward 1') // the name the ward already has
+    expect(update?.params?.[2]).toBe(628) // the constituency the ward already has
+    expect(update?.params?.[4]).toBe(1500) // the registered voters from the file
   })
 
   it('skips the rows the preview refuses, and says why', async () => {
     const csv = [
       'ward_name,constituency_name,county_name,code',
-      'Kayole,Test Constituency,Nairobi,W500',
-      'Kilimani,Test Constituency,Nairobi,W500',
-      'Mukuru,Nowhere County,Nairobi,W501',
+      'Kayole,Test Constituency,Nairobi,W0001',
+      'Kilimani,Test Constituency,Nairobi,W0001',
+      'Mukuru,Nowhere County,Nairobi',
     ].join('\n')
 
     const response = await importPost(importRequest('wards', false, csv) as any)
     const body = await response.json()
 
-    expect(body.created).toBe(1)
+    expect(body.created).toBe(0)
+    expect(body.updated).toBe(1)
     expect(body.skipped).toBe(2)
     expect(body.errors).toHaveLength(2)
     expect(body.errors[0].row).toBe(3)
-    expect(body.errors[0].message).toContain('W500')
+    expect(body.errors[0].message).toContain('W0001')
     expect(body.errors[1].row).toBe(4)
     expect(body.errors[1].message).toContain('Nowhere County')
   })
 
-  it('updates a ward that the file names twice', async () => {
+  it('never creates a row for a ward that does not exist', async () => {
     const csv = [
-      'ward_name,constituency_name,county_name,registered_voters',
-      'Kayole,Test Constituency,Nairobi,1500',
-      'Kayole,Test Constituency,Nairobi,1600',
+      'ward_name,constituency_name,county_name',
+      'Mukuru,Test Constituency,Nairobi',
     ].join('\n')
 
-    const preview = await (await importPost(importRequest('wards', true, csv) as any)).json()
-    expect(preview.create).toBe(1)
-    expect(preview.update).toBe(1)
-
-    executed.length = 0
     const response = await importPost(importRequest('wards', false, csv) as any)
     const body = await response.json()
 
-    expect(body.created).toBe(1)
-    expect(body.updated).toBe(1)
-    expect(body.errors).toHaveLength(0)
-
-    expect(executed.filter((entry) => /INSERT INTO wards/.test(entry.text))).toHaveLength(1)
-    expect(executed.filter((entry) => /UPDATE wards/.test(entry.text))).toHaveLength(1)
+    expect(body.created).toBe(0)
+    expect(body.updated).toBe(0)
+    expect(body.skipped).toBe(1)
+    expect(writes()).toEqual([])
   })
 
-  it('updates a ward that exists already when the file names it twice', async () => {
-    baseHandlers([
-      {
-        match: /SELECT id, code FROM wards/,
-        handler: () => [{ id: 2660, code: 'W0001' }],
-      },
-      ...IMPORT_HANDLERS,
-    ])
-
+  it('names the same existing ward twice and updates it twice', async () => {
     const csv = [
       'ward_name,constituency_name,county_name,registered_voters',
       'Kayole,Test Constituency,Nairobi,1500',
@@ -969,5 +1000,6 @@ describe('the real CSV import', () => {
     expect(body.created).toBe(0)
     expect(body.updated).toBe(2)
     expect(body.errors).toHaveLength(0)
+    expect(executed.filter((entry) => /UPDATE wards/.test(entry.text))).toHaveLength(2)
   })
 })
