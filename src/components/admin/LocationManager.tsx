@@ -322,15 +322,14 @@ export default function LocationManager() {
       {tab === 'import' ? (
         <div className="glass-effect rounded-xl p-6 space-y-5">
           <div>
-            <h3 className="text-lg font-semibold text-white mb-1">Bulk import (update only)</h3>
+            <h3 className="text-lg font-semibold text-white mb-1">Bulk import</h3>
             <p className="text-sm text-dark-300">
-              Load an official IEBC file to update the existing wards and polling
-              stations. The geography is never created here: a row that matches no
-              existing record is skipped with an error. A ward is matched by its
-              code, or by its name inside its constituency; a polling station by
-              its code, or by its name inside its ward. Only the columns the file
-              carries are written, so a column you leave out keeps its current
-              value.
+              Load an official IEBC file to create or update wards and polling
+              stations. New wards/polling stations are created when they do not
+              exist and sufficient details are provided. Existing records are
+              matched by code or by name and updated. A ward&apos;s code is never
+              changed by the import. Only the columns the file carries are
+              written.
             </p>
           </div>
 

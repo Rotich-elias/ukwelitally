@@ -779,13 +779,13 @@ export interface ImportPreview {
 interface WardPlanEntry {
   index: number
   row: number
-  action: 'update'
+  action: 'update' | 'create'
   /** The ward that exists and is updated. */
-  existing_id: number
-  /** The fields present in the file. */
+  existing_id?: number
   code?: string
   name?: string
   constituency_id?: number
+  county_id?: number
   registered_voters?: number
 }
 
@@ -935,10 +935,10 @@ function normaliseName(value: string): string {
 /**
  * Read a ward file and decide what every row would update, without writing.
  *
- * The file only updates wards that already exist: a row that matches no ward
- * is refused, so an import can never create or rename the electoral
- * geography. A ward is matched by its code when the file carries one, and by
- * its name inside the constituency otherwise.
+ * New wards can be created from the file when they don't already exist.
+ * A ward is matched by its code when the file carries one, and by its name
+ * inside the constituency otherwise. Existing wards are updated when matched.
+ * A ward's code is never changed by the import.
  *
  * Only the fields present in the file are carried, so a column the file
  * leaves out keeps the value the ward already has.
@@ -1048,7 +1048,7 @@ async function planWardImport(text: string): Promise<WardPlan> {
             row: rowNumber,
             code: 'unmatched_record',
             severity: 'error',
-            message: `No ward has the code "${rawCode}". The import only updates wards that already exist.`,
+            message: `No ward has the code "${rawCode}". Provide a name and constituency name to create it.`,
             field: 'code',
           })
         )
@@ -1128,7 +1128,7 @@ async function planWardImport(text: string): Promise<WardPlan> {
             row: rowNumber,
             code: 'unmatched_record',
             severity: 'error',
-            message: `No ward named "${name}" exists in ${constituencyName}. The import only updates wards that already exist.`,
+            message: `No ward named "${name}" exists in ${constituencyName}". Provide a code to create it or use an existing ward.`,
             field: 'ward_name',
           })
         )
@@ -1212,22 +1212,35 @@ export async function importWardsFromCsv(
     if (!entry) continue
 
     try {
-      // The patient fields only: a column the file leaves out is not passed,
-      // so the ward keeps the value it already has.
-      await updateWard(
-        entry.existing_id,
-        {
-          ...(entry.name !== undefined ? { name: entry.name } : {}),
-          ...(entry.constituency_id !== undefined
-            ? { constituency_id: entry.constituency_id }
-            : {}),
-          ...(entry.registered_voters !== undefined
-            ? { registered_voters: entry.registered_voters }
-            : {}),
-        },
-        actor
-      )
-      summary.updated += 1
+      if (entry.action === 'create') {
+        await createWard(
+          {
+            code: entry.code!,
+            name: entry.name!,
+            constituency_id: entry.constituency_id!,
+            registered_voters: entry.registered_voters ?? 0,
+          },
+          actor
+        )
+        summary.created += 1
+      } else {
+        // The patient fields only: a column the file leaves out is not passed,
+        // so the ward keeps the value it already has.
+        await updateWard(
+          entry.existing_id!,
+          {
+            ...(entry.name !== undefined ? { name: entry.name } : {}),
+            ...(entry.constituency_id !== undefined
+              ? { constituency_id: entry.constituency_id }
+              : {}),
+            ...(entry.registered_voters !== undefined
+              ? { registered_voters: entry.registered_voters }
+              : {}),
+          },
+          actor
+        )
+        summary.updated += 1
+      }
     } catch (error) {
       summary.skipped += 1
       summary.errors.push({
