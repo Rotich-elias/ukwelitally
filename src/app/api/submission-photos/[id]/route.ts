@@ -38,14 +38,19 @@ export async function GET(
       submitted_by: number
       candidate_id: number
       candidate_user_id: number | null
+      scope_candidate_id: number | null
+      scope_candidate_user_id: number | null
     }>(
       `SELECT sp.id, sp.file_path, sp.submission_id,
               s.user_id as submitted_by,
               s.candidate_id,
-              c.user_id as candidate_user_id
+              s.scope_candidate_id,
+              c.user_id as candidate_user_id,
+              sc.user_id as scope_candidate_user_id
          FROM submission_photos sp
          JOIN submissions s ON s.id = sp.submission_id
          LEFT JOIN candidates c ON c.id = s.candidate_id
+         LEFT JOIN candidates sc ON sc.id = s.scope_candidate_id
         WHERE sp.id = $1`,
       [photoId]
     )
@@ -55,11 +60,41 @@ export async function GET(
     }
 
     // The submitter, the candidate of the team and administrators may read
-    // the evidence. Nobody else, even with a valid account.
-    const allowed =
+    // the evidence.
+    let allowed =
       user.role === 'admin' ||
       photo.submitted_by === user.userId ||
-      (photo.candidate_user_id !== null && photo.candidate_user_id === user.userId)
+      (photo.candidate_user_id !== null && photo.candidate_user_id === user.userId) ||
+      (photo.scope_candidate_user_id !== null &&
+        photo.scope_candidate_user_id === user.userId)
+
+    // A candidate can review submissions inside their electoral scope, so they
+    // must be able to see the evidence of those submissions too. This is the
+    // same scope the review queue and the review action enforce. Without it
+    // the queue renders a submission whose images are all 403.
+    if (!allowed && user.role === 'candidate') {
+      const scope = await queryOne<{ allowed: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1
+           FROM submissions s
+           JOIN polling_stations ps ON ps.id = s.polling_station_id
+           JOIN wards w ON w.id = ps.ward_id
+           JOIN constituencies con ON con.id = w.constituency_id
+           JOIN candidates c ON c.user_id = $1
+           WHERE s.id = $2
+             AND (
+               s.candidate_id = c.id
+               OR s.scope_candidate_id = c.id
+               OR c.position = 'president'
+               OR (c.position IN ('governor','senator','women_rep') AND ps.county_id = c.county_id)
+               OR (c.position = 'mp' AND con.id = c.constituency_id)
+               OR (c.position = 'mca' AND w.id = c.ward_id)
+             )
+         ) AS allowed`,
+        [user.userId, photo.submission_id]
+      )
+      allowed = !!scope?.allowed
+    }
 
     if (!allowed) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

@@ -431,11 +431,14 @@ async function handlePost(req: NextRequest) {
       const uploadedPhotos: any[] = []
       const skippedPhotos: Array<{ type: string; reason: string }> = []
       const photoHashes = new Set<string>()
+      let attemptedPhotos = 0
+      let storageFailures = 0
 
       for (const [fieldName, fileArray] of Object.entries(files)) {
         const photoType = photoTypes.find((t) => fieldName.includes(t)) || 'other'
 
         for (const file of fileArray) {
+          attemptedPhotos++
           try {
             const fileInfo = await saveUploadedFile(file, `submission-${submission.id}`)
 
@@ -491,10 +494,25 @@ async function handlePost(req: NextRequest) {
               // Continue with other photos
             }
           } catch (error) {
+            storageFailures++
             console.error('Error uploading photo:', error)
+            const reason =
+              error instanceof Error
+                ? error.message
+                : 'The photo could not be stored and was not attached.'
+            skippedPhotos.push({ type: photoType, reason })
             // Continue with other photos
           }
         }
+      }
+
+      // A submission whose evidence could not be stored at all must not be
+      // accepted: the row would look valid while the image it points at does
+      // not exist. Failing here rolls the whole transaction back and tells the
+      // agent why, instead of silently creating a submission with no evidence.
+      if (attemptedPhotos > 0 && uploadedPhotos.length === 0 && storageFailures > 0) {
+        const reason = skippedPhotos[0]?.reason || 'The photos could not be stored.'
+        throw new Error(`The evidence photos could not be saved. ${reason}`)
       }
 
       // Calculate confidence score

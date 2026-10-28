@@ -94,7 +94,9 @@ import { GET as uploadsGet } from '@/app/api/uploads/[...path]/route'
 
 const SUBMITTER = { id: 201, role: 'agent' as const }
 const CANDIDATE_OWNER = { id: 100, role: 'candidate' as const }
+const SCOPE_CANDIDATE_OWNER = { id: 200, role: 'candidate' as const }
 const OTHER_CANDIDATE = { id: 300, role: 'candidate' as const }
+const REVIEWING_CANDIDATE = { id: 400, role: 'candidate' as const }
 const ADMIN = { id: 2, role: 'admin' as const }
 
 function token(user: { id: number; role: string }) {
@@ -124,6 +126,8 @@ function baseHandlers(overrides: QueryHandler[] = []) {
         submitted_by: SUBMITTER.id,
         candidate_id: 10,
         candidate_user_id: CANDIDATE_OWNER.id,
+        scope_candidate_id: null,
+        scope_candidate_user_id: null,
       },
     ],
   })
@@ -160,6 +164,49 @@ describe('the submission evidence route', () => {
   it('serves the evidence to an administrator', async () => {
     const response = await evidenceGet(
       request('/api/submission-photos/30', ADMIN) as any,
+      { params: { id: '30' } }
+    )
+
+    expect(response.status).toBe(200)
+  })
+
+  it('serves the evidence to the candidate that owns the observer scope', async () => {
+    baseHandlers([
+      {
+        match: /FROM submission_photos sp/,
+        handler: () => [
+          {
+            id: 30,
+            file_path: '/submission-125/photo.png',
+            submission_id: 125,
+            submitted_by: SUBMITTER.id,
+            candidate_id: 10,
+            candidate_user_id: null,
+            scope_candidate_id: 11,
+            scope_candidate_user_id: SCOPE_CANDIDATE_OWNER.id,
+          },
+        ],
+      },
+    ])
+
+    const response = await evidenceGet(
+      request('/api/submission-photos/30', SCOPE_CANDIDATE_OWNER) as any,
+      { params: { id: '30' } }
+    )
+
+    expect(response.status).toBe(200)
+  })
+
+  it('serves the evidence to a candidate whose electoral scope covers it', async () => {
+    baseHandlers([
+      {
+        match: /JOIN candidates c ON c\.user_id = \$1/,
+        handler: () => [{ allowed: true }],
+      },
+    ])
+
+    const response = await evidenceGet(
+      request('/api/submission-photos/30', REVIEWING_CANDIDATE) as any,
       { params: { id: '30' } }
     )
 
