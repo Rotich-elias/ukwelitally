@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
-import { hashPassword, normalizeEmail, normalizePhoneNumber } from '@/lib/auth'
+import { hashPassword, isStrongPassword, normalizeEmail, normalizePhoneNumber } from '@/lib/auth'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from '@/lib/jwtSecret'
 import { validateCandidateLocation } from '@/lib/candidateLocation'
@@ -214,7 +214,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { user_id, email, phone, full_name, active, access_status } = body
+    const { user_id, email, phone, full_name, active, access_status, password } = body
 
     if (!user_id) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
@@ -224,6 +224,31 @@ export async function PUT(request: NextRequest) {
     const currentUser = await queryOne('SELECT * FROM users WHERE id = $1', [user_id])
     if (!currentUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Admins can reset an agent's password without knowing the old one. The
+    // plain-text value is never stored or written to the audit log.
+    let passwordChanged = false
+    let passwordHash: string | null = null
+    if (password !== undefined) {
+      if (currentUser.role !== 'agent') {
+        return NextResponse.json(
+          { error: 'Passwords can only be reset for agent accounts' },
+          { status: 400 }
+        )
+      }
+
+      if (typeof password !== 'string') {
+        return NextResponse.json({ error: 'Password must be a string' }, { status: 400 })
+      }
+
+      const strength = isStrongPassword(password)
+      if (!strength.valid) {
+        return NextResponse.json({ error: strength.errors.join('. ') }, { status: 400 })
+      }
+
+      passwordHash = await hashPassword(password)
+      passwordChanged = true
     }
 
     // The purchased access of a candidate is a separate concept from the
@@ -311,6 +336,12 @@ export async function PUT(request: NextRequest) {
       paramIndex++
     }
 
+    if (passwordHash) {
+      updates.push(`password_hash = $${paramIndex}`)
+      params.push(passwordHash)
+      paramIndex++
+    }
+
     if (updates.length === 0 && !candidateAccessChanged) {
       return NextResponse.json({ error: 'No changes to update' }, { status: 400 })
     }
@@ -318,7 +349,7 @@ export async function PUT(request: NextRequest) {
     let updatedUser = currentUser
     if (updates.length > 0) {
       params.push(user_id)
-      const queryText = `UPDATE users SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${paramIndex} RETURNING *`
+      const queryText = `UPDATE users SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${paramIndex} RETURNING id, email, phone, full_name, role, verified, active, created_at, updated_at`
 
       updatedUser = (await queryOne(queryText, params)) ?? currentUser
     }
@@ -333,15 +364,18 @@ export async function PUT(request: NextRequest) {
         'user',
         user_id,
         JSON.stringify({ email: currentUser.email, phone: currentUser.phone, full_name: currentUser.full_name, active: currentUser.active }),
-        JSON.stringify({ email, phone, full_name, active }),
+        JSON.stringify({ email, phone, full_name, active, password_changed: passwordChanged }),
         request.headers.get('x-forwarded-for') || 'unknown',
       ]
     )
 
+    const responseUser = updatedUser ?? currentUser
+    const { password_hash: _passwordHash, ...safeUser } = responseUser
+
     return NextResponse.json({
       success: true,
       message: 'User updated successfully',
-      data: updatedUser ?? currentUser,
+      data: safeUser,
     })
   } catch (error) {
     console.error('Error updating user:', error)

@@ -58,7 +58,17 @@ row.
 
 ## What the import does
 
+The file is a **replacement**, not a merge. Before the rows are written, the
+import deletes every polling station that is currently on the platform, together
+with the agents, volunteers, submissions and results attached to those stations.
+The stations in the file are then inserted fresh. An import with no valid row
+deletes nothing, so a broken file cannot empty the platform by accident.
+
 ### Matching
+
+The rows are still matched against the existing records before anything is
+deleted. This lets a row that leaves a column empty keep the value the matching
+station already has.
 
 - A polling station is matched by its **IEBC code and stream**.
 - When the file carries no code, it is matched by its **name inside its ward**.
@@ -66,8 +76,9 @@ row.
 - A constituency is matched by its **name inside its county**.
 - A county is matched by its **name**.
 
-An existing record is updated in place and keeps its codes. Only the columns
-the file carries are written.
+Matching does not keep the old record: the station is still deleted and
+inserted anew. Only the columns the file carries are written for a new station;
+the columns it leaves out are taken from the station that matched.
 
 ### Creating a fresh hierarchy
 
@@ -81,15 +92,13 @@ import creates the missing levels from the county down:
 
 This means a completely empty database can be loaded with one polling-station
 file. Auto-created counties, constituencies and wards receive a generated code;
-the code of an existing record is never changed. Re-importing the same file is
-safe: the second run matches every level and updates the stations instead of
-creating duplicates.
+the code of an existing record is never changed.
 
 ### Validation and preview
 
 The **Preview** button runs the same planner as the import without writing
-anything. It reports how many rows would be created, updated or skipped, and
-the reason for every skipped row.
+anything. It reports how many rows would be created or skipped, how many
+existing stations would be deleted, and the reason for every skipped row.
 
 The import is refused with a 400 response when any of the eight required
 columns is missing. The response names the missing columns and repeats the

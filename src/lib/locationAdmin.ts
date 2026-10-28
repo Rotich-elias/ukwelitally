@@ -756,6 +756,8 @@ export async function deletePollingStation(
 export interface ImportSummary {
   created: number
   updated: number
+  /** The existing polling stations the import removed before writing the file. */
+  deleted?: number
   skipped: number
   errors: Array<{ row: number; message: string }>
 }
@@ -820,6 +822,8 @@ export interface ImportPreview {
   valid_rows: number
   create?: number
   update: number
+  /** The existing polling stations the import would remove. */
+  deleted?: number
   skip: number
   error_rows: number
   warning_rows: number
@@ -2072,50 +2076,6 @@ async function insertStationBatch(
   )
 }
 
-/** Update one batch of existing stations. */
-async function updateStationBatch(
-  client: PoolClient,
-  batch: StationWrite[]
-): Promise<number> {
-  const result = await client.query(
-    `UPDATE polling_stations AS ps
-        SET code = v.code,
-            name = v.name,
-            ward_id = v.ward_id,
-            constituency_id = v.constituency_id,
-            county_id = v.county_id,
-            latitude = v.latitude,
-            longitude = v.longitude,
-            registered_voters = v.registered_voters,
-            stream = v.stream,
-            registration_centre = v.registration_centre
-       FROM (
-         SELECT * FROM UNNEST(
-           $1::int[], $2::text[], $3::text[], $4::int[], $5::int[], $6::int[],
-           $7::numeric[], $8::numeric[], $9::int[], $10::text[], $11::text[]
-         ) AS t(id, code, name, ward_id, constituency_id, county_id,
-                 latitude, longitude, registered_voters, stream,
-                 registration_centre)
-       ) AS v
-      WHERE ps.id = v.id`,
-    [
-      batch.map((write) => write.existing_id),
-      batch.map((write) => write.code),
-      batch.map((write) => write.name),
-      batch.map((write) => write.ward_id),
-      batch.map((write) => write.constituency_id),
-      batch.map((write) => write.county_id),
-      batch.map((write) => write.latitude),
-      batch.map((write) => write.longitude),
-      batch.map((write) => write.registered_voters),
-      batch.map((write) => write.stream),
-      batch.map((write) => write.registration_centre),
-    ]
-  )
-
-  return result.rowCount ?? batch.length
-}
-
 /**
  * Refuse a bulk import while the database still has the old row-level trigger.
  *
@@ -2147,10 +2107,13 @@ async function assertBulkImportReady(): Promise<void> {
 /**
  * Import polling stations from a CSV.
  *
- * The file is planned first, exactly as the preview plans it, and the plan is
- * then written in batches. The whole write is one transaction: a file either
- * lands completely or not at all. The voter totals are rolled up once, after
- * the last batch, instead of once per station.
+ * The import replaces the polling stations: the existing stations, and the
+ * agents, volunteers and submissions attached to them, are deleted before the
+ * file is written. The file is planned first, exactly as the preview plans it,
+ * so a row that cannot be resolved is still skipped and reported, then the
+ * valid rows are written in batches. The whole write is one transaction: a file
+ * either lands completely or not at all. The voter totals are rolled up once,
+ * after the last batch, instead of once per station.
  */
 export async function importPollingStationsFromCsv(
   text: string,
@@ -2159,7 +2122,13 @@ export async function importPollingStationsFromCsv(
   await assertBulkImportReady()
   const cache = await loadLocationCache()
   const plan = planStationImport(text, cache)
-  const summary: ImportSummary = { created: 0, updated: 0, skipped: 0, errors: [] }
+  const summary: ImportSummary = {
+    created: 0,
+    updated: 0,
+    deleted: 0,
+    skipped: 0,
+    errors: [],
+  }
   const writes: StationWrite[] = []
 
   for (const row of plan.rows) {
@@ -2181,12 +2150,16 @@ export async function importPollingStationsFromCsv(
       })
       continue
     }
-    writes.push(write)
+
+    // The import replaces the table, so every valid row is inserted afresh.
+    // Matching an existing station still matters: it supplies the values the
+    // file leaves out and the row is validated against it first.
+    writes.push({ ...write, action: 'create', existing_id: undefined })
   }
 
   if (writes.length > 0) {
     let created = 0
-    let updated = 0
+    let deleted = 0
 
     await transaction(async (client) => {
       // The row-level roll-up is the expensive part of a large import. The
@@ -2196,12 +2169,22 @@ export async function importPollingStationsFromCsv(
         `SELECT set_config('ukwelitally.bulk_import', 'on', true)`
       )
 
+      // Remove the old geography before the file is written. Agents and
+      // volunteer registrations reference a station without ON DELETE CASCADE,
+      // so they are cleared first; the stations then cascade to submissions,
+      // results, discrepancies and observer assignments.
+      await client.query(
+        `DELETE FROM agents WHERE polling_station_id IS NOT NULL`
+      )
+      await client.query(
+        `DELETE FROM volunteer_registrations WHERE polling_station_id IS NOT NULL`
+      )
+      const removed = await client.query(`DELETE FROM polling_stations`)
+      deleted = removed.rowCount ?? 0
+
       await ensureHierarchy(client, cache, writes)
 
-      const creates = writes.filter((write) => write.action === 'create')
-      const updates = writes.filter((write) => write.action === 'update')
-
-      for (const batch of chunk(creates, BULK_BATCH_SIZE)) {
+      for (const batch of chunk(writes, BULK_BATCH_SIZE)) {
         const inserted = await insertStationBatch(client, batch)
         for (const write of batch) {
           if (inserted.has(stationCodeKey(write.code, write.stream))) {
@@ -2212,21 +2195,18 @@ export async function importPollingStationsFromCsv(
               row: write.row,
               message: `The station "${write.name}"${
                 write.stream ? ` and stream ${write.stream}` : ''
-              } already exists`,
+              } could not be written`,
             })
           }
         }
-      }
-
-      for (const batch of chunk(updates, BULK_BATCH_SIZE)) {
-        updated += await updateStationBatch(client, batch)
       }
 
       await client.query('SELECT * FROM sync_registered_voters_from_stations()')
     })
 
     summary.created = created
-    summary.updated = updated
+    summary.updated = 0
+    summary.deleted = deleted
 
     await recordAudit({
       userId: actor.userId,
@@ -2234,7 +2214,8 @@ export async function importPollingStationsFromCsv(
       entityType: 'polling_station',
       newValues: {
         created,
-        updated,
+        updated: 0,
+        deleted,
         skipped: summary.skipped,
         total_rows: plan.rows.length,
       },
@@ -2252,7 +2233,22 @@ export async function importPollingStationsFromCsv(
 export async function previewPollingStationsImport(text: string): Promise<ImportPreview> {
   const cache = await loadLocationCache()
   const plan = planStationImport(text, cache)
-  return summarisePreview('polling_stations', plan.rows)
+
+  // The import replaces every station, so a row that matches an existing
+  // station is still a create when the file is written.
+  const rows = plan.rows.map((row) =>
+    row.action === 'update'
+      ? { ...row, action: 'create' as const, target_id: null }
+      : row
+  )
+
+  // A file with no valid row writes nothing, so it deletes nothing either.
+  const replaces = rows.some((row) => row.action !== 'skip')
+
+  return {
+    ...summarisePreview('polling_stations', rows),
+    deleted: replaces ? cache.stations.length : 0,
+  }
 }
 
 /**

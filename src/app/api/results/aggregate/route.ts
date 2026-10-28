@@ -35,9 +35,14 @@ export async function GET(req: NextRequest) {
           position = 'president'
         }
 
-        // If user is a candidate, get their location restrictions
+        // If user is a candidate, get their location restrictions. A
+        // candidate may only ever see their own race, so the position is
+        // taken from the stored profile instead of the query string.
         if (userRole === 'candidate') {
           candidateRestrictions = await getCandidateRestrictions(userId)
+          if (candidateRestrictions) {
+            position = candidateRestrictions.position
+          }
         }
       } catch (error) {
         // Invalid token, treat as public access
@@ -246,8 +251,11 @@ export async function GET(req: NextRequest) {
     const totalStationsInArea = parseInt(totalStatsResult[0]?.total_stations) || 0
     const totalRegisteredVotersInArea = parseInt(totalStatsResult[0]?.total_registered_voters) || 0
 
-    // Get count of stations with ANY submissions (not just verified).
-    // This matches the logic from the polling-stations/reporting-status API.
+    // Get count of stations with submissions for this position (not just
+    // verified ones). Submissions belong to a candidate, so counting every
+    // submission at a station would let presidential agents inflate the
+    // reporting percentage of an MCA race. Only submissions belonging to the
+    // requested position are counted.
     const submittedCountSql = `
       SELECT COUNT(*) as total
       FROM (
@@ -257,13 +265,20 @@ export async function GET(req: NextRequest) {
         JOIN constituencies const ON w.constituency_id = const.id
         JOIN counties co ON const.county_id = co.id
         LEFT JOIN submissions s ON ps.id = s.polling_station_id
-        WHERE 1=1 ${buildLocationClause(1)}
+          AND s.superseded_by_submission_id IS NULL
+          AND EXISTS (
+            SELECT 1
+            FROM candidates c
+            WHERE c.id = s.candidate_id
+              AND c.position = $1
+          )
+        WHERE 1=1 ${buildLocationClause(2)}
         GROUP BY ps.id
         HAVING COUNT(s.id) > 0
       ) as stations_with_submissions
     `
 
-    const submittedStationsResult = await queryMany(submittedCountSql, buildLocationParams())
+    const submittedStationsResult = await queryMany(submittedCountSql, buildScopedParams())
     const stationsWithSubmissions = parseInt(submittedStationsResult[0]?.total) || 0
 
     // ------------------------------------------------------------------
@@ -374,7 +389,7 @@ export async function GET(req: NextRequest) {
         rejected_votes: totalRejectedVotes,
         turnout_percentage: turnoutPercentage, // Average from reported stations
         total_stations: totalStationsInArea, // All stations in area
-        stations_reported: stationsWithSubmissions, // Stations with ANY submission (matches polling stations view)
+        stations_reported: stationsWithSubmissions, // Stations with a submission for this position
         reporting_percentage: reportingPercentage,
         // Where the counted results came from.
         agent_primary_results: parseInt(sourceRow.agent_primary) || 0,

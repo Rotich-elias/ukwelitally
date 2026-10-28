@@ -160,27 +160,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Enforce limits: max 1 primary agent and max 2 backup agents per polling station (across all teams)
+    // Enforce limits within this candidate's own team: max 1 primary agent and
+    // max 2 backup agents per polling station. Another team at the same
+    // station has its own allocation, so it can never use up this team's
+    // slots.
     if (polling_station_id) {
       if (is_primary !== false) {
         const existingPrimary = await queryOne(
-          `SELECT COUNT(*) as cnt FROM agents WHERE polling_station_id = $1 AND is_primary = TRUE`,
-          [polling_station_id]
+          `SELECT COUNT(*) as cnt FROM agents
+            WHERE candidate_id = $1 AND polling_station_id = $2 AND is_primary = TRUE`,
+          [candidate.id, polling_station_id]
         )
         if (parseInt(existingPrimary?.cnt) >= 1) {
           return NextResponse.json(
-            { error: 'Only 1 primary agent allowed per polling station. Add the agent as a backup agent instead.' },
+            { error: 'Only 1 primary agent allowed per polling station for your team. Add the agent as a backup agent instead.' },
             { status: 409 }
           )
         }
       } else {
         const existingBackups = await queryOne(
-          `SELECT COUNT(*) as cnt FROM agents WHERE polling_station_id = $1 AND is_primary = FALSE`,
-          [polling_station_id]
+          `SELECT COUNT(*) as cnt FROM agents
+            WHERE candidate_id = $1 AND polling_station_id = $2 AND is_primary = FALSE`,
+          [candidate.id, polling_station_id]
         )
         if (parseInt(existingBackups?.cnt) >= 2) {
           return NextResponse.json(
-            { error: 'Maximum 2 backup agents allowed per polling station.' },
+            { error: 'Maximum 2 backup agents allowed per polling station for your team.' },
             { status: 409 }
           )
         }
@@ -207,7 +212,7 @@ export async function POST(request: NextRequest) {
       `INSERT INTO agents (user_id, candidate_id, polling_station_id, is_primary)
        VALUES ($1, $2, $3, $4)
        RETURNING id`,
-      [newUser.id, candidate.id, polling_station_id || null, is_primary || true]
+      [newUser.id, candidate.id, polling_station_id || null, is_primary !== false]
     )
 
     // Audit log

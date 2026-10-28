@@ -574,8 +574,23 @@ function importHandler(db: FakeDb): QueryHandler {
         return db.stations.map((station) => ({ ...station }))
       }
 
-      if (sql.startsWith("SELECT set_config('ukwelitally.bulk_import'")) {
+      if (sql.startsWith('SELECT set_config(\'ukwelitally.bulk_import\'')) {
         return [{ set_config: 'on' }]
+      }
+
+      // The replacement import clears the records that pin a station first.
+      if (sql.startsWith('DELETE FROM agents')) {
+        return []
+      }
+
+      if (sql.startsWith('DELETE FROM volunteer_registrations')) {
+        return []
+      }
+
+      if (sql.startsWith('DELETE FROM polling_stations')) {
+        const removed = db.stations.length
+        db.stations = []
+        return { rows: [], rowCount: removed }
       }
 
       // The hierarchy is inserted top down with UNNEST.
@@ -813,7 +828,7 @@ describe('the polling station CSV import', () => {
     expect(body.required_columns).toContain('IEBC Code')
   })
 
-  it('previews an update for an existing station', async () => {
+  it('previews the replacement of an existing station', async () => {
     const response = await importPost(
       importRequest('polling_stations', true, STATIONS_CSV) as any
     )
@@ -822,11 +837,13 @@ describe('the polling station CSV import', () => {
     expect(response.status).toBe(200)
     expect(body.dry_run).toBe(true)
     expect(body.total_rows).toBe(1)
-    expect(body.update).toBe(1)
-    expect(body.create).toBe(0)
+    expect(body.update).toBe(0)
+    expect(body.create).toBe(1)
     expect(body.skip).toBe(0)
-    expect(body.rows[0].action).toBe('update')
+    expect(body.deleted).toBe(1)
+    expect(body.rows[0].action).toBe('create')
     expect(body.rows[0].code).toBe('PS000001')
+    expect(body.rows[0].target_id).toBe(null)
   })
 
   it('reads the official tab-separated eight-column file', async () => {
@@ -836,7 +853,8 @@ describe('the polling station CSV import', () => {
     const body = await response.json()
 
     expect(response.status).toBe(200)
-    expect(body.update).toBe(1)
+    expect(body.create).toBe(1)
+    expect(body.update).toBe(0)
     expect(body.skip).toBe(0)
   })
 
@@ -852,8 +870,8 @@ describe('the polling station CSV import', () => {
     )
     const body = await response.json()
 
-    expect(body.update).toBe(1)
-    expect(body.create).toBe(1)
+    expect(body.create).toBe(2)
+    expect(body.update).toBe(0)
     expect(body.skip).toBe(0)
     expect(body.error_rows).toBe(0)
   })
@@ -891,8 +909,8 @@ describe('the polling station CSV import', () => {
     )
     const body = await response.json()
 
-    expect(body.update).toBe(1)
-    expect(body.create).toBe(1)
+    expect(body.create).toBe(2)
+    expect(body.update).toBe(0)
     expect(writes()).toEqual([])
     expect(db.counties).toHaveLength(1)
     expect(db.wards).toHaveLength(1)
@@ -926,8 +944,10 @@ describe('the polling station CSV import', () => {
     )
     const body = await response.json()
 
-    expect(body.update).toBe(1)
-    expect(body.rows[0].target_id).toBe(4447)
+    expect(body.create).toBe(1)
+    expect(body.update).toBe(0)
+    expect(body.rows[0].action).toBe('create')
+    expect(body.rows[0].code).toBe('PS000001')
   })
 
   it('reports a station row without a name or a code', async () => {
@@ -971,6 +991,7 @@ describe('the polling station CSV import', () => {
     expect(response.status).toBe(200)
     expect(body.created).toBe(1)
     expect(body.updated).toBe(0)
+    expect(body.deleted).toBe(1)
     expect(body.skipped).toBe(0)
 
     const county = db.counties.find((entry) => entry.name === 'Mombasa')
@@ -1020,8 +1041,9 @@ describe('the polling station CSV import', () => {
     )
     const body = await response.json()
 
-    expect(body.created).toBe(0)
-    expect(body.updated).toBe(1)
+    expect(body.created).toBe(1)
+    expect(body.updated).toBe(0)
+    expect(body.deleted).toBe(1)
     expect(body.skipped).toBe(0)
     expect(db.counties).toHaveLength(counties)
     expect(db.constituencies).toHaveLength(constituencies)
@@ -1043,7 +1065,8 @@ describe('the polling station CSV import', () => {
     )
     const body = await response.json()
 
-    expect(body.updated).toBe(1)
+    expect(body.created).toBe(1)
+    expect(body.deleted).toBe(1)
 
     const station = db.stations.find((entry) => entry.code === 'PS000001')
     expect(station?.name).toBe('Kayole Hall')
@@ -1065,6 +1088,7 @@ describe('the polling station CSV import', () => {
     const body = await response.json()
 
     expect(body.created).toBe(1)
+    expect(body.deleted).toBe(1)
     expect(body.skipped).toBe(2)
     expect(body.errors).toHaveLength(2)
     expect(body.errors[0].row).toBe(3)
@@ -1084,7 +1108,8 @@ describe('the polling station CSV import', () => {
     )
     const body = await response.json()
 
-    expect(body.update).toBe(1)
+    expect(body.create).toBe(1)
+    expect(body.update).toBe(0)
     expect(body.warning_rows).toBe(1)
     expect(body.error_rows).toBe(0)
 
@@ -1107,5 +1132,56 @@ describe('the polling station CSV import', () => {
     expect(body.create).toBe(1)
     expect(body.skip).toBe(0)
     expect(body.error_rows).toBe(0)
+  })
+
+  it('deletes the old stations and their dependents before writing the file', async () => {
+    await importPost(importRequest('polling_stations', false, STATIONS_CSV) as any)
+
+    const order = executed.map((entry) => entry.text.replace(/\s+/g, ' ').trim())
+    const agentsAt = order.findIndex((sql) => sql.startsWith('DELETE FROM agents'))
+    const volunteersAt = order.findIndex((sql) =>
+      sql.startsWith('DELETE FROM volunteer_registrations')
+    )
+    const stationsAt = order.findIndex((sql) =>
+      sql.startsWith('DELETE FROM polling_stations')
+    )
+    const insertAt = order.findIndex((sql) =>
+      sql.startsWith('INSERT INTO polling_stations')
+    )
+
+    expect(agentsAt).toBeGreaterThanOrEqual(0)
+    expect(volunteersAt).toBeGreaterThan(agentsAt)
+    expect(stationsAt).toBeGreaterThan(volunteersAt)
+    expect(insertAt).toBeGreaterThan(stationsAt)
+
+    // The station of the file replaces the one that was there before.
+    expect(db.stations).toHaveLength(1)
+    expect(db.stations[0].code).toBe('PS000001')
+    expect(db.stations[0].id).not.toBe(4447)
+  })
+
+  it('deletes nothing when the file has no valid row', async () => {
+    const csv = [HEADER, 'Nairobi\tTest Constituency\tTest Ward\t\t\t1\t\t100'].join(
+      '\n'
+    )
+
+    const preview = await (
+      await importPost(importRequest('polling_stations', true, csv) as any)
+    ).json()
+    expect(preview.deleted).toBe(0)
+
+    const response = await importPost(
+      importRequest('polling_stations', false, csv) as any
+    )
+    const body = await response.json()
+
+    expect(body.created).toBe(0)
+    expect(body.deleted).toBe(0)
+    expect(body.skipped).toBe(1)
+    expect(db.stations).toHaveLength(1)
+    expect(db.stations[0].id).toBe(4447)
+    expect(executed.some((entry) => /DELETE FROM polling_stations/i.test(entry.text))).toBe(
+      false
+    )
   })
 })

@@ -53,6 +53,7 @@ export default function AdminDashboard() {
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserDetails | null>(null)
+  const [editPassword, setEditPassword] = useState('')
   const [paymentFormData, setPaymentFormData] = useState({
     expected_payment_amount: '',
     payment_amount: '',
@@ -403,11 +404,29 @@ export default function AdminDashboard() {
       if (response.ok) {
         const data = await response.json()
         setSelectedUser(data.data)
+        setEditPassword('')
         setShowEditModal(true)
       }
     } catch (error) {
       console.error('Failed to fetch user details:', error)
     }
+  }
+
+  const generateAgentPassword = () => {
+    const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+    const lower = 'abcdefghijkmnopqrstuvwxyz'
+    const digits = '23456789'
+    const symbols = '!@#$%&*'
+    const pick = (chars: string) => chars[Math.floor(Math.random() * chars.length)]
+    const all = upper + lower + digits + symbols
+    // Guarantee at least one character from each class, then fill and shuffle.
+    const chars = [pick(upper), pick(lower), pick(digits), pick(symbols)]
+    while (chars.length < 12) chars.push(pick(all))
+    for (let i = chars.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[chars[i], chars[j]] = [chars[j], chars[i]]
+    }
+    setEditPassword(chars.join(''))
   }
 
   const handleSaveEdit = async () => {
@@ -432,6 +451,11 @@ export default function AdminDashboard() {
             selectedUser.role === 'candidate'
               ? selectedUser.access_status || 'active'
               : undefined,
+          // Leave undefined when blank so the existing password is untouched.
+          password:
+            selectedUser.role === 'agent' && editPassword.trim()
+              ? editPassword.trim()
+              : undefined,
         }),
       })
 
@@ -443,6 +467,7 @@ export default function AdminDashboard() {
 
       setSuccess('User updated successfully')
       setShowEditModal(false)
+      setEditPassword('')
       fetchUsers()
     } catch (err: any) {
       setError(err.message || 'Failed to update user')
@@ -1430,6 +1455,11 @@ export default function AdminDashboard() {
                   <li>Fill in your candidate data (one candidate per row)</li>
                   <li>Upload the completed CSV file</li>
                 </ol>
+                <p className="mt-3 text-sm text-yellow-400">
+                  Importing replaces the current ballot: all existing ballot candidates (and
+                  their agents, submissions and results) are deleted before the new rows are
+                  added. Candidate accounts and observer placeholders are kept.
+                </p>
                 <a
                   href="/templates/candidates-import-template.csv"
                   download
@@ -1486,6 +1516,9 @@ export default function AdminDashboard() {
                     <p className="font-semibold">✓ Import Complete!</p>
                     <div className="mt-2 space-y-1 text-sm">
                       <p>• Successfully imported: {importResult.imported} candidates</p>
+                      {importResult.deleted > 0 && (
+                        <p>• Replaced previous ballot entries: {importResult.deleted} candidates</p>
+                      )}
                       {importResult.skipped > 0 && (
                         <p>• Skipped: {importResult.skipped} candidates</p>
                       )}
@@ -1969,6 +2002,36 @@ export default function AdminDashboard() {
                     <option value="inactive">Inactive</option>
                   </select>
                 </div>
+
+                {selectedUser.role === 'agent' && (
+                  <div>
+                    <label className="block text-sm font-medium text-dark-200 mb-2">
+                      New password
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={editPassword}
+                        onChange={(e) => setEditPassword(e.target.value)}
+                        placeholder="Leave blank to keep the current password"
+                        autoComplete="new-password"
+                        className="flex-1 px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={generateAgentPassword}
+                        className="px-4 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors whitespace-nowrap"
+                      >
+                        Generate
+                      </button>
+                    </div>
+                    <p className="text-xs text-dark-400 mt-2">
+                      Set a new password for this agent. It must be at least 8 characters and
+                      include an uppercase letter, a lowercase letter and a number. The agent will
+                      use it the next time they sign in.
+                    </p>
+                  </div>
+                )}
 
                 {selectedUser.role === 'candidate' && (
                   <div>

@@ -181,7 +181,18 @@ async function handlePost(req: NextRequest) {
     const result = await transaction(async (client) => {
       let imported = 0
       let skipped = 0
-      const skippedList = []
+      const skippedList: string[] = []
+
+      // A CSV import replaces the ballot. Remove the previous ballot
+      // candidates first so re-importing a corrected file does not leave the
+      // old entries behind. System candidates (the teams that log in) and
+      // observer placeholders are not part of the ballot import and are kept.
+      // Related rows (agents, submissions, results) follow the cascade.
+      const deletedResult = await client.query(
+        `DELETE FROM candidates
+         WHERE is_system_user = false AND is_placeholder = false`
+      )
+      const deleted = deletedResult.rowCount ?? 0
 
       // Get the starting candidate number for this batch
       const year = new Date().getFullYear()
@@ -275,7 +286,7 @@ async function handlePost(req: NextRequest) {
         imported++
       }
 
-      return { imported, skipped, skippedList }
+      return { imported, skipped, skippedList, deleted }
     })
 
     // Audit log
@@ -287,7 +298,7 @@ async function handlePost(req: NextRequest) {
         'candidates_imported',
         'candidate',
         null,
-        JSON.stringify({ imported: result.imported, skipped: result.skipped }),
+        JSON.stringify({ imported: result.imported, skipped: result.skipped, deleted: result.deleted }),
       ]
     )
 
@@ -295,6 +306,7 @@ async function handlePost(req: NextRequest) {
       message: 'Import completed',
       imported: result.imported,
       skipped: result.skipped,
+      deleted: result.deleted,
       skippedList: result.skippedList,
       errors: errors.length > 0 ? errors : null,
     })

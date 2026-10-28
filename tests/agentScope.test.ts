@@ -390,8 +390,12 @@ describe('the agent assignment route', () => {
         handler: () => [],
       },
       {
-        match: /SELECT id FROM agents\s+WHERE candidate_id = \$1 AND polling_station_id = \$2 AND is_primary = TRUE/,
-        handler: () => [],
+        match: /SELECT COUNT\(\*\) as cnt FROM agents\s+WHERE candidate_id = \$1 AND polling_station_id = \$2 AND is_primary = TRUE/,
+        handler: () => [{ cnt: 0 }],
+      },
+      {
+        match: /SELECT COUNT\(\*\) as cnt FROM agents\s+WHERE candidate_id = \$1 AND polling_station_id = \$2 AND is_primary = FALSE/,
+        handler: () => [{ cnt: 0 }],
       },
       {
         match: /INSERT INTO users/,
@@ -429,6 +433,13 @@ describe('the agent assignment route', () => {
 
     expect(response.status).toBe(201)
     expect(body.success).toBe(true)
+
+    // The limit is counted inside this candidate's team only.
+    const limitQuery = executed.find((entry) =>
+      /SELECT COUNT\(\*\) as cnt FROM agents/.test(entry.text)
+    )
+    expect(limitQuery?.text).toContain('candidate_id = $1')
+    expect(limitQuery?.params).toEqual([CANDIDATES.mca.id, 4447])
   })
 
   it('refuses a station outside the scope', async () => {
@@ -474,10 +485,42 @@ describe('the agent assignment route', () => {
     expect(body.error).toMatch(/outside your electoral area/)
   })
 
+  it('does not let another team use up this team primary slot', async () => {
+    baseHandlers([
+      {
+        match: /SELECT COUNT\(\*\) as cnt FROM agents\s+WHERE candidate_id = \$1 AND polling_station_id = \$2 AND is_primary = TRUE/,
+        // Another candidate already has a primary agent at this station.
+        handler: (_text: string, params?: any[]) => [{ cnt: params?.[0] === CANDIDATES.mca.id ? 0 : 1 }],
+      },
+      {
+        match: /SELECT id FROM users WHERE email = \$1 OR phone = \$2 OR id_number = \$3/,
+        handler: () => [],
+      },
+      {
+        match: /INSERT INTO users/,
+        handler: () => [{ id: 901, email: 'agent@test.local' }],
+      },
+      {
+        match: /INSERT INTO agents/,
+        handler: () => [{ id: 78 }],
+      },
+    ])
+
+    const response = await agentsPost(
+      request('/api/candidates/agents', CANDIDATE_USER, {
+        method: 'POST',
+        body: JSON.stringify(payload(4447)),
+        headers: { 'content-type': 'application/json' },
+      }) as any
+    )
+
+    expect(response.status).toBe(201)
+  })
+
   it('refuses a second primary agent at the same station', async () => {
     baseHandlers([
       {
-        match: /SELECT COUNT\(\*\) as cnt FROM agents WHERE polling_station_id = \$1 AND is_primary = TRUE/,
+        match: /SELECT COUNT\(\*\) as cnt FROM agents\s+WHERE candidate_id = \$1 AND polling_station_id = \$2 AND is_primary = TRUE/,
         handler: () => [{ cnt: 1 }],
       },
       {
@@ -502,7 +545,7 @@ describe('the agent assignment route', () => {
   it('refuses a third backup agent at the same station', async () => {
     baseHandlers([
       {
-        match: /SELECT COUNT\(\*\) as cnt FROM agents WHERE polling_station_id = \$1 AND is_primary = FALSE/,
+        match: /SELECT COUNT\(\*\) as cnt FROM agents\s+WHERE candidate_id = \$1 AND polling_station_id = \$2 AND is_primary = FALSE/,
         handler: () => [{ cnt: 2 }],
       },
       {

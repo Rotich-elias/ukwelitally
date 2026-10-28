@@ -139,6 +139,7 @@ export default function ResultsPage() {
     setStationsLoading(true)
     try {
       const params = new URLSearchParams()
+      params.append('position', selectedPosition)
       if (countyId) params.append('county_id', countyId.toString())
       if (constituencyId) params.append('constituency_id', constituencyId.toString())
       if (wardId) params.append('ward_id', wardId.toString())
@@ -167,7 +168,9 @@ export default function ResultsPage() {
     setStationDetailsLoading(true)
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`/api/polling-stations/${stationId}/detailed-results`, {
+      const params = new URLSearchParams()
+      params.append('position', selectedPosition)
+      const response = await fetch(`/api/polling-stations/${stationId}/detailed-results?${params.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -419,33 +422,31 @@ export default function ResultsPage() {
             </button>
           </div>
 
-          {/* Position Selector - Only for Aggregate View */}
-          {viewMode === 'aggregate' && (
-            <div className="glass-effect rounded-xl p-2 inline-flex items-center gap-2">
-              <span className="text-sm text-dark-400 px-2">Position:</span>
-              <select
-                value={selectedPosition}
-                onChange={(e) => setSelectedPosition(e.target.value)}
-                disabled={!!candidateProfile || userRole === 'observer'}
-                className={`px-4 py-2 bg-dark-800 text-white rounded-lg border border-dark-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-medium uppercase text-sm ${
-                  candidateProfile || userRole === 'observer' ? 'opacity-60 cursor-not-allowed' : ''
-                }`}
-              >
-                <option value="president">President</option>
-                <option value="governor">Governor</option>
-                <option value="senator">Senator</option>
-                <option value="women_rep">Women Representative</option>
-                <option value="mp">Member of Parliament</option>
-                <option value="mca">Member of County Assembly</option>
-              </select>
-              {candidateProfile && (
-                <span className="text-xs text-blue-400 px-2">Locked to your position</span>
-              )}
-              {userRole === 'observer' && (
-                <span className="text-xs text-blue-400 px-2">Volunteers can only view presidential results</span>
-              )}
-            </div>
-          )}
+          {/* Position Selector - Applies to both views */}
+          <div className="glass-effect rounded-xl p-2 inline-flex items-center gap-2">
+            <span className="text-sm text-dark-400 px-2">Position:</span>
+            <select
+              value={selectedPosition}
+              onChange={(e) => setSelectedPosition(e.target.value)}
+              disabled={!!candidateProfile || userRole === 'observer'}
+              className={`px-4 py-2 bg-dark-800 text-white rounded-lg border border-dark-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-medium uppercase text-sm ${
+                candidateProfile || userRole === 'observer' ? 'opacity-60 cursor-not-allowed' : ''
+              }`}
+            >
+              <option value="president">President</option>
+              <option value="governor">Governor</option>
+              <option value="senator">Senator</option>
+              <option value="women_rep">Women Representative</option>
+              <option value="mp">Member of Parliament</option>
+              <option value="mca">Member of County Assembly</option>
+            </select>
+            {candidateProfile && (
+              <span className="text-xs text-blue-400 px-2">Locked to your position</span>
+            )}
+            {userRole === 'observer' && (
+              <span className="text-xs text-blue-400 px-2">Volunteers can only view presidential results</span>
+            )}
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-8">

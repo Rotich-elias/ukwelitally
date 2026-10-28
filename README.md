@@ -300,12 +300,15 @@ carry the eight IEBC columns:
 | `Registered Voters` | Registered voters for the stream |
 
 A station is matched by its code and stream, and by its name inside its ward
-as a fallback. A station, ward, constituency or county the platform does not
-have is created: the import builds the hierarchy from the county down before
-it writes the station. A level that already exists is matched by name and
-keeps its code, so running an import again updates the existing rows instead
-of duplicating them. The names are compared without their case and without
-their extra spaces, so the official files match as they are.
+as a fallback, so the columns a row leaves out can be taken from the record it
+matches. The file then replaces the platform's polling stations: every
+existing station, together with the agents, volunteers, submissions and results
+attached to it, is deleted before the rows of the file are written. A missing
+ward, constituency or county is created from the county down before the station
+is written. A level that already exists is matched by name and keeps its code.
+The names are compared without their case and without their extra spaces, so
+the official files match as they are. An import with no valid row deletes
+nothing.
 
 **The preview** (the "Preview" button) reads the file with the same planner
 the import writes with, and writes nothing:
@@ -314,7 +317,7 @@ the import writes with, and writes nothing:
 |---|---|
 | Rows read | The rows of the file, the header apart |
 | To create | The rows that would be added |
-| To update | The rows that would be changed |
+| To delete | The existing stations the import would remove |
 | To skip | The rows that would not be written |
 | With errors | The rows that carry at least one error |
 
@@ -410,9 +413,16 @@ npm run db:migrate:status   # show applied/pending without applying
 
 ### Results
 - `POST /api/results` - Record a result for a submission
-- `GET /api/results/aggregate` - Aggregated results for an area
-- `GET /api/polling-stations/reporting-status` - Per-station reporting status
-- `GET /api/polling-stations/:id/detailed-results` - All submissions for a station
+- `GET /api/results/aggregate?position=<race>` - Aggregated results for an area
+- `GET /api/polling-stations/reporting-status?position=<race>` - Per-station reporting status for one race
+- `GET /api/polling-stations/:id/detailed-results?position=<race>` - Submissions for a station and race
+
+A submission belongs to a candidate, and therefore to exactly one race. The
+reporting counters above only count submissions whose candidate has the
+requested position, so a presidential submission at a polling station does not
+mark that station as reported for the MCA race in the same ward. A candidate
+account is always forced to its own position and electoral area; the `position`
+query parameter cannot be used to read another race.
 
 ### Administration
 - `GET/POST /api/admin/users` - List and create users

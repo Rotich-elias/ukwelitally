@@ -36,15 +36,19 @@ const REQUIRED_HEADER =
  *   Registration Centre, Registered Voters
  *
  * A station is matched by its IEBC code and its stream, then by its name
- * inside its ward. A station the platform does not have is created, and so is
- * a missing ward, constituency or county: the import creates the hierarchy
- * from the county down before it writes the station. A level that already
- * exists is matched by name and keeps its code.
+ * inside its ward, so the values a row leaves out can be taken from the record
+ * that already exists. The file is then a replacement: every existing polling
+ * station, together with the agents, volunteers and submissions attached to
+ * it, is deleted before the rows of the file are written. A station the
+ * platform does not have is created, and so is a missing ward, constituency or
+ * county: the import creates the hierarchy from the county down before it
+ * writes the station. A level that already exists is matched by name and keeps
+ * its code.
  *
  * The dry run reads the file with the same planner the import writes with, so
- * the preview reports the rows that would be created or updated and the rows
- * that would be skipped, with the reason of each one. It only reads: nothing
- * is written.
+ * the preview reports the rows that would be created and the rows that would
+ * be skipped, with the reason of each one, and how many existing stations the
+ * import would delete. It only reads: nothing is written.
  */
 async function handlePost(req: NextRequest) {
   try {
@@ -115,21 +119,25 @@ async function handlePost(req: NextRequest) {
       return NextResponse.json({
         success: true,
         dry_run: true,
-        message: `${preview.total_rows} row(s) read: ${preview.create ?? 0} to create, ${preview.update} to update, ${preview.skip} to skip${
+        message: `${preview.total_rows} row(s) read: ${preview.create ?? 0} to create, ${
+          preview.skip
+        } to skip${
           preview.error_rows ? ` (${preview.error_rows} with errors)` : ''
-        }. Nothing was written.`,
+        }; ${preview.deleted ?? 0} existing station(s) will be deleted. Nothing was written.`,
         ...preview,
       })
     }
 
-    // The import writes the whole file in one transaction and rolls the
-    // parent voter totals up once, just before it commits.
+    // The import replaces the polling stations in one transaction and rolls
+    // the parent voter totals up once, just before it commits.
     const summary = await importPollingStationsFromCsv(text, actor)
 
     return NextResponse.json({
       success: true,
-      message: `Import finished: ${summary.created} created, ${summary.updated} updated, ${summary.skipped} skipped`,
-      total_rows: summary.created + summary.updated + summary.skipped,
+      message: `Import finished: ${summary.deleted ?? 0} station(s) deleted, ${
+        summary.created
+      } created, ${summary.skipped} skipped`,
+      total_rows: summary.created + summary.skipped,
       ...summary,
     })
   } catch (error) {

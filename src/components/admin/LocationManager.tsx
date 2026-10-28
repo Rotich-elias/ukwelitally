@@ -326,12 +326,22 @@ export default function LocationManager() {
             <p className="text-sm text-dark-300">
               Load the official IEBC polling station file. It must carry the
               eight columns County, Constituency, Ward, IEBC Code, Polling
-              Station, Stream, Registration Centre and Registered Voters. A
-              station the platform does not have is created, and so is a
-              missing ward, constituency or county: the import creates the
-              hierarchy from the county down. Existing records are matched by
-              code and stream, or by name, and are updated without changing
-              their codes.
+              Station, Stream, Registration Centre and Registered Voters. The
+              file replaces the polling stations on the platform: every existing
+              station, and the agents, volunteers and submissions attached to
+              it, is deleted first, then the rows of the file are written. A
+              missing ward, constituency or county is created from the county
+              down. A station is matched by code and stream, or by name, only to
+              fill in the columns the row leaves out.
+            </p>
+          </div>
+
+          <div className="bg-red-500/10 border border-red-500/40 rounded-lg p-4">
+            <p className="text-sm text-red-300">
+              This is a replacement import. Every polling station that is not in
+              the new file is removed, together with its agents, volunteers,
+              submissions and results. Preview the file first to see how many
+              stations would be deleted.
             </p>
           </div>
 
@@ -451,10 +461,10 @@ export default function LocationManager() {
                   {(
                     [
                       ['Rows read', importResult.total_rows],
-                      ['To create', importResult.create ?? 0],
-                      ['To update', importResult.update],
-                      ['To skip', importResult.skip],
-                      ['With errors', importResult.error_rows],
+                      ['To create', importResult.create ?? importResult.created ?? 0],
+                      ['To delete', importResult.deleted ?? 0],
+                      ['To skip', importResult.skip ?? importResult.skipped ?? 0],
+                      ['With errors', importResult.error_rows ?? importResult.errors?.length ?? 0],
                     ] as Array<[string, number]>
                   ).map(([label, value]) => (
                     <div key={label} className="bg-dark-800/50 rounded px-3 py-2">
@@ -464,10 +474,10 @@ export default function LocationManager() {
                   ))}
                 </div>
               )}
-              {importResult.updated !== undefined && (
+              {importResult.created !== undefined && (
                 <p className="text-dark-300">
-                  Created: {importResult.created ?? 0} · Updated:{' '}
-                  {importResult.updated} · Skipped: {importResult.skipped}
+                  Deleted: {importResult.deleted ?? 0} · Created:{' '}
+                  {importResult.created ?? 0} · Skipped: {importResult.skipped}
                 </p>
               )}
               {importResult.removed !== undefined && (

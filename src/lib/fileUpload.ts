@@ -27,7 +27,9 @@ function assertDurableBackend(): void {
   )
 }
 
-// Ensure upload directory exists
+// Ensure upload directory exists. Local storage also creates the directory on
+// write, so this is only a convenience for callers that read that directory
+// directly.
 export async function ensureUploadDir() {
   const dir = getUploadDir()
   if (!existsSync(dir)) {
@@ -109,7 +111,12 @@ export async function saveUploadedFile(
   height: number | null
   exifData: Record<string, any> | null
 }> {
-  await ensureUploadDir()
+  // See saveCandidatePhoto: resolve the backend before touching local disk.
+  const storage = getStorage()
+  assertDurableBackend()
+  if (storage.name === 'local') {
+    await ensureUploadDir()
+  }
 
   // Validate file type
   if (!isValidImageType(file.type)) {
@@ -141,8 +148,6 @@ export async function saveUploadedFile(
   // disk would lose the evidence.
   const filename = generateFilename(file.name)
   const storageKey = `${subdir}/${filename}`
-  const storage = getStorage()
-  assertDurableBackend()
   await storage.put(storageKey, compressedBuffer, 'image/jpeg')
 
   return {
@@ -179,7 +184,15 @@ export async function parseFormData(request: Request): Promise<{
 
 // Save candidate profile photo (smaller size, optimized for profiles)
 export async function saveCandidatePhoto(file: File): Promise<string> {
-  await ensureUploadDir()
+  // Resolve the backend before touching the filesystem. On a serverless
+  // platform the bundle directory is read-only, so creating `.uploads` there
+  // fails with ENOENT. If no durable backend is configured the caller gets the
+  // clear "set BLOB_READ_WRITE_TOKEN" error instead.
+  const storage = getStorage()
+  assertDurableBackend()
+  if (storage.name === 'local') {
+    await ensureUploadDir()
+  }
 
   // Validate file type
   if (!isValidImageType(file.type)) {
@@ -208,8 +221,6 @@ export async function saveCandidatePhoto(file: File): Promise<string> {
   // Generate filename and store via the configured storage backend
   const filename = generateFilename(file.name)
   const storageKey = `candidate-photos/${filename}`
-  const storage = getStorage()
-  assertDurableBackend()
   await storage.put(storageKey, compressedBuffer, 'image/jpeg')
 
   // Return relative path for database storage (consistent with submission photos)

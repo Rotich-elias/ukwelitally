@@ -37,6 +37,24 @@ async function handleGet(req: NextRequest, context?: any) {
 
     console.log('[Detailed Results] Fetching polling station:', pollingStationId)
 
+    const { searchParams } = new URL(req.url)
+    let position = searchParams.get('position')
+
+    // Volunteers may only view the presidential race.
+    if (user.role === 'observer') {
+      position = 'president'
+    }
+
+    // A candidate may only ever see their own race, so the position is taken
+    // from the stored profile instead of the query string.
+    let candidateRestrictions = null
+    if (user.role === 'candidate') {
+      candidateRestrictions = await getCandidateRestrictions(user.userId)
+      if (candidateRestrictions) {
+        position = candidateRestrictions.position
+      }
+    }
+
     // Get polling station info
     const pollingStation = await queryOne(
       `SELECT
@@ -61,11 +79,10 @@ async function handleGet(req: NextRequest, context?: any) {
     // A candidate may only look at the stations in their own electoral area,
     // so the submissions and the evidence of another candidate stay private.
     if (user.role === 'candidate') {
-      const restrictions = await getCandidateRestrictions(user.userId)
       if (
-        restrictions &&
-        restrictions.position !== 'president' &&
-        !canAccessLocation(restrictions, {
+        candidateRestrictions &&
+        candidateRestrictions.position !== 'president' &&
+        !canAccessLocation(candidateRestrictions, {
           county_id: pollingStation.county_id,
           constituency_id: pollingStation.constituency_id,
           ward_id: pollingStation.ward_id,
@@ -78,8 +95,10 @@ async function handleGet(req: NextRequest, context?: any) {
       }
     }
 
-    // Get all submissions for this polling station
-    console.log('[Detailed Results] Fetching submissions...')
+    // Get all submissions for this polling station, limited to the requested
+    // race. Counting every position here would mix presidential submissions
+    // into the MCA view of the same station.
+    console.log('[Detailed Results] Fetching submissions for position:', position)
     const submissions = await queryMany(
       `SELECT
         s.*,
@@ -140,6 +159,7 @@ async function handleGet(req: NextRequest, context?: any) {
       LEFT JOIN results r ON s.id = r.submission_id
       LEFT JOIN submission_photos sp ON s.id = sp.submission_id
       WHERE s.polling_station_id = $1
+        AND ($2::text IS NULL OR c.position = $2)
       GROUP BY s.id, u.id, c.id, r.id
       ORDER BY
         CASE s.status
@@ -150,7 +170,7 @@ async function handleGet(req: NextRequest, context?: any) {
           ELSE 5
         END,
         s.submitted_at DESC`,
-      [pollingStationId]
+      [pollingStationId, position || null]
     )
 
     console.log('[Detailed Results] Submissions fetched:', submissions.length)

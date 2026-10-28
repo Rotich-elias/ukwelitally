@@ -115,16 +115,19 @@ async function handlePost(req: NextRequest) {
       )
     }
 
-    // Enforce agent limits per polling station: max 1 primary and max 2 backups.
+    // Enforce agent limits inside this candidate's own team: max 1 primary
+    // and max 2 backups per polling station. Other teams at the station are
+    // counted separately.
     const targetStationId = polling_station_id || volunteer.polling_station_id
     if (targetStationId) {
       const primaryCount = await queryOne(
-        `SELECT COUNT(*)::int AS cnt FROM agents WHERE polling_station_id = $1 AND is_primary = TRUE`,
-        [targetStationId]
+        `SELECT COUNT(*)::int AS cnt FROM agents
+          WHERE candidate_id = $1 AND polling_station_id = $2 AND is_primary = TRUE`,
+        [candidate_id, targetStationId]
       )
       if (parseInt(primaryCount?.cnt) >= 1) {
         return NextResponse.json(
-          { error: 'This polling station already has a primary agent. Assign this volunteer as a backup agent.' },
+          { error: 'This candidate already has a primary agent at this polling station. Assign this volunteer as a backup agent.' },
           { status: 409 }
         )
       }
