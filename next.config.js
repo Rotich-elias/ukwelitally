@@ -1,4 +1,15 @@
 /** @type {import('next').NextConfig} */
+const isDevelopment = process.env.NODE_ENV !== 'production'
+
+// Next.js dev mode compiles with eval-source-map, which requires
+// 'unsafe-eval'. Without it the browser blocks the dev bundles, React never
+// hydrates, and forms fall back to a native submit (the login page just
+// reloads). Production builds do not use eval, so the stricter policy is
+// kept there.
+const scriptSrc = isDevelopment
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+  : "script-src 'self' 'unsafe-inline'"
+
 const securityHeaders = [
   // Enforce HTTPS for two years, including subdomains.
   {
@@ -17,12 +28,13 @@ const securityHeaders = [
   // Do not allow the app to be framed (clickjacking).
   { key: 'X-Frame-Options', value: 'DENY' },
   // A conservative CSP. 'unsafe-inline' is required by Next.js inline
-  // bootstrap scripts and styled-jsx; 'unsafe-eval' is not included.
+  // bootstrap scripts and styled-jsx. 'unsafe-eval' is added only in
+  // development, because the dev compiler relies on eval().
   {
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      scriptSrc,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
