@@ -15,6 +15,14 @@ async function handlePost(req: NextRequest) {
 
     const formData = await req.formData()
     const file = formData.get('file') as File
+    const requestedMode = String(formData.get('mode') || 'replace').toLowerCase()
+    if (requestedMode !== 'update' && requestedMode !== 'replace') {
+      return NextResponse.json(
+        { error: 'mode must be update or replace' },
+        { status: 400 }
+      )
+    }
+    const mode = requestedMode as 'update' | 'replace'
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -121,31 +129,72 @@ async function handlePost(req: NextRequest) {
     // Import in transaction
     const result = await transaction(async (client) => {
       let imported = 0
+      let updated = 0
       let skipped = 0
       const skippedList: string[] = []
+      const replaces = mode === 'replace'
+      let deleted = 0
 
-      // A CSV import replaces the ballot. Remove the previous ballot
-      // candidates first so re-importing a corrected file does not leave the
-      // old entries behind. System candidates (the teams that log in) and
-      // observer placeholders are not part of the ballot import and are kept.
-      // Related rows (agents, submissions, results) follow the cascade.
-      const deletedResult = await client.query(
-        `DELETE FROM candidates
-         WHERE is_system_user = false AND is_placeholder = false`
-      )
-      const deleted = deletedResult.rowCount ?? 0
+      // Replace mode removes the previous ballot first so re-importing a
+      // corrected file does not leave the old entries behind. System candidates
+      // (the teams that log in) and observer placeholders are not part of the
+      // ballot import and are kept. Update mode never deletes anything.
+      if (replaces) {
+        const deletedResult = await client.query(
+          `DELETE FROM candidates
+           WHERE is_system_user = false AND is_placeholder = false`
+        )
+        deleted = deletedResult.rowCount ?? 0
+      }
 
       for (const candidate of importable) {
-        // Check for duplicates
+        // The natural key is the name, the position and the electoral area.
         const existing = await client.query(
           `SELECT id FROM candidates
-           WHERE full_name = $1 AND position = $2 AND is_system_user = false AND is_placeholder = false`,
-          [candidate.full_name, candidate.position]
+           WHERE lower(full_name) = lower($1)
+             AND position = $2
+             AND COALESCE(county_id, 0) = COALESCE($3, 0)
+             AND COALESCE(constituency_id, 0) = COALESCE($4, 0)
+             AND COALESCE(ward_id, 0) = COALESCE($5, 0)
+             AND is_system_user = false
+             AND is_placeholder = false
+           LIMIT 1`,
+          [
+            candidate.full_name,
+            candidate.position,
+            candidate.county_id,
+            candidate.constituency_id,
+            candidate.ward_id,
+          ]
         )
 
         if (existing.rows.length > 0) {
-          skipped++
-          skippedList.push(`${candidate.full_name} (${candidate.position}) - already exists`)
+          if (replaces) {
+            skipped++
+            skippedList.push(`${candidate.full_name} (${candidate.position}) - Duplicate row in the file`)
+            continue
+          }
+
+          await client.query(
+            `UPDATE candidates
+                SET full_name = $2,
+                    party_name = $3,
+                    party_abbreviation = $4,
+                    county_id = $5,
+                    constituency_id = $6,
+                    ward_id = $7
+              WHERE id = $1`,
+            [
+              existing.rows[0].id,
+              candidate.full_name,
+              candidate.party_name,
+              candidate.party_abbreviation,
+              candidate.county_id,
+              candidate.constituency_id,
+              candidate.ward_id,
+            ]
+          )
+          updated++
           continue
         }
 
@@ -169,7 +218,7 @@ async function handlePost(req: NextRequest) {
         imported++
       }
 
-      return { imported, skipped, skippedList, deleted }
+      return { imported, updated, skipped, skippedList, deleted }
     })
 
     // Audit log
@@ -181,13 +230,21 @@ async function handlePost(req: NextRequest) {
         'ballot_candidates_imported',
         'candidate',
         null,
-        JSON.stringify({ imported: result.imported, skipped: result.skipped, deleted: result.deleted }),
+        JSON.stringify({
+          mode,
+          imported: result.imported,
+          updated: result.updated,
+          skipped: result.skipped,
+          deleted: result.deleted,
+        }),
       ]
     )
 
     return NextResponse.json({
       message: 'Import completed',
+      mode,
       imported: result.imported,
+      updated: result.updated,
       skipped: result.skipped,
       deleted: result.deleted,
       skippedList: result.skippedList,

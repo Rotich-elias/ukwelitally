@@ -703,7 +703,6 @@ function importHandler(db: FakeDb): QueryHandler {
       if (sql.startsWith('UPDATE polling_stations AS ps')) {
         const [
           ids,
-          codes,
           names,
           wardIds,
           constituencyIds,
@@ -715,7 +714,6 @@ function importHandler(db: FakeDb): QueryHandler {
           centres,
         ] = params as [
           number[],
-          string[],
           string[],
           number[],
           number[],
@@ -735,7 +733,6 @@ function importHandler(db: FakeDb): QueryHandler {
           if (!station) continue
 
           Object.assign(station, {
-            code: String(codes[index]),
             name: String(names[index]),
             ward_id: Number(wardIds[index]),
             constituency_id: Number(constituencyIds[index]),
@@ -778,11 +775,13 @@ function importRequest(
   type: string,
   dryRun: boolean,
   csv?: string,
-  user: { id: number; role: string } = ADMIN
+  user: { id: number; role: string } = ADMIN,
+  mode?: 'update' | 'replace'
 ) {
   const form = new FormData()
   form.append('type', type)
   form.append('dry_run', dryRun ? 'true' : 'false')
+  if (mode) form.append('mode', mode)
   if (csv !== undefined) {
     form.append('file', new File([csv], 'locations.csv', { type: 'text/csv' }))
   }
@@ -844,6 +843,45 @@ describe('the polling station CSV import', () => {
     expect(body.rows[0].action).toBe('create')
     expect(body.rows[0].code).toBe('PS000001')
     expect(body.rows[0].target_id).toBe(null)
+  })
+
+  it('previews an update without planning to delete the station', async () => {
+    const response = await importPost(
+      importRequest('polling_stations', true, STATIONS_CSV, ADMIN, 'update') as any
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.dry_run).toBe(true)
+    expect(body.mode).toBe('update')
+    expect(body.total_rows).toBe(1)
+    expect(body.create).toBe(0)
+    expect(body.update).toBe(1)
+    expect(body.deleted).toBe(0)
+    expect(body.rows[0].action).toBe('update')
+    expect(body.rows[0].target_id).toBe(4447)
+  })
+
+  it('updates a station in place in update mode', async () => {
+    const response = await importPost(
+      importRequest('polling_stations', false, STATIONS_CSV, ADMIN, 'update') as any
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.created).toBe(0)
+    expect(body.updated).toBe(1)
+    expect(body.deleted).toBe(0)
+
+    const station = db.stations.find((entry) => entry.id === 4447)
+    expect(station?.registered_voters).toBe(450)
+    expect(db.stations).toHaveLength(1)
+    expect(writes().some((entry) => /DELETE FROM polling_stations/i.test(entry.text))).toBe(
+      false
+    )
+    expect(writes().some((entry) => /UPDATE polling_stations AS ps/i.test(entry.text))).toBe(
+      true
+    )
   })
 
   it('reads the official tab-separated eight-column file', async () => {

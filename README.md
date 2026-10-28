@@ -301,14 +301,16 @@ carry the eight IEBC columns:
 
 A station is matched by its code and stream, and by its name inside its ward
 as a fallback, so the columns a row leaves out can be taken from the record it
-matches. The file then replaces the platform's polling stations: every
-existing station, together with the agents, volunteers, submissions and results
-attached to it, is deleted before the rows of the file are written. A missing
-ward, constituency or county is created from the county down before the station
-is written. A level that already exists is matched by name and keeps its code.
-The names are compared without their case and without their extra spaces, so
-the official files match as they are. An import with no valid row deletes
-nothing.
+matches. The import form offers two modes. **Update existing** (the default)
+updates the matched station in place, adds the rows that are new, and leaves
+stations the file does not mention alone, together with their agents,
+volunteers, submissions and results. **Replace all** deletes every existing
+station, and the agents, volunteers, submissions and results attached to it,
+before the rows of the file are written. A missing ward, constituency or county
+is created from the county down before the station is written. A level that
+already exists is matched by name and keeps its code. The names are compared
+without their case and without their extra spaces, so the official files match
+as they are. An import with no valid row deletes nothing.
 
 **The preview** (the "Preview" button) reads the file with the same planner
 the import writes with, and writes nothing:
@@ -317,7 +319,8 @@ the import writes with, and writes nothing:
 |---|---|
 | Rows read | The rows of the file, the header apart |
 | To create | The rows that would be added |
-| To delete | The existing stations the import would remove |
+| To update | The existing stations the update mode would change |
+| To delete | The existing stations a replacement would remove |
 | To skip | The rows that would not be written |
 | With errors | The rows that carry at least one error |
 

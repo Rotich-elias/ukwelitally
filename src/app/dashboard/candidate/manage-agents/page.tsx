@@ -42,6 +42,7 @@ export default function ManageAgentsPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [importLoading, setImportLoading] = useState(false)
   const [importResult, setImportResult] = useState<any>(null)
+  const [importMode, setImportMode] = useState<'update' | 'replace'>('update')
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -139,6 +140,15 @@ export default function ManageAgentsPage() {
       return
     }
 
+    if (
+      importMode === 'replace' &&
+      !window.confirm(
+        'Replace all agent assignments for the candidates in this file? Agents that are not in the file will lose their assignment.'
+      )
+    ) {
+      return
+    }
+
     setImportLoading(true)
     setError('')
     setImportResult(null)
@@ -147,6 +157,7 @@ export default function ManageAgentsPage() {
       const token = localStorage.getItem('token')
       const formData = new FormData()
       formData.append('file', selectedFile)
+      formData.append('mode', importMode)
 
       const response = await fetch('/api/agents/import', {
         method: 'POST',
@@ -484,6 +495,65 @@ export default function ManageAgentsPage() {
                 </a>
               </div>
 
+              {/* Import mode */}
+              <fieldset className="mb-6">
+                <legend className="block text-sm font-medium text-dark-200 mb-2">
+                  How should existing agents be handled?
+                </legend>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <label
+                    className={`cursor-pointer rounded-lg border p-4 ${
+                      importMode === 'update'
+                        ? 'border-blue-500/60 bg-blue-500/10'
+                        : 'border-dark-700 bg-dark-900/40'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="agent-import-mode"
+                      value="update"
+                      checked={importMode === 'update'}
+                      onChange={() => {
+                        setImportMode('update')
+                        setImportResult(null)
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-white font-medium">Update existing</span>
+                    <span className="block mt-1 text-xs text-dark-300">
+                      Update agents that already have an account on your team,
+                      add the new ones, and keep agents that are not in the file.
+                      Existing passwords are kept unless the file supplies one.
+                    </span>
+                  </label>
+                  <label
+                    className={`cursor-pointer rounded-lg border p-4 ${
+                      importMode === 'replace'
+                        ? 'border-red-500/60 bg-red-500/10'
+                        : 'border-dark-700 bg-dark-900/40'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="agent-import-mode"
+                      value="replace"
+                      checked={importMode === 'replace'}
+                      onChange={() => {
+                        setImportMode('replace')
+                        setImportResult(null)
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-white font-medium">Replace all</span>
+                    <span className="block mt-1 text-xs text-dark-300">
+                      Remove the agent assignments of the candidates in this file
+                      before importing. Agent accounts and their submissions are
+                      kept and re-used when they appear in the file.
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
+
               {/* File Upload */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-dark-200 mb-2">
@@ -516,6 +586,12 @@ export default function ManageAgentsPage() {
                     <p className="font-semibold">✓ Import Complete!</p>
                     <div className="mt-2 space-y-1 text-sm">
                       <p>• Successfully imported: {importResult.imported} agents</p>
+                      {importResult.updated > 0 && (
+                        <p>• Updated existing agents: {importResult.updated}</p>
+                      )}
+                      {importResult.deleted > 0 && (
+                        <p>• Removed previous agent assignments: {importResult.deleted}</p>
+                      )}
                       {importResult.skipped > 0 && (
                         <p>• Skipped: {importResult.skipped} agents</p>
                       )}

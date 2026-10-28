@@ -27,6 +27,14 @@ async function handlePost(req: NextRequest) {
 
     const formData = await req.formData()
     const file = formData.get('file') as File
+    const requestedMode = String(formData.get('mode') || 'update').toLowerCase()
+    if (requestedMode !== 'update' && requestedMode !== 'replace') {
+      return NextResponse.json(
+        { error: 'mode must be update or replace' },
+        { status: 400 }
+      )
+    }
+    const mode = requestedMode as 'update' | 'replace'
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -141,7 +149,9 @@ async function handlePost(req: NextRequest) {
         candidate_id: candidateId,
         polling_station_id: pollingStationId,
         is_primary: row.is_primary?.toLowerCase() === 'true' || row.is_primary === '1' || !row.is_primary, // Default to true
-        password: row.password || 'Agent123!', // Default password if not provided
+        // A password in the file is honoured. Without one a new account gets
+        // the default, and an existing account keeps its current password.
+        password: row.password || null,
       })
     }
 
@@ -155,8 +165,24 @@ async function handlePost(req: NextRequest) {
     // Import in transaction
     const result = await transaction(async (client) => {
       let imported = 0
+      let updated = 0
+      let deleted = 0
       let skipped = 0
-      const skippedList = []
+      const skippedList: string[] = []
+      const replaces = mode === 'replace'
+
+      // Replace mode clears the agent assignments of the candidates in the
+      // file. The user accounts are not deleted: an account that appears in
+      // the new file is re-used, while one that does not simply loses its
+      // assignment. Submissions and other records the account owns are kept.
+      if (replaces) {
+        const candidateIds = [...new Set(agents.map((agent) => agent.candidate_id))]
+        const removed = await client.query(
+          'DELETE FROM agents WHERE candidate_id = ANY($1::int[])',
+          [candidateIds]
+        )
+        deleted = removed.rowCount ?? 0
+      }
 
       for (const agent of agents) {
         // Normalize phone
@@ -166,18 +192,6 @@ async function handlePost(req: NextRequest) {
         } catch (error) {
           skipped++
           skippedList.push(`${agent.full_name} - Invalid phone number: ${agent.phone}`)
-          continue
-        }
-
-        // Check if user already exists
-        const existingUser = await client.query(
-          'SELECT id FROM users WHERE email = $1 OR phone = $2 OR id_number = $3',
-          [agent.email, normalizedPhone, agent.id_number]
-        )
-
-        if (existingUser.rows.length > 0) {
-          skipped++
-          skippedList.push(`${agent.full_name} (${agent.email}) - User already exists`)
           continue
         }
 
@@ -219,8 +233,83 @@ async function handlePost(req: NextRequest) {
           }
         }
 
-        // Hash password
-        const passwordHash = await hashPassword(agent.password)
+        // A user is matched by any of the three identifiers the CSV carries.
+        const existingUser = await client.query(
+          `SELECT id, role FROM users
+            WHERE email = $1 OR phone = $2 OR id_number = $3
+            ORDER BY id
+            LIMIT 1`,
+          [agent.email, normalizedPhone, agent.id_number]
+        )
+
+        if (existingUser.rows.length > 0) {
+          const existing = existingUser.rows[0]
+
+          // Never turn an administrator, candidate or observer into an agent
+          // through an import.
+          if (existing.role !== 'agent') {
+            skipped++
+            skippedList.push(
+              `${agent.full_name} (${agent.email}) - Existing account is a ${existing.role}, not an agent`
+            )
+            continue
+          }
+
+          const profile = await client.query(
+            'SELECT id, candidate_id FROM agents WHERE user_id = $1',
+            [existing.id]
+          )
+
+          if (profile.rows.length > 0 && profile.rows[0].candidate_id !== agent.candidate_id) {
+            skipped++
+            skippedList.push(
+              `${agent.full_name} (${agent.email}) - Already assigned to another candidate`
+            )
+            continue
+          }
+
+          // Keep the current password unless the file supplies a new one.
+          if (agent.password) {
+            const passwordHash = await hashPassword(agent.password)
+            await client.query(
+              `UPDATE users
+                  SET full_name = $2, phone = $3, id_number = $4,
+                      role = 'agent', verified = true, active = true,
+                      password_hash = $5
+                WHERE id = $1`,
+              [existing.id, agent.full_name, normalizedPhone, agent.id_number, passwordHash]
+            )
+          } else {
+            await client.query(
+              `UPDATE users
+                  SET full_name = $2, phone = $3, id_number = $4,
+                      role = 'agent', verified = true, active = true
+                WHERE id = $1`,
+              [existing.id, agent.full_name, normalizedPhone, agent.id_number]
+            )
+          }
+
+          if (profile.rows.length > 0) {
+            await client.query(
+              `UPDATE agents
+                  SET polling_station_id = $2, is_primary = $3
+                WHERE id = $1`,
+              [profile.rows[0].id, agent.polling_station_id, agent.is_primary]
+            )
+          } else {
+            await client.query(
+              `INSERT INTO agents (user_id, candidate_id, polling_station_id, is_primary)
+               VALUES ($1, $2, $3, $4)`,
+              [existing.id, agent.candidate_id, agent.polling_station_id, agent.is_primary]
+            )
+          }
+
+          updated++
+          continue
+        }
+
+        // New account. A file without a password gets the documented default.
+        const passwordHash = await hashPassword(agent.password || 'Agent123!')
 
         // Create user
         const userResult = await client.query(
@@ -242,7 +331,7 @@ async function handlePost(req: NextRequest) {
         imported++
       }
 
-      return { imported, skipped, skippedList }
+      return { imported, updated, deleted, skipped, skippedList }
     })
 
     // Audit log
@@ -254,13 +343,22 @@ async function handlePost(req: NextRequest) {
         'agents_imported',
         'agent',
         null,
-        JSON.stringify({ imported: result.imported, skipped: result.skipped }),
+        JSON.stringify({
+          mode,
+          imported: result.imported,
+          updated: result.updated,
+          deleted: result.deleted,
+          skipped: result.skipped,
+        }),
       ]
     )
 
     return NextResponse.json({
       message: 'Import completed',
+      mode,
       imported: result.imported,
+      updated: result.updated,
+      deleted: result.deleted,
       skipped: result.skipped,
       skippedList: result.skippedList,
       errors: errors.length > 0 ? errors : null,

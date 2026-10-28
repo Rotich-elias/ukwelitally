@@ -137,6 +137,7 @@ export default function LocationManager() {
   const [notice, setNotice] = useState<string | null>(null)
 
   const [importType, setImportType] = useState('polling_stations')
+  const [importMode, setImportMode] = useState<'update' | 'replace'>('update')
   const [importFile, setImportFile] = useState<File | null>(null)
   const [importResult, setImportResult] = useState<any>(null)
   const [importPhase, setImportPhase] = useState<ImportPhase>('idle')
@@ -240,6 +241,17 @@ export default function LocationManager() {
       return
     }
 
+    if (
+      !dryRun &&
+      importType === 'polling_stations' &&
+      importMode === 'replace' &&
+      !window.confirm(
+        'Replace all polling stations? Every existing station, and the agents, volunteers, submissions and results attached to it, will be deleted before the file is written.'
+      )
+    ) {
+      return
+    }
+
     const uploadsFile = importType !== 'prune_placeholders' && importFile !== null
     setImportPhase(uploadsFile ? 'uploading' : 'processing')
     setUploadProgress(
@@ -251,6 +263,7 @@ export default function LocationManager() {
       const form = new FormData()
       form.append('type', importType)
       form.append('dry_run', dryRun ? 'true' : 'false')
+      form.append('mode', importMode)
       if (uploadsFile && importFile) form.append('file', importFile)
 
       const body = await uploadImport(form, token(), (loaded, total) => {
@@ -326,22 +339,28 @@ export default function LocationManager() {
             <p className="text-sm text-dark-300">
               Load the official IEBC polling station file. It must carry the
               eight columns County, Constituency, Ward, IEBC Code, Polling
-              Station, Stream, Registration Centre and Registered Voters. The
-              file replaces the polling stations on the platform: every existing
-              station, and the agents, volunteers and submissions attached to
-              it, is deleted first, then the rows of the file are written. A
+              Station, Stream, Registration Centre and Registered Voters. A
               missing ward, constituency or county is created from the county
-              down. A station is matched by code and stream, or by name, only to
-              fill in the columns the row leaves out.
+              down. A station is matched by code and stream, or by name, so a
+              matched row can fill in the columns the file leaves out.
             </p>
           </div>
 
-          <div className="bg-red-500/10 border border-red-500/40 rounded-lg p-4">
-            <p className="text-sm text-red-300">
-              This is a replacement import. Every polling station that is not in
-              the new file is removed, together with its agents, volunteers,
-              submissions and results. Preview the file first to see how many
-              stations would be deleted.
+          <div
+            className={
+              importMode === 'replace'
+                ? 'bg-red-500/10 border border-red-500/40 rounded-lg p-4'
+                : 'bg-blue-500/10 border border-blue-500/40 rounded-lg p-4'
+            }
+          >
+            <p
+              className={
+                importMode === 'replace' ? 'text-sm text-red-300' : 'text-sm text-blue-300'
+              }
+            >
+              {importMode === 'replace'
+                ? 'Replace mode: every polling station that is not in the new file is removed, together with its agents, volunteers, submissions and results. Preview the file first to see how many stations would be deleted.'
+                : 'Update mode: matching stations are updated in place, new rows are added, and stations not mentioned in the file are left alone. Agents, volunteers, submissions and results are kept.'}
             </p>
           </div>
 
@@ -378,6 +397,64 @@ export default function LocationManager() {
               </div>
             )}
           </div>
+
+          {importType !== 'prune_placeholders' && (
+            <fieldset>
+              <legend className="block text-sm font-medium text-dark-200 mb-2">
+                How should existing data be handled?
+              </legend>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <label
+                  className={`cursor-pointer rounded-lg border p-4 ${
+                    importMode === 'update'
+                      ? 'border-blue-500/60 bg-blue-500/10'
+                      : 'border-dark-700 bg-dark-900/40'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="location-import-mode"
+                    value="update"
+                    checked={importMode === 'update'}
+                    onChange={() => {
+                      setImportMode('update')
+                      setImportResult(null)
+                    }}
+                    className="mr-2"
+                  />
+                  <span className="text-white font-medium">Update existing</span>
+                  <span className="block mt-1 text-xs text-dark-300">
+                    Update matching stations, add new ones, and keep records that
+                    are not in the file.
+                  </span>
+                </label>
+                <label
+                  className={`cursor-pointer rounded-lg border p-4 ${
+                    importMode === 'replace'
+                      ? 'border-red-500/60 bg-red-500/10'
+                      : 'border-dark-700 bg-dark-900/40'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="location-import-mode"
+                    value="replace"
+                    checked={importMode === 'replace'}
+                    onChange={() => {
+                      setImportMode('replace')
+                      setImportResult(null)
+                    }}
+                    className="mr-2"
+                  />
+                  <span className="text-white font-medium">Replace all</span>
+                  <span className="block mt-1 text-xs text-dark-300">
+                    Delete every existing station and its attached data before
+                    writing the file.
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+          )}
 
           {importType === 'prune_placeholders' && (
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
@@ -462,6 +539,7 @@ export default function LocationManager() {
                     [
                       ['Rows read', importResult.total_rows],
                       ['To create', importResult.create ?? importResult.created ?? 0],
+                      ['To update', importResult.update ?? importResult.updated ?? 0],
                       ['To delete', importResult.deleted ?? 0],
                       ['To skip', importResult.skip ?? importResult.skipped ?? 0],
                       ['With errors', importResult.error_rows ?? importResult.errors?.length ?? 0],
@@ -477,7 +555,8 @@ export default function LocationManager() {
               {importResult.created !== undefined && (
                 <p className="text-dark-300">
                   Deleted: {importResult.deleted ?? 0} · Created:{' '}
-                  {importResult.created ?? 0} · Skipped: {importResult.skipped}
+                  {importResult.created ?? 0} · Updated: {importResult.updated ?? 0} · Skipped:{' '}
+                  {importResult.skipped}
                 </p>
               )}
               {importResult.removed !== undefined && (

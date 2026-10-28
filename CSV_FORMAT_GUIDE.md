@@ -58,17 +58,19 @@ row.
 
 ## What the import does
 
-The file is a **replacement**, not a merge. Before the rows are written, the
-import deletes every polling station that is currently on the platform, together
-with the agents, volunteers, submissions and results attached to those stations.
-The stations in the file are then inserted fresh. An import with no valid row
-deletes nothing, so a broken file cannot empty the platform by accident.
+The import has two modes, chosen in the import form or with the `mode` field:
+
+- **Update existing** (`mode=update`, the default) matches each row to the
+  station that already exists, updates that station in place, and inserts the
+  rows that are new. Stations the file does not mention are left alone, and so
+  are their agents, volunteers, submissions and results.
+- **Replace all** (`mode=replace`) deletes every polling station that is
+  currently on the platform, together with the agents, volunteers, submissions
+  and results attached to those stations, before the rows of the file are
+  written. An import with no valid row deletes nothing, so a broken file cannot
+  empty the platform by accident.
 
 ### Matching
-
-The rows are still matched against the existing records before anything is
-deleted. This lets a row that leaves a column empty keep the value the matching
-station already has.
 
 - A polling station is matched by its **IEBC code and stream**.
 - When the file carries no code, it is matched by its **name inside its ward**.
@@ -76,9 +78,10 @@ station already has.
 - A constituency is matched by its **name inside its county**.
 - A county is matched by its **name**.
 
-Matching does not keep the old record: the station is still deleted and
-inserted anew. Only the columns the file carries are written for a new station;
-the columns it leaves out are taken from the station that matched.
+In update mode a matched station keeps its id, so everything attached to it
+stays attached. A column the row leaves out keeps the value the station already
+has. In replace mode the old record is deleted and the row is inserted anew;
+the values the row leaves out are still taken from the station that matched.
 
 ### Creating a fresh hierarchy
 
@@ -97,8 +100,9 @@ the code of an existing record is never changed.
 ### Validation and preview
 
 The **Preview** button runs the same planner as the import without writing
-anything. It reports how many rows would be created or skipped, how many
-existing stations would be deleted, and the reason for every skipped row.
+anything. It reports how many rows would be created, updated or skipped, how
+many existing stations a replacement would delete, and the reason for every
+skipped row.
 
 The import is refused with a 400 response when any of the eight required
 columns is missing. The response names the missing columns and repeats the

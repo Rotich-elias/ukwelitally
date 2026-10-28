@@ -273,10 +273,20 @@ export default function AdminDashboard() {
   const [importResult, setImportResult] = useState<any>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [importLoading, setImportLoading] = useState(false)
+  const [importMode, setImportMode] = useState<'update' | 'replace'>('update')
 
   const handleImportCSV = async () => {
     if (!selectedFile) {
       setError('Please select a CSV file')
+      return
+    }
+
+    if (
+      importMode === 'replace' &&
+      !window.confirm(
+        'Replace all ballot candidates? The current ballot, and its agents, submissions and results, will be deleted before the file is imported.'
+      )
+    ) {
       return
     }
 
@@ -289,6 +299,7 @@ export default function AdminDashboard() {
       const token = localStorage.getItem('token')
       const formData = new FormData()
       formData.append('file', selectedFile)
+      formData.append('mode', importMode)
 
       const response = await fetch('/api/candidates/import', {
         method: 'POST',
@@ -1456,9 +1467,9 @@ export default function AdminDashboard() {
                   <li>Upload the completed CSV file</li>
                 </ol>
                 <p className="mt-3 text-sm text-yellow-400">
-                  Importing replaces the current ballot: all existing ballot candidates (and
-                  their agents, submissions and results) are deleted before the new rows are
-                  added. Candidate accounts and observer placeholders are kept.
+                  {importMode === 'replace'
+                    ? 'Replace mode deletes the current ballot first: all existing ballot candidates (and their agents, submissions and results) are removed before the new rows are added. Candidate accounts and observer placeholders are kept.'
+                    : 'Update mode matches a row by name, position and electoral area. Matching candidates are updated, new rows are added, and ballot candidates that are not in the file are kept.'}
                 </p>
                 <a
                   href="/templates/candidates-import-template.csv"
@@ -1477,6 +1488,62 @@ export default function AdminDashboard() {
                   </ul>
                 </div>
               </div>
+
+              {/* Import mode */}
+              <fieldset className="mb-6">
+                <legend className="block text-sm font-medium text-dark-200 mb-2">
+                  How should existing ballot candidates be handled?
+                </legend>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <label
+                    className={`cursor-pointer rounded-lg border p-4 ${
+                      importMode === 'update'
+                        ? 'border-blue-500/60 bg-blue-500/10'
+                        : 'border-dark-700 bg-dark-900/40'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="ballot-import-mode"
+                      value="update"
+                      checked={importMode === 'update'}
+                      onChange={() => {
+                        setImportMode('update')
+                        setImportResult(null)
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-white font-medium">Update existing</span>
+                    <span className="block mt-1 text-xs text-dark-300">
+                      Update matching candidates, add new ones, and keep records
+                      that are not in the file.
+                    </span>
+                  </label>
+                  <label
+                    className={`cursor-pointer rounded-lg border p-4 ${
+                      importMode === 'replace'
+                        ? 'border-red-500/60 bg-red-500/10'
+                        : 'border-dark-700 bg-dark-900/40'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="ballot-import-mode"
+                      value="replace"
+                      checked={importMode === 'replace'}
+                      onChange={() => {
+                        setImportMode('replace')
+                        setImportResult(null)
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-white font-medium">Replace all</span>
+                    <span className="block mt-1 text-xs text-dark-300">
+                      Delete the existing ballot before importing the file.
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
 
               {/* File Upload */}
               <div className="mb-6">
@@ -1516,8 +1583,11 @@ export default function AdminDashboard() {
                     <p className="font-semibold">✓ Import Complete!</p>
                     <div className="mt-2 space-y-1 text-sm">
                       <p>• Successfully imported: {importResult.imported} candidates</p>
+                      {importResult.updated > 0 && (
+                        <p>• Updated existing candidates: {importResult.updated}</p>
+                      )}
                       {importResult.deleted > 0 && (
-                        <p>• Replaced previous ballot entries: {importResult.deleted} candidates</p>
+                        <p>• Deleted previous ballot entries: {importResult.deleted} candidates</p>
                       )}
                       {importResult.skipped > 0 && (
                         <p>• Skipped: {importResult.skipped} candidates</p>
