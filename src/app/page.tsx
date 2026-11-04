@@ -11,7 +11,14 @@ export default function Home() {
       {/* Header */}
       <nav className="glass-effect border-b border-dark-700/50 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <a href="/" className="cursor-pointer">
+          <a href="/" className="cursor-pointer flex items-center gap-2">
+            <img
+              src="/icons/icon-192x192.png"
+              alt="UkweliTally logo"
+              width={32}
+              height={32}
+              className="h-8 w-8 rounded-xl shadow-lg shadow-blue-500/20"
+            />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               UkweliTally
             </h1>
