@@ -971,6 +971,43 @@ describe('the polling station CSV import', () => {
     expect(body.rows[0].code).toBe('NEW001')
   })
 
+  it('matches a ward whose punctuation differs from the official name', async () => {
+    // The official ward is "Embobut/Embulot"; the station file writes
+    // "EMBOBUT / EMBULOT". They must resolve to the same ward, or the import
+    // would create a duplicate ward and move the stations into it.
+    db.wards = [
+      {
+        id: 2660,
+        constituency_id: 628,
+        county_id: 201,
+        name: 'Embobut/Embulot',
+        code: '0734',
+      },
+    ]
+
+    const csv = [
+      HEADER,
+      'Nairobi\tTest Constituency\tEMBOBUT / EMBULOT\tNEW001\tNew Hall\t1\tNew Primary\t500',
+    ].join('\n')
+
+    const response = await importPost(
+      importRequest('polling_stations', false, csv, ADMIN, 'update') as any
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.created).toBe(1)
+    expect(body.skipped).toBe(0)
+    expect(db.wards).toHaveLength(1)
+    expect(db.wards[0].id).toBe(2660)
+    expect(db.stations.find((entry) => entry.code === 'NEW001')?.ward_id).toBe(
+      2660
+    )
+    expect(
+      writes().some((entry) => /INSERT INTO wards/i.test(entry.text))
+    ).toBe(false)
+  })
+
   it('matches an existing station by name when the file carries no code', async () => {
     const csv = [
       HEADER,

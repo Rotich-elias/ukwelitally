@@ -910,16 +910,31 @@ interface LocationCache {
   wardCodes: Set<string>
 }
 
-function countyNameKey(name: string): string {
-  return normaliseName(name)
+/**
+ * A county, constituency or ward name, ready to be compared.
+ *
+ * The official ward list, the polling-station files and the older seeded data
+ * do not always agree on punctuation: "EMBOBUT / EMBULOT" and
+ * "Embobut/Embulot" are the same ward. Punctuation and the spacing around it
+ * are therefore ignored when a level of the geography is matched.
+ *
+ * Polling-station names keep the stricter normaliseName, so two stations whose
+ * names differ only in punctuation are still treated as two stations.
+ */
+function geographyNameKey(value: string): string {
+  return normaliseName(value)
+    .toLowerCase()
+    .replace(/['\u2019`]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
 }
 
 function constituencyKey(countyId: number, name: string): string {
-  return `${countyId}::${normaliseName(name)}`
+  return `${countyId}::${geographyNameKey(name)}`
 }
 
 function wardKey(constituencyId: number, name: string): string {
-  return `${constituencyId}::${normaliseName(name)}`
+  return `${constituencyId}::${geographyNameKey(name)}`
 }
 
 function stationCodeKey(code: string, stream: string | null): string {
@@ -984,12 +999,12 @@ async function loadLocationCache(): Promise<LocationCache> {
   }
 
   for (const county of counties) {
-    cache.countiesByName.set(countyNameKey(county.name), county)
+    cache.countiesByName.set(geographyNameKey(county.name), county)
     cache.countyCodes.add(county.code)
   }
 
   for (const constituency of constituencies) {
-    const key = countyNameKey(constituency.name)
+    const key = geographyNameKey(constituency.name)
     const list = cache.constituenciesByName.get(key) ?? []
     list.push(constituency)
     cache.constituenciesByName.set(key, list)
@@ -1001,7 +1016,7 @@ async function loadLocationCache(): Promise<LocationCache> {
   }
 
   for (const ward of wards) {
-    const key = countyNameKey(ward.name)
+    const key = geographyNameKey(ward.name)
     const list = cache.wardsByName.get(key) ?? []
     list.push(ward)
     cache.wardsByName.set(key, list)
@@ -1350,21 +1365,21 @@ function planStationImport(text: string, cache: LocationCache): StationPlan {
     if (wardName) {
       if (constituencyName) {
         const county = countyName
-          ? cache.countiesByName.get(normaliseName(countyName))
+          ? cache.countiesByName.get(geographyNameKey(countyName))
           : undefined
 
         let constituency = county
           ? cache.constituenciesByCountyName.get(
               constituencyKey(county.id, constituencyName)
             )
-          : cache.constituenciesByName.get(normaliseName(constituencyName))?.[0]
+          : cache.constituenciesByName.get(geographyNameKey(constituencyName))?.[0]
 
         // A constituency of the same name under another county is still the
         // constituency of the file's ward: the county of the file is reported
         // but never duplicated.
         if (!constituency && county) {
           constituency = cache.constituenciesByName.get(
-            normaliseName(constituencyName)
+            geographyNameKey(constituencyName)
           )?.[0]
         }
 
@@ -1372,7 +1387,8 @@ function planStationImport(text: string, cache: LocationCache): StationPlan {
           if (
             countyName &&
             constituency.county_name &&
-            normaliseName(countyName) !== normaliseName(constituency.county_name)
+            geographyNameKey(countyName) !==
+              geographyNameKey(constituency.county_name)
           ) {
             issues.push({
               row: rowNumber,
@@ -1423,7 +1439,7 @@ function planStationImport(text: string, cache: LocationCache): StationPlan {
         }
       } else {
         ward =
-          cache.wardsByName.get(normaliseName(wardName))?.[0] ?? null
+          cache.wardsByName.get(geographyNameKey(wardName))?.[0] ?? null
 
         if (!ward) {
           planned.push(
@@ -1496,12 +1512,14 @@ function planStationImport(text: string, cache: LocationCache): StationPlan {
       ? `id:${ward.id}`
       : wardToCreate
         ? wardToCreate.constituency_id !== undefined
-          ? `constituency:${wardToCreate.constituency_id}::${normaliseName(
+          ? `constituency:${wardToCreate.constituency_id}::${geographyNameKey(
               wardToCreate.name
             )}`
-          : `new:${normaliseName(wardToCreate.county_name ?? '')}::${normaliseName(
+          : `new:${geographyNameKey(
+              wardToCreate.county_name ?? ''
+            )}::${geographyNameKey(
               wardToCreate.constituency_name
-            )}::${normaliseName(wardToCreate.name)}`
+            )}::${geographyNameKey(wardToCreate.name)}`
         : existing
           ? `id:${existing.ward_id}`
           : null
@@ -1807,7 +1825,7 @@ async function ensureHierarchy(
     cache.constituencies.map((constituency) => [constituency.id, constituency])
   )
   const countyIdsByName = new Map(
-    cache.counties.map((county) => [normaliseName(county.name), county.id])
+    cache.counties.map((county) => [geographyNameKey(county.name), county.id])
   )
   const constituencyIdsByKey = new Map(
     cache.constituencies.map((constituency) => [
@@ -1822,7 +1840,7 @@ async function ensureHierarchy(
   const resolveCountyId = (target: StationWrite): number | undefined =>
     target.county_id ??
     (target.county_name
-      ? countyIdsByName.get(normaliseName(target.county_name))
+      ? countyIdsByName.get(geographyNameKey(target.county_name))
       : undefined)
 
   const resolveConstituencyId = (
@@ -1841,7 +1859,7 @@ async function ensureHierarchy(
   for (const target of targets) {
     if (target.county_id !== undefined || !target.county_name) continue
     const displayName = target.county_name.trim().replace(/\s+/g, ' ')
-    const key = normaliseName(displayName)
+    const key = geographyNameKey(displayName)
     if (!cache.countiesByName.has(key)) {
       countiesToCreate.set(key, displayName)
     }
@@ -1861,7 +1879,7 @@ async function ensureHierarchy(
     )
 
     for (const county of result.rows) {
-      const key = normaliseName(county.name)
+      const key = geographyNameKey(county.name)
       cache.counties.push(county)
       cache.countiesByName.set(key, county)
       countyById.set(county.id, county)
@@ -1880,7 +1898,7 @@ async function ensureHierarchy(
     const countyId =
       target.county_id ??
       (target.county_name
-        ? countyIdsByName.get(normaliseName(target.county_name))
+        ? countyIdsByName.get(geographyNameKey(target.county_name))
         : undefined)
     if (countyId === undefined) {
       throw new LocationError(
@@ -1918,8 +1936,9 @@ async function ensureHierarchy(
       }
       const key = constituencyKey(created.county_id, created.name)
       cache.constituencies.push(created)
-      cache.constituenciesByName.set(normaliseName(created.name), [
-        ...(cache.constituenciesByName.get(normaliseName(created.name)) ?? []),
+      cache.constituenciesByName.set(geographyNameKey(created.name), [
+        ...(cache.constituenciesByName.get(geographyNameKey(created.name)) ??
+          []),
         created,
       ])
       cache.constituenciesByCountyName.set(key, created)
