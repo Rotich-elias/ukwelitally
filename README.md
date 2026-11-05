@@ -342,6 +342,31 @@ The older command line scripts still work and are unchanged:
 (insert only), `scripts/seed-iebc-geography.js --wipe` (destructive reseed) and
 the `scripts/update-*-voters.js` helpers.
 
+**The official IEBC wards file** (`code,name,constituency,constituency_code,county_code`)
+is loaded with the wards importer. It is safe to run more than once: counties
+and constituencies are matched by their official code, and wards are matched by
+code first and then by name inside their constituency. A ward that an earlier
+polling-station import created with the ward name as its code (EMSOO, KAMARINY
+…) is given its official numeric code in place, so its polling stations stay
+attached. Nothing is deleted; empty placeholder wards can be pruned from the
+admin screen afterwards.
+
+```bash
+# Check the file against the target database and roll everything back
+DATABASE_URL_DIRECT='postgresql://...' node scripts/import-wards.js ~/Downloads/wards.csv --dry-run
+
+# Write the wards
+DATABASE_URL_DIRECT='postgresql://...' node scripts/import-wards.js ~/Downloads/wards.csv
+
+# The same commands through npm
+npm run db:import-wards -- ~/Downloads/wards.csv --dry-run
+npm run db:import-wards -- ~/Downloads/wards.csv
+```
+
+`DATABASE_URL_DIRECT` is the non-pooled connection string from the Postgres
+provider (Neon calls it the direct connection). The importer runs in one
+transaction: if any row fails, nothing is written.
+
 ### Assigning agents
 A candidate assigns agents to the polling stations inside their own
 electoral area, and the scope follows from their race:

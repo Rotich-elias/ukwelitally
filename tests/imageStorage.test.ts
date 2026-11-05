@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import fs from 'fs'
 import path from 'path'
 import {
   contentTypeFromKey,
+  createVercelBlobBackend,
   getEvidenceUrl,
   getFileUrl,
   getStorage,
@@ -62,6 +63,45 @@ describe('getFileUrl and getEvidenceUrl', () => {
 
   it('serves evidence through the authorized route', () => {
     expect(getEvidenceUrl(42)).toBe('/api/submission-photos/42')
+  })
+})
+
+describe('the Vercel Blob backend', () => {
+  const previousToken = process.env.BLOB_READ_WRITE_TOKEN
+
+  afterEach(() => {
+    if (previousToken === undefined) delete process.env.BLOB_READ_WRITE_TOKEN
+    else process.env.BLOB_READ_WRITE_TOKEN = previousToken
+  })
+
+  it('reads a blob with its access level and decodes the stream', async () => {
+    process.env.BLOB_READ_WRITE_TOKEN = 'test-token'
+    const blobGet = vi.fn().mockResolvedValue({
+      stream: new Response('hello world').body,
+      blob: { contentType: 'image/jpeg' },
+    })
+
+    const storage = createVercelBlobBackend({ put: vi.fn(), get: blobGet })
+    expect(storage?.name).toBe('vercel-blob')
+
+    const file = await storage!.get('candidate-photos/photo.jpg')
+
+    expect(file?.data.toString()).toBe('hello world')
+    expect(file?.contentType).toBe('image/jpeg')
+    expect(blobGet).toHaveBeenCalledWith(
+      'candidate-photos/photo.jpg',
+      expect.objectContaining({ access: 'public' })
+    )
+  })
+
+  it('reports a missing blob instead of throwing', async () => {
+    process.env.BLOB_READ_WRITE_TOKEN = 'test-token'
+    const blobGet = vi.fn().mockResolvedValue(null)
+
+    const storage = createVercelBlobBackend({ put: vi.fn(), get: blobGet })
+    const file = await storage!.get('candidate-photos/missing.jpg')
+
+    expect(file).toBeNull()
   })
 })
 

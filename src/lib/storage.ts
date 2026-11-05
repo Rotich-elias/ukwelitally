@@ -128,11 +128,14 @@ const localStorage: StorageBackend = {
  * variable, which is available when the Vercel Blob store is connected to
  * the project.
  */
-function createVercelBlobBackend(): StorageBackend | null {
+export function createVercelBlobBackend(
+  client?: { put: any; get: any }
+): StorageBackend | null {
   if (!process.env.BLOB_READ_WRITE_TOKEN) return null
 
-  // Imported lazily so the dependency is only required when it is used.
-  const { put, get } = require('@vercel/blob')
+  // Imported lazily so the dependency is only required when it is used. The
+  // client can be injected by tests.
+  const { put, get } = client || require('@vercel/blob')
 
   return {
     name: 'vercel-blob',
@@ -150,13 +153,29 @@ function createVercelBlobBackend(): StorageBackend | null {
     },
 
     async get(key: string) {
+      // `get` was changed in @vercel/blob v2: it now requires the blob's
+      // access level and returns a stream-based result
+      // ({ stream, blob, headers }) instead of a Blob with arrayBuffer().
+      // Omitting `access` makes every read throw, which is why uploaded
+      // photos were accepted but then never served.
       const result = await get(key, {
+        access: 'public',
         token: process.env.BLOB_READ_WRITE_TOKEN,
       })
       if (!result) return null
 
-      const data = Buffer.from(await result.arrayBuffer())
-      return { data, contentType: result.contentType || contentTypeFromKey(key) }
+      const data =
+        typeof (result as any).arrayBuffer === 'function'
+          ? // Older @vercel/blob versions returned a Blob-like object.
+            Buffer.from(await (result as any).arrayBuffer())
+          : Buffer.from(await new Response(result.stream).arrayBuffer())
+
+      const contentType =
+        result.blob?.contentType ||
+        (result as any).contentType ||
+        contentTypeFromKey(key)
+
+      return { data, contentType }
     },
   }
 }
