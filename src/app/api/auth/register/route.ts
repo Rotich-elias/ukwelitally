@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { query, queryOne } from '@/lib/db'
 import { hashPassword, normalizeEmail, normalizePhoneNumber, sanitizeUser, generateToken } from '@/lib/auth'
+import { authenticateRequest } from '@/lib/authenticate'
 import { registerUserSchema } from '@/lib/validation'
 import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
 import { User } from '@/types/database'
@@ -19,16 +20,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     // Verify the caller is an authenticated admin.
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Authentication required. Only administrators can create accounts.' },
-        { status: 401 }
-      )
-    }
-
-    const { verifyToken } = await import('@/lib/auth')
-    const payload = verifyToken(authHeader.substring(7))
+    const payload = await authenticateRequest(request)
     if (!payload) {
       return NextResponse.json(
         { error: 'Invalid or expired token' },
@@ -73,7 +65,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Validation failed',
-          details: validationResult.error.errors,
+          details: validationResult.error.issues,
         },
         { status: 400 }
       )
@@ -125,6 +117,7 @@ export async function POST(request: NextRequest) {
       userId: result.id,
       email: result.email,
       role: result.role,
+      tokenVersion: 1,
     })
 
     // Audit log

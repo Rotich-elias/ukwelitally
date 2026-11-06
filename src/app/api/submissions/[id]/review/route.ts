@@ -70,13 +70,20 @@ async function handlePost(
     // fall inside their electoral scope. Without this check any authenticated
     // candidate could review a rival's submission (IDOR).
     if (user.role === 'candidate') {
-      const candidateProfile = await queryOne<{ id: number }>(
-        'SELECT id FROM candidates WHERE user_id = $1',
+      const candidateProfile = await queryOne<{ id: number; access_status: string }>(
+        'SELECT id, access_status FROM candidates WHERE user_id = $1',
         [user.userId]
       )
 
       if (!candidateProfile) {
         return NextResponse.json({ error: 'Candidate profile not found' }, { status: 404 })
+      }
+
+      if (candidateProfile.access_status !== 'active') {
+        return NextResponse.json(
+          { error: 'Your subscription is not active. Contact an administrator to restore access.' },
+          { status: 403 }
+        )
       }
 
       const inScope = await queryOne<{ allowed: boolean }>(
@@ -403,7 +410,7 @@ async function handlePost(
   } catch (error) {
     console.error('Error reviewing submission:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

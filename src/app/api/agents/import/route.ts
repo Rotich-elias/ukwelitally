@@ -275,7 +275,7 @@ async function handlePost(req: NextRequest) {
               `UPDATE users
                   SET full_name = $2, phone = $3, id_number = $4,
                       role = 'agent', verified = true, active = true,
-                      password_hash = $5
+                      password_hash = $5, token_version = token_version + 1
                 WHERE id = $1`,
               [existing.id, agent.full_name, normalizedPhone, agent.id_number, passwordHash]
             )
@@ -283,7 +283,8 @@ async function handlePost(req: NextRequest) {
             await client.query(
               `UPDATE users
                   SET full_name = $2, phone = $3, id_number = $4,
-                      role = 'agent', verified = true, active = true
+                      role = 'agent', verified = true, active = true,
+                      token_version = token_version + 1
                 WHERE id = $1`,
               [existing.id, agent.full_name, normalizedPhone, agent.id_number]
             )
@@ -366,7 +367,7 @@ async function handlePost(req: NextRequest) {
   } catch (error) {
     console.error('Error importing agents:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

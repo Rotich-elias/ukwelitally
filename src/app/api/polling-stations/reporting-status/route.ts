@@ -206,7 +206,7 @@ async function handleGet(req: NextRequest) {
   } catch (error) {
     console.error('Error fetching polling stations reporting status:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryOne } from '@/lib/db'
-import jwt from 'jsonwebtoken'
-import { getJwtSecret } from '@/lib/jwtSecret'
-
-const JWT_SECRET = getJwtSecret()
+import { authenticateRequest } from '@/lib/authenticate'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,13 +10,10 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    const decoded = await authenticateRequest(request)
+    if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
 
     if (decoded.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })

@@ -33,6 +33,13 @@ async function handleGet(req: NextRequest) {
       return NextResponse.json({ error: 'Candidate profile not found' }, { status: 404 })
     }
 
+    if (candidate.access_status !== 'active') {
+      return NextResponse.json(
+        { error: 'Your subscription is not active. Contact an administrator to restore access.' },
+        { status: 403 }
+      )
+    }
+
     const { searchParams } = new URL(req.url)
     const statusParam = searchParams.get('status') as ReviewStatus | 'all' | null
     const reviewStatus: ReviewStatus | 'all' =

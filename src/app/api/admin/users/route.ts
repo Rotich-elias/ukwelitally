@@ -1,24 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
 import { hashPassword, isStrongPassword, normalizeEmail, normalizePhoneNumber } from '@/lib/auth'
-import jwt from 'jsonwebtoken'
-import { getJwtSecret } from '@/lib/jwtSecret'
+import { authenticateRequest } from '@/lib/authenticate'
 import { validateCandidateLocation } from '@/lib/candidateLocation'
-
-const JWT_SECRET = getJwtSecret()
 
 export const dynamic = 'force-dynamic'
 
 // GET - List all users (admin only)
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    const decoded = await authenticateRequest(request)
+    if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
 
     if (decoded.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })
@@ -68,13 +62,10 @@ export async function GET(request: NextRequest) {
 // POST - Create new user (admin only)
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    const decoded = await authenticateRequest(request)
+    if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
 
     if (decoded.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })
@@ -201,13 +192,10 @@ export async function POST(request: NextRequest) {
 // PUT - Update user (admin only)
 export async function PUT(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    const decoded = await authenticateRequest(request)
+    if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
 
     if (decoded.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })
@@ -334,12 +322,17 @@ export async function PUT(request: NextRequest) {
       updates.push(`active = $${paramIndex}`)
       params.push(active)
       paramIndex++
+      // Invalidate every existing session for this account, including one
+      // that is being reactivated later.
+      updates.push('token_version = token_version + 1')
     }
 
     if (passwordHash) {
       updates.push(`password_hash = $${paramIndex}`)
       params.push(passwordHash)
       paramIndex++
+      // A password reset must revoke tokens issued with the old password.
+      updates.push('token_version = token_version + 1')
     }
 
     if (updates.length === 0 && !candidateAccessChanged) {
@@ -386,13 +379,10 @@ export async function PUT(request: NextRequest) {
 // DELETE - Delete user (admin only)
 export async function DELETE(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    const decoded = await authenticateRequest(request)
+    if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
 
     if (decoded.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })

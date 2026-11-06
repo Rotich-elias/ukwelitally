@@ -336,6 +336,39 @@ export async function getObserverSubmissionsForReview(params: {
 /*                              Review actions                                 */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Does the candidate own the electoral scope of a polling station for a race?
+ *
+ * A candidate may only act on results for the race they are contesting and in
+ * the area they are contesting it in. The check also requires the purchased
+ * access entitlement to be active, so a suspended or revoked candidate cannot
+ * keep acting on the data through an API call.
+ */
+async function candidateOwnsStationScope(
+  client: PoolClient,
+  candidateId: number,
+  pollingStationId: number,
+  position: string
+): Promise<boolean> {
+  const owned = await client.query(
+    `SELECT 1 FROM candidates c
+       JOIN polling_stations ps ON ps.id = $1
+      WHERE c.id = $2
+        AND c.position = $3
+        AND c.access_status = 'active'
+        AND (
+          (c.position = 'president')
+          OR (c.position IN ('governor', 'senator', 'women_rep') AND c.county_id = ps.county_id)
+          OR (c.position = 'mp' AND c.constituency_id = ps.constituency_id)
+          OR (c.position = 'mca' AND c.ward_id = ps.ward_id)
+        )
+      LIMIT 1`,
+    [pollingStationId, candidateId, position]
+  )
+
+  return owned.rows.length > 0
+}
+
 export interface FallbackActionResult {
   ok: boolean
   code?: FallbackRejectionCode | 'not_found' | 'conflict'
@@ -437,19 +470,11 @@ export async function approveObserverFallback(params: {
       [submission.user_id, submission.polling_station_id]
     )
 
-    const ownsScope = await client.query(
-      `SELECT 1 FROM candidates c
-         JOIN polling_stations ps ON ps.id = $1
-        WHERE c.id = $2
-          AND c.position = $3
-          AND (
-            (c.position = 'president')
-            OR (c.position IN ('governor', 'senator', 'women_rep') AND c.county_id = ps.county_id)
-            OR (c.position = 'mp' AND c.constituency_id = ps.constituency_id)
-            OR (c.position = 'mca' AND c.ward_id = ps.ward_id)
-          )
-        LIMIT 1`,
-      [submission.polling_station_id, params.candidateId, position]
+    const ownsScope = await candidateOwnsStationScope(
+      client,
+      params.candidateId,
+      submission.polling_station_id,
+      position
     )
 
     const eligibility = evaluateFallbackEligibility({
@@ -461,7 +486,7 @@ export async function approveObserverFallback(params: {
         polling_station_id: submission.polling_station_id,
         user_id: submission.user_id,
       },
-      candidateOwnsScope: ownsScope.rows.length > 0,
+      candidateOwnsScope: ownsScope,
       observerAuthorized: observerAuthorized.rows.length > 0,
       agentSubmission: agentSubmission.rows[0] ?? null,
       selectedResult: selectedRow.rows[0] ?? null,
@@ -601,11 +626,11 @@ export async function rejectObserverFallback(params: {
       }
     }
 
-    if (submission.review_status === 'rejected_fallback') {
+    if (submission.review_status !== 'pending_review') {
       return {
         ok: false as const,
         code: 'already_reviewed' as const,
-        message: 'This submission was already rejected.',
+        message: 'This submission has already been reviewed.',
       }
     }
 
@@ -613,17 +638,22 @@ export async function rejectObserverFallback(params: {
       'SELECT position FROM results WHERE submission_id = $1 LIMIT 1',
       [submission.id]
     )
-    const position = resultRow.rows[0]?.position ?? null
+    const position = resultRow.rows[0]?.position
+    if (!position) {
+      return {
+        ok: false as const,
+        code: 'submission_invalid' as const,
+        message: 'This submission has no result figures attached.',
+      }
+    }
 
-    const ownsScope = await client.query(
-      `SELECT 1 FROM candidates c
-         JOIN polling_stations ps ON ps.id = $1
-        WHERE c.id = $2
-          AND c.position = $3
-        LIMIT 1`,
-      [submission.polling_station_id, params.candidateId, position]
+    const ownsScope = await candidateOwnsStationScope(
+      client,
+      params.candidateId,
+      submission.polling_station_id,
+      position
     )
-    if (ownsScope.rows.length === 0) {
+    if (!ownsScope) {
       return {
         ok: false as const,
         code: 'not_in_scope' as const,
@@ -827,6 +857,23 @@ export async function resolveSubmissionConflict(params: {
         ok: false as const,
         message: 'This conflict has already been resolved.',
         code: 'already_resolved',
+      }
+    }
+
+    // A candidate may only resolve conflicts in the race and electoral area
+    // they own. Without this check any candidate could resolve (and thereby
+    // rewrite the selected result of) another candidate's station.
+    const ownsScope = await candidateOwnsStationScope(
+      client,
+      params.candidateId,
+      conflict.polling_station_id,
+      conflict.position
+    )
+    if (!ownsScope) {
+      return {
+        ok: false as const,
+        message: 'This conflict is outside the electoral area you are responsible for.',
+        code: 'not_in_scope',
       }
     }
 

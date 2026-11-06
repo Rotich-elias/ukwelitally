@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken, extractTokenFromHeader } from '@/lib/auth'
+import { authenticateRequest } from '@/lib/authenticate'
 import { UserRole } from '@/types/database'
 
 // Extend NextRequest to include user info
@@ -16,20 +16,12 @@ export function withAuth(
   handler: (req: AuthenticatedRequest, context?: any) => Promise<NextResponse>
 ) {
   return async (req: NextRequest, context?: any) => {
-    // Extract token from Authorization header
-    const authHeader = req.headers.get('authorization')
-    const token = extractTokenFromHeader(authHeader)
+    // Verify the signature, then re-check the account in the database. The
+    // second check rejects deactivated users, changed roles, and tokens that
+    // were issued before a password reset.
+    const user = await authenticateRequest(req)
 
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
-
-    // Verify token
-    const payload = verifyToken(token)
-    if (!payload) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Invalid or expired token' },
         { status: 401 }
@@ -38,7 +30,11 @@ export function withAuth(
 
     // Add user info to request
     const authReq = req as AuthenticatedRequest
-    authReq.user = payload
+    authReq.user = {
+      userId: user.userId,
+      email: user.email,
+      role: user.role,
+    }
 
     // Call the handler with context (for route params)
     return handler(authReq, context)

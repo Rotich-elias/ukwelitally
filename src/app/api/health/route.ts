@@ -1,18 +1,21 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { readdirSync } from 'fs'
 import path from 'path'
+import { authenticateRequest } from '@/lib/authenticate'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Unauthenticated health check.
+ * Health check.
  *
- * Reports database connectivity and whether every migration has been applied.
- * A deploy that is missing a migration returns status 503 so monitoring and
- * the team find out before users hit a schema error on a specific screen.
+ * Reports whether the database is reachable and whether every migration has
+ * been applied. The summary is public so monitoring can poll it, but the
+ * detailed checks (including database error messages and the names of
+ * pending migrations) contain deployment internals and are only returned to
+ * an authenticated administrator.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   const checks: Record<string, unknown> = {}
   let healthy = true
 
@@ -54,8 +57,14 @@ export async function GET() {
     checks.migrations_error = error instanceof Error ? error.message : 'unknown'
   }
 
-  return NextResponse.json(
-    { status: healthy ? 'ok' : 'degraded', checks, timestamp: new Date().toISOString() },
-    { status: healthy ? 200 : 503 }
-  )
+  const status = healthy ? 'ok' : 'degraded'
+  const timestamp = new Date().toISOString()
+  const statusCode = healthy ? 200 : 503
+
+  const user = await authenticateRequest(request)
+  if (user?.role === 'admin') {
+    return NextResponse.json({ status, checks, timestamp }, { status: statusCode })
+  }
+
+  return NextResponse.json({ status, timestamp }, { status: statusCode })
 }

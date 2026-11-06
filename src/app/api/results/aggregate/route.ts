@@ -3,10 +3,7 @@ import { queryMany, queryOne } from '@/lib/db'
 import { getCandidateRestrictions } from '@/lib/candidate-restrictions'
 import { buildCandidateBreakdown, computeReportingPercentage, computeTurnout } from '@/lib/aggregation'
 import { getFileUrl } from '@/lib/storage'
-import jwt from 'jsonwebtoken'
-import { getJwtSecret } from '@/lib/jwtSecret'
-
-const JWT_SECRET = getJwtSecret()
+import { authenticateRequest } from '@/lib/authenticate'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,31 +19,24 @@ export async function GET(req: NextRequest) {
     let userId: number | null = null
     let candidateRestrictions = null
 
-    const authHeader = req.headers.get('authorization')
-    if (authHeader?.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.substring(7)
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
-        userRole = decoded.role
-        userId = decoded.userId
+    const decoded = await authenticateRequest(req)
+    if (decoded) {
+      userRole = decoded.role
+      userId = decoded.userId
 
-        // Force volunteers (observers) to only view presidential results
-        if (userRole === 'observer') {
-          position = 'president'
-        }
+      // Force volunteers (observers) to only view presidential results
+      if (userRole === 'observer') {
+        position = 'president'
+      }
 
-        // If user is a candidate, get their location restrictions. A
-        // candidate may only ever see their own race, so the position is
-        // taken from the stored profile instead of the query string.
-        if (userRole === 'candidate') {
-          candidateRestrictions = await getCandidateRestrictions(userId)
-          if (candidateRestrictions) {
-            position = candidateRestrictions.position
-          }
+      // If user is a candidate, get their location restrictions. A
+      // candidate may only ever see their own race, so the position is
+      // taken from the stored profile instead of the query string.
+      if (userRole === 'candidate') {
+        candidateRestrictions = await getCandidateRestrictions(userId)
+        if (candidateRestrictions) {
+          position = candidateRestrictions.position
         }
-      } catch (error) {
-        // Invalid token, treat as public access
-        console.error('Invalid token:', error)
       }
     }
 

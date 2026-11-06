@@ -1,25 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
-import jwt from 'jsonwebtoken'
-import { getJwtSecret } from '@/lib/jwtSecret'
-
-const JWT_SECRET = getJwtSecret()
+import { authenticateRequest } from '@/lib/authenticate'
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // Verify authentication
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    // Verify authentication and admin role
+    const decoded = await authenticateRequest(request)
+    if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
-
-    // Verify admin role
     if (decoded.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })
     }
@@ -168,9 +161,8 @@ export async function PUT(
     })
   } catch (error) {
     console.error('Payment update error:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update payment information'
     return NextResponse.json(
-      { error: errorMessage },
+      { error: 'Failed to update payment information' },
       { status: 500 }
     )
   }
@@ -181,16 +173,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Verify authentication
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    // Verify authentication and admin role
+    const decoded = await authenticateRequest(request)
+    if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
-
-    // Verify admin role
     if (decoded.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })
     }

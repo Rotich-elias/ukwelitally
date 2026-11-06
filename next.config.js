@@ -38,7 +38,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      "connect-src 'self' https:",
+      "connect-src 'self'",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -49,13 +49,11 @@ const securityHeaders = [
 
 const nextConfig = {
   images: {
-    domains: ['localhost'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+    // Photos are served by the application itself (evidence through the
+    // authorized route, profile photos from the storage host). The built-in
+    // optimizer is not used, and leaving remote optimization enabled with a
+    // wildcard host pattern would turn the deployment into an image proxy.
+    unoptimized: true,
   },
   experimental: {
     serverActions: {

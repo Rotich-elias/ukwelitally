@@ -33,6 +33,13 @@ async function handlePost(req: NextRequest, context?: any) {
       return NextResponse.json({ error: 'Candidate profile not found' }, { status: 404 })
     }
 
+    if (candidate.access_status !== 'active') {
+      return NextResponse.json(
+        { error: 'Your subscription is not active. Contact an administrator to restore access.' },
+        { status: 403 }
+      )
+    }
+
     const params = await Promise.resolve(context?.params ?? {})
     const conflictId = parseInt(params?.id)
     if (!conflictId || conflictId <= 0) {
@@ -78,7 +85,7 @@ async function handlePost(req: NextRequest, context?: any) {
   } catch (error) {
     console.error('Error resolving submission conflict:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryMany, transaction } from '@/lib/db'
-import jwt from 'jsonwebtoken'
-import { getJwtSecret } from '@/lib/jwtSecret'
-
-const JWT_SECRET = getJwtSecret()
+import { authenticateRequest } from '@/lib/authenticate'
 
 export const dynamic = 'force-dynamic'
 
 // POST /api/admin/users/bulk-update - Bulk activate/deactivate users
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    const decoded = await authenticateRequest(request)
+    if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
 
     if (decoded.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })
@@ -53,7 +47,12 @@ export async function POST(request: NextRequest) {
           }
 
           const result = await client.query(
-            'UPDATE users SET active = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, email, full_name, active',
+            `UPDATE users
+                SET active = $1,
+                    token_version = token_version + 1,
+                    updated_at = CURRENT_TIMESTAMP
+              WHERE id = $2
+              RETURNING id, email, full_name, active`,
             [newActiveStatus, userId]
           )
 

@@ -3,23 +3,17 @@ import { query, queryOne } from '@/lib/db'
 import { hashPassword, normalizeEmail, normalizePhoneNumber } from '@/lib/auth'
 import { getAssignmentScope, isStationInScope, describeScope } from '@/lib/agentScope'
 import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
-import jwt from 'jsonwebtoken'
-import { getJwtSecret } from '@/lib/jwtSecret'
-
-const JWT_SECRET = getJwtSecret()
+import { authenticateRequest } from '@/lib/authenticate'
 
 export const dynamic = 'force-dynamic'
 
 // GET - List candidate's agents
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    const decoded = await authenticateRequest(request)
+    if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
 
     if (decoded.role !== 'candidate') {
       return NextResponse.json({ error: 'Forbidden - Candidate access only' }, { status: 403 })
@@ -76,13 +70,10 @@ export async function GET(request: NextRequest) {
 // POST - Create new agent
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    const decoded = await authenticateRequest(request)
+    if (!decoded) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const token = authHeader.substring(7)
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
 
     if (decoded.role !== 'candidate') {
       return NextResponse.json({ error: 'Forbidden - Candidate access only' }, { status: 403 })
@@ -104,13 +95,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Get candidate profile
-    const candidate = await queryOne(
-      'SELECT id FROM candidates WHERE user_id = $1',
+    const candidate = await queryOne<{ id: number; access_status: string }>(
+      'SELECT id, access_status FROM candidates WHERE user_id = $1',
       [decoded.userId]
     )
 
     if (!candidate) {
       return NextResponse.json({ error: 'Candidate profile not found' }, { status: 404 })
+    }
+
+    if (candidate.access_status !== 'active') {
+      return NextResponse.json(
+        { error: 'Your subscription is not active. Contact an administrator to restore access.' },
+        { status: 403 }
+      )
     }
 
     const body = await request.json()

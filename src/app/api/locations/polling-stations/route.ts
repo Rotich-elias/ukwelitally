@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { getCandidateRestrictions } from '@/lib/candidate-restrictions'
-import jwt from 'jsonwebtoken'
-import { getJwtSecret } from '@/lib/jwtSecret'
-
-const JWT_SECRET = getJwtSecret()
+import { authenticateRequest } from '@/lib/authenticate'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,40 +13,31 @@ export async function GET(request: NextRequest) {
     let countyId = searchParams.get('county_id')
 
     // Check if user is a candidate and apply location restrictions
-    const authHeader = request.headers.get('authorization')
-    if (authHeader?.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.substring(7)
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
+    const decoded = await authenticateRequest(request)
+    if (decoded?.role === 'candidate') {
+      const restrictions = await getCandidateRestrictions(decoded.userId)
 
-        if (decoded.role === 'candidate') {
-          const restrictions = await getCandidateRestrictions(decoded.userId)
-
-          if (restrictions && restrictions.position !== 'president') {
-            // Override query params with candidate's restrictions
-            switch (restrictions.position) {
-              case 'mca':
-                wardId = restrictions.ward_id?.toString() || null
-                constituencyId = null
-                countyId = null
-                break
-              case 'mp':
-                constituencyId = restrictions.constituency_id?.toString() || null
-                wardId = null
-                countyId = null
-                break
-              case 'governor':
-              case 'senator':
-                countyId = restrictions.county_id?.toString() || null
-                constituencyId = null
-                wardId = null
-                break
-            }
-          }
+      if (restrictions && restrictions.position !== 'president') {
+        // Override query params with candidate's restrictions
+        switch (restrictions.position) {
+          case 'mca':
+            wardId = restrictions.ward_id?.toString() || null
+            constituencyId = null
+            countyId = null
+            break
+          case 'mp':
+            constituencyId = restrictions.constituency_id?.toString() || null
+            wardId = null
+            countyId = null
+            break
+          case 'governor':
+          case 'senator':
+          case 'women_rep':
+            countyId = restrictions.county_id?.toString() || null
+            constituencyId = null
+            wardId = null
+            break
         }
-      } catch (error) {
-        // Invalid token, continue without restrictions
-        console.error('Invalid token:', error)
       }
     }
 

@@ -32,6 +32,8 @@ export interface User {
   id_number: string
   verified: boolean
   active: boolean
+  /** Incremented when the account is deactivated, demoted, or the password changes. */
+  token_version?: number
   created_at: Date
   updated_at: Date
 }
@@ -379,4 +381,9 @@ export interface JWTPayload {
   userId: number
   email: string
   role: UserRole
+  /**
+   * The user's token_version at the time the token was issued. Missing on
+   * tokens issued before migration 026; those are treated as version 1.
+   */
+  tokenVersion?: number
 }

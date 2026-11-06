@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Validation failed',
-          details: validationResult.error.errors,
+          details: validationResult.error.issues,
         },
         { status: 400 }
       )
@@ -39,6 +39,27 @@ export async function POST(request: NextRequest) {
     // a handful of mistakes on one account lock every account on the machine
     // out for 15 minutes.
     const ip = getClientIp(request)
+
+    // First a per-address cap. The per-account bucket below can be evaded by
+    // trying a different email on every request; this one cannot.
+    const ipLimit = checkRateLimit(
+      rateLimitKey('login-ip', ip),
+      RATE_LIMITS.loginIp.limit,
+      RATE_LIMITS.loginIp.windowMs
+    )
+    if (!ipLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Too many login attempts. Please try again later.',
+          retryAfterSeconds: ipLimit.retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(ipLimit.retryAfterSeconds) },
+        }
+      )
+    }
+
     const limit = checkRateLimit(
       rateLimitKey('login', `${ip}:${email}`),
       RATE_LIMITS.login.limit,
@@ -94,6 +115,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       email: user.email,
       role: user.role,
+      tokenVersion: user.token_version ?? 1,
     })
 
     // Audit log

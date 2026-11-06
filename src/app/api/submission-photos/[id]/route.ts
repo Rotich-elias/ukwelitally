@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryOne } from '@/lib/db'
 import { getStorage, contentTypeFromKey } from '@/lib/storage'
-import { verifyToken } from '@/lib/auth'
+import { authenticateRequest } from '@/lib/authenticate'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +26,10 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid photo id' }, { status: 400 })
     }
 
-    const user = await authenticate(req)
+    // Evidence images are rendered by <img> tags, which cannot send an
+    // Authorization header, so this read-only endpoint also accepts the
+    // httpOnly session cookie.
+    const user = await authenticateRequest(req, { allowCookie: true })
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -129,23 +132,4 @@ export async function GET(
   }
 }
 
-/**
- * Resolve the user from the bearer token or the session cookie.
- */
-async function authenticate(
-  req: NextRequest
-): Promise<{ userId: number; role: string } | null> {
-  const authHeader = req.headers.get('authorization')
-  if (authHeader?.startsWith('Bearer ')) {
-    const payload = verifyToken(authHeader.substring(7))
-    if (payload) return { userId: payload.userId, role: payload.role }
-  }
 
-  const cookie = req.cookies.get('ukwelitally_session')?.value
-  if (cookie) {
-    const payload = verifyToken(cookie)
-    if (payload) return { userId: payload.userId, role: payload.role }
-  }
-
-  return null
-}

@@ -44,6 +44,7 @@ async function handleGet(req: NextRequest) {
       scopeClause = ` AND EXISTS (
         SELECT 1 FROM candidates c2
         WHERE c2.user_id = $${params.length}
+          AND c2.access_status = 'active'
           AND (
             s.candidate_id = c2.id
             OR s.scope_candidate_id = c2.id
@@ -127,7 +128,7 @@ async function handleGet(req: NextRequest) {
   } catch (error) {
     console.error('Error fetching review queue:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

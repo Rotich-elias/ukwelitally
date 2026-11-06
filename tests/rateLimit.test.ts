@@ -56,8 +56,21 @@ describe('getClientIp', () => {
     headers: { get: (name: string) => headers[name.toLowerCase()] ?? null },
   })
 
-  it('uses the first entry of x-forwarded-for', () => {
-    expect(getClientIp(req({ 'x-forwarded-for': '203.0.113.5, 10.0.0.1' }))).toBe('203.0.113.5')
+  it('uses the right-most entry of x-forwarded-for', () => {
+    // The left-most entry is client supplied and must not be trusted.
+    expect(getClientIp(req({ 'x-forwarded-for': '203.0.113.5, 10.0.0.1' }))).toBe('10.0.0.1')
+  })
+
+  it('prefers x-real-ip over x-forwarded-for', () => {
+    expect(
+      getClientIp(
+        req({ 'x-real-ip': '198.51.100.7', 'x-forwarded-for': '203.0.113.5, 10.0.0.1' })
+      )
+    ).toBe('198.51.100.7')
+  })
+
+  it('strips a port from an address', () => {
+    expect(getClientIp(req({ 'x-forwarded-for': '203.0.113.5:443' }))).toBe('203.0.113.5')
   })
 
   it('falls back to x-real-ip', () => {

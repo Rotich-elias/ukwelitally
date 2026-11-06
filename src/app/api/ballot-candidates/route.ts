@@ -239,7 +239,7 @@ async function handlePost(req: NextRequest) {
   } catch (error) {
     console.error('Error creating ballot candidate:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
@@ -330,7 +330,7 @@ async function handlePut(req: NextRequest) {
   } catch (error) {
     console.error('Error updating ballot candidate:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
@@ -401,7 +401,7 @@ async function handleDelete(req: NextRequest) {
   } catch (error) {
     console.error('Error deleting ballot candidate:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
