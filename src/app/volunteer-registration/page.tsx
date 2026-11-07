@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import LocationSelector from '@/components/LocationSelector'
 
@@ -82,15 +83,15 @@ export default function VolunteerRegistrationPage() {
       {/* Public Navigation Header */}
       <nav className="glass-effect border-b border-dark-700/50 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <a href="/" className="cursor-pointer">
+          <Link href="/" className="cursor-pointer">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               UkweliTally
             </h1>
-          </a>
+          </Link>
           <div className="space-x-4">
-            <a href="/" className="text-dark-300 hover:text-blue-400 transition-colors">
+            <Link href="/" className="text-dark-300 hover:text-blue-400 transition-colors">
               Home
-            </a>
+            </Link>
             <a 
               href="/presidential-results" 
               className="text-dark-300 hover:text-blue-400 transition-colors"

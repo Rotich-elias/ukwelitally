@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import InstallAppButton from '@/components/InstallAppButton'
 
 export default function Home() {
@@ -11,7 +12,7 @@ export default function Home() {
       {/* Header */}
       <nav className="glass-effect border-b border-dark-700/50 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <a href="/" className="cursor-pointer flex items-center gap-2">
+          <Link href="/" className="cursor-pointer flex items-center gap-2">
             <img
               src="/icons/icon-192x192.png"
               alt="UkweliTally logo"
@@ -22,11 +23,11 @@ export default function Home() {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               UkweliTally
             </h1>
-          </a>
+          </Link>
           <div className="space-x-4">
-            <a href="/login" className="text-dark-300 hover:text-blue-400 transition-colors">
+            <Link href="/login" className="text-dark-300 hover:text-blue-400 transition-colors">
               Login
-            </a>
+            </Link>
             <a 
               href="/presidential-results" 
               className="text-dark-300 hover:text-blue-400 transition-colors"

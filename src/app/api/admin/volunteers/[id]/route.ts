@@ -3,10 +3,11 @@ import { query, queryOne } from '@/lib/db'
 import { withRole } from '@/middleware/auth'
 
 // DELETE /api/admin/volunteers/[id] - Delete a volunteer registration
-async function handleDelete(req: NextRequest, { params }: { params: { id: string } }) {
+async function handleDelete(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = (req as any).user
-    const volunteerId = parseInt(params.id)
+    const { id } = await params
+    const volunteerId = parseInt(id)
 
     // Check if volunteer exists
     const volunteer = await queryOne(

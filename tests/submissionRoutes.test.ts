@@ -138,6 +138,25 @@ function baseHandlers(overrides: QueryHandler[] = []) {
   handlers.length = 0
   // Overrides are registered first so they take precedence.
   handlers.push(...overrides)
+  // The authentication helper re-checks the account in the database.
+  handlers.push({
+    match: /SELECT id, email, role, active, token_version[\s\S]*FROM users/,
+    handler: (_text, params) => {
+      const user = [CANDIDATE_USER, AGENT_USER, OBSERVER_USER].find(
+        (candidate) => candidate.id === params?.[0]
+      )
+      if (!user) return []
+      return [
+        {
+          id: user.id,
+          email: `${user.role}@test.local`,
+          role: user.role,
+          active: true,
+          token_version: 1,
+        },
+      ]
+    },
+  })
   handlers.push(
     {
       match: /FROM candidates c\s+JOIN users u ON u\.id = c\.user_id/,

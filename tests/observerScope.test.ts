@@ -145,6 +145,24 @@ function baseHandlers(overrides: QueryHandler[] = []) {
   handlers.push(...overrides)
   handlers.push(
     {
+      match: /SELECT id, email, role, active, token_version[\s\S]*FROM users/,
+      handler: (_text, params) => {
+        const user = [OBSERVER_USER, CANDIDATE_USER, OTHER_CANDIDATE_USER].find(
+          (candidate) => candidate.id === params?.[0]
+        )
+        if (!user) return []
+        return [
+          {
+            id: user.id,
+            email: `${user.role}${user.id}@test.local`,
+            role: user.role,
+            active: true,
+            token_version: 1,
+          },
+        ]
+      },
+    },
+    {
       // The observer's station assignment.
       match: /FROM observer_assignments\s+WHERE user_id = \$1 AND status = 'active'/,
       handler: () => [

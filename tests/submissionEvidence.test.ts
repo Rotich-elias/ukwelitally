@@ -117,6 +117,29 @@ function baseHandlers(overrides: QueryHandler[] = []) {
   handlers.length = 0
   handlers.push(...overrides)
   handlers.push({
+    match: /SELECT id, email, role, active, token_version[\s\S]*FROM users/,
+    handler: (_text, params) => {
+      const user = [
+        SUBMITTER,
+        CANDIDATE_OWNER,
+        SCOPE_CANDIDATE_OWNER,
+        OTHER_CANDIDATE,
+        REVIEWING_CANDIDATE,
+        ADMIN,
+      ].find((candidate) => candidate.id === params?.[0])
+      if (!user) return []
+      return [
+        {
+          id: user.id,
+          email: `${user.role}${user.id}@test.local`,
+          role: user.role,
+          active: true,
+          token_version: 1,
+        },
+      ]
+    },
+  })
+  handlers.push({
     match: /FROM submission_photos sp/,
     handler: () => [
       {
@@ -145,7 +168,7 @@ describe('the submission evidence route', () => {
   it('serves the evidence to the submitter', async () => {
     const response = await evidenceGet(
       request('/api/submission-photos/30', SUBMITTER) as any,
-      { params: { id: '30' } }
+      { params: Promise.resolve({ id: '30' }) }
     )
 
     expect(response.status).toBe(200)
@@ -155,7 +178,7 @@ describe('the submission evidence route', () => {
   it('serves the evidence to the candidate of the team', async () => {
     const response = await evidenceGet(
       request('/api/submission-photos/30', CANDIDATE_OWNER) as any,
-      { params: { id: '30' } }
+      { params: Promise.resolve({ id: '30' }) }
     )
 
     expect(response.status).toBe(200)
@@ -164,7 +187,7 @@ describe('the submission evidence route', () => {
   it('serves the evidence to an administrator', async () => {
     const response = await evidenceGet(
       request('/api/submission-photos/30', ADMIN) as any,
-      { params: { id: '30' } }
+      { params: Promise.resolve({ id: '30' }) }
     )
 
     expect(response.status).toBe(200)
@@ -191,7 +214,7 @@ describe('the submission evidence route', () => {
 
     const response = await evidenceGet(
       request('/api/submission-photos/30', SCOPE_CANDIDATE_OWNER) as any,
-      { params: { id: '30' } }
+      { params: Promise.resolve({ id: '30' }) }
     )
 
     expect(response.status).toBe(200)
@@ -207,7 +230,7 @@ describe('the submission evidence route', () => {
 
     const response = await evidenceGet(
       request('/api/submission-photos/30', REVIEWING_CANDIDATE) as any,
-      { params: { id: '30' } }
+      { params: Promise.resolve({ id: '30' }) }
     )
 
     expect(response.status).toBe(200)
@@ -216,7 +239,7 @@ describe('the submission evidence route', () => {
   it('refuses a candidate of another team', async () => {
     const response = await evidenceGet(
       request('/api/submission-photos/30', OTHER_CANDIDATE) as any,
-      { params: { id: '30' } }
+      { params: Promise.resolve({ id: '30' }) }
     )
 
     expect(response.status).toBe(403)
@@ -225,7 +248,7 @@ describe('the submission evidence route', () => {
   it('refuses an anonymous request', async () => {
     const response = await evidenceGet(
       request('/api/submission-photos/30') as any,
-      { params: { id: '30' } }
+      { params: Promise.resolve({ id: '30' }) }
     )
 
     expect(response.status).toBe(401)
@@ -241,7 +264,7 @@ describe('the submission evidence route', () => {
 
     const response = await evidenceGet(
       request('/api/submission-photos/999', CANDIDATE_OWNER) as any,
-      { params: { id: '999' } }
+      { params: Promise.resolve({ id: '999' }) }
     )
 
     expect(response.status).toBe(404)
@@ -254,7 +277,7 @@ describe('the submission evidence route', () => {
 
     const response = await evidenceGet(
       request('/api/submission-photos/30', CANDIDATE_OWNER) as any,
-      { params: { id: '30' } }
+      { params: Promise.resolve({ id: '30' }) }
     )
     const body = await response.json()
 
@@ -265,7 +288,7 @@ describe('the submission evidence route', () => {
   it('rejects an invalid photo id', async () => {
     const response = await evidenceGet(
       request('/api/submission-photos/abc', CANDIDATE_OWNER) as any,
-      { params: { id: 'abc' } }
+      { params: Promise.resolve({ id: 'abc' }) }
     )
 
     expect(response.status).toBe(400)
@@ -284,7 +307,7 @@ describe('the public upload route', () => {
   it('serves a candidate photo', async () => {
     const response = await uploadsGet(
       request('/api/uploads/candidate-photos/photo.png') as any,
-      { params: { path: ['candidate-photos', 'photo.png'] } }
+      { params: Promise.resolve({ path: ['candidate-photos', 'photo.png'] }) }
     )
 
     expect(response.status).toBe(200)
@@ -293,7 +316,7 @@ describe('the public upload route', () => {
   it('does not serve submission evidence', async () => {
     const response = await uploadsGet(
       request('/api/uploads/submission-125/photo.png') as any,
-      { params: { path: ['submission-125', 'photo.png'] } }
+      { params: Promise.resolve({ path: ['submission-125', 'photo.png'] }) }
     )
 
     // The answer is a 404 so the route does not confirm which files exist.
@@ -303,7 +326,7 @@ describe('the public upload route', () => {
   it('refuses a path traversal', async () => {
     const response = await uploadsGet(
       request('/api/uploads/..%2F..%2Fetc%2Fpasswd') as any,
-      { params: { path: ['..', '..', 'etc', 'passwd'] } }
+      { params: Promise.resolve({ path: ['..', '..', 'etc', 'passwd'] }) }
     )
 
     expect(response.status).toBe(400)

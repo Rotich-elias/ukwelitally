@@ -114,6 +114,23 @@ function queriesMatching(pattern: RegExp) {
 beforeEach(() => {
   handlers.length = 0
   executed.length = 0
+  // The authentication helper re-checks the account in the database.
+  handlers.push({
+    match: /SELECT id, email, role, active, token_version[\s\S]*FROM users/,
+    handler: (_text, params) => {
+      const user = [ADMIN, CANDIDATE].find((candidate) => candidate.id === params?.[0])
+      if (!user) return []
+      return [
+        {
+          id: user.id,
+          email: `${user.role}${user.id}@test.local`,
+          role: user.role,
+          active: true,
+          token_version: 1,
+        },
+      ]
+    },
+  })
 })
 
 describe('GET /api/results/aggregate', () => {

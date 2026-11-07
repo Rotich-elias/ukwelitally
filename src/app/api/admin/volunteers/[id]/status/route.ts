@@ -5,10 +5,11 @@ import { withRole } from '@/middleware/auth'
 import { hashPassword } from '@/lib/auth'
 
 // PUT /api/admin/volunteers/[id]/status - Update volunteer status
-async function handlePut(req: NextRequest, { params }: { params: { id: string } }) {
+async function handlePut(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = (req as any).user
-    const volunteerId = parseInt(params.id)
+    const { id } = await params
+    const volunteerId = parseInt(id)
     const body = await req.json()
     const { status, notes } = body
 

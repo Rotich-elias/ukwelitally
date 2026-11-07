@@ -10,11 +10,12 @@ export const dynamic = 'force-dynamic'
 // /api/submission-photos/:id, which checks who is asking.
 export async function GET(
   req: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
+    const { path: segments } = await params
     // Join the path segments
-    const filePath = params.path.join('/')
+    const filePath = segments.join('/')
 
     // Security check: prevent directory traversal
     if (filePath.includes('..') || filePath.includes('~')) {

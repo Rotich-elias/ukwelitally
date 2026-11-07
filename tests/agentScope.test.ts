@@ -175,12 +175,47 @@ function baseHandlers(overrides: QueryHandler[] = []) {
   handlers.push(...overrides)
   handlers.push(
     {
+      match: /SELECT id, email, role, active, token_version[\s\S]*FROM users/,
+      handler: (_text, params) => {
+        if (params?.[0] === CANDIDATE_USER.id) {
+          return [
+            {
+              id: CANDIDATE_USER.id,
+              email: 'candidate@test.local',
+              role: CANDIDATE_USER.role,
+              active: true,
+              token_version: 1,
+            },
+          ]
+        }
+        if (params?.[0] === 5) {
+          return [
+            {
+              id: 5,
+              email: 'agent@test.local',
+              role: 'agent',
+              active: true,
+              token_version: 1,
+            },
+          ]
+        }
+        return []
+      },
+    },
+    {
       // The candidate profile.
       match: /FROM candidates c\s+JOIN users u ON u\.id = c\.user_id/,
       handler: () => [CANDIDATES[candidatePosition]],
     },
     {
       // The candidate row the agent route looks up.
+      match: /SELECT id, access_status FROM candidates WHERE user_id = \$1/,
+      handler: () => [
+        { id: CANDIDATES[candidatePosition].id, access_status: 'active' },
+      ],
+    },
+    {
+      // The candidate row the other routes look up.
       match: /SELECT id FROM candidates WHERE user_id = \$1/,
       handler: () => [{ id: CANDIDATES[candidatePosition].id }],
     },

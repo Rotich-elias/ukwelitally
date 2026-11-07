@@ -4,7 +4,7 @@ import { authenticateRequest } from '@/lib/authenticate'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify authentication and admin role
@@ -17,7 +17,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })
     }
 
-    const userId = parseInt(params.id)
+    const { id } = await params
+    const userId = parseInt(id)
     if (isNaN(userId)) {
       return NextResponse.json(
         { error: 'Invalid user ID' },
@@ -170,7 +171,7 @@ export async function PUT(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify authentication and admin role
@@ -183,7 +184,8 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })
     }
 
-    const userId = parseInt(params.id)
+    const { id } = await params
+    const userId = parseInt(id)
     if (isNaN(userId)) {
       return NextResponse.json(
         { error: 'Invalid user ID' },

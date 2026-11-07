@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 // GET - Get user details by ID (admin only)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const decoded = await authenticateRequest(request)
@@ -19,7 +19,8 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden - Admin access only' }, { status: 403 })
     }
 
-    const userId = params.id
+    const { id } = await params
+    const userId = id
 
     // Get user with full details including candidate/agent profile
     const user = await queryOne(

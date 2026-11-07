@@ -137,6 +137,21 @@ function baseHandlers(overrides: QueryHandler[] = []) {
   handlers.push(...overrides)
   handlers.push(
     {
+      match: /SELECT id, email, role, active, token_version[\s\S]*FROM users/,
+      handler: (_text, params) => {
+        if (params?.[0] !== AGENT_USER.id) return []
+        return [
+          {
+            id: AGENT_USER.id,
+            email: 'agent@test.local',
+            role: AGENT_USER.role,
+            active: true,
+            token_version: 1,
+          },
+        ]
+      },
+    },
+    {
       match: /FROM agents a\s+JOIN candidates c ON c\.id = a\.candidate_id/,
       handler: () => [
         {

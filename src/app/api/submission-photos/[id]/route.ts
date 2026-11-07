@@ -18,10 +18,11 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const photoId = parseInt(params?.id)
+    const { id } = await params
+    const photoId = parseInt(id)
     if (!photoId || photoId <= 0) {
       return NextResponse.json({ error: 'Invalid photo id' }, { status: 400 })
     }

@@ -135,6 +135,22 @@ function baseHandlers(overrides: QueryHandler[] = []) {
   handlers.push(...overrides)
   handlers.push(
     {
+      match: /SELECT id, email, role, active, token_version[\s\S]*FROM users/,
+      handler: (_text, params) => {
+        const user = [ADMIN, CANDIDATE].find((candidate) => candidate.id === params?.[0])
+        if (!user) return []
+        return [
+          {
+            id: user.id,
+            email: `${user.role}${user.id}@test.local`,
+            role: user.role,
+            active: true,
+            token_version: 1,
+          },
+        ]
+      },
+    },
+    {
       match: /SELECT id, county_id FROM constituencies WHERE id = \$1/,
       handler: () => [{ id: 628, county_id: 201 }],
     },
@@ -766,6 +782,22 @@ let db: FakeDb
 beforeEach(() => {
   db = seedDb()
   handlers.length = 0
+  handlers.push({
+    match: /SELECT id, email, role, active, token_version[\s\S]*FROM users/,
+    handler: (_text, params) => {
+      const user = [ADMIN, CANDIDATE].find((candidate) => candidate.id === params?.[0])
+      if (!user) return []
+      return [
+        {
+          id: user.id,
+          email: `${user.role}${user.id}@test.local`,
+          role: user.role,
+          active: true,
+          token_version: 1,
+        },
+      ]
+    },
+  })
   handlers.push(importHandler(db))
   executed.length = 0
 })
