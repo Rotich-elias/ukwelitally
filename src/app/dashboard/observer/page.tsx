@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
+import PageHeader from '@/components/PageHeader'
 
 interface ObserverInfo {
   assignment_id: number
@@ -300,15 +301,30 @@ export default function ObserverDashboard() {
     <div className="min-h-screen bg-dark-950">
       <DashboardNav />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Election Observer</h1>
-          <p className="text-dark-300">
-            Welcome, {user?.full_name}. Submit alternative results for your assigned polling
-            station.
-          </p>
-        </div>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <PageHeader
+          eyebrow="Independent observation"
+          title="Election Observer"
+          description={`Welcome, ${user?.full_name || 'observer'}. Submit alternative results for your assigned polling station.`}
+          meta={
+            observerInfo ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="badge-success">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                  {observerInfo.station_name}
+                </span>
+                <span className="badge border-white/10 bg-white/[0.03] text-dark-300">
+                  <span className="text-dark-500">Code</span>
+                  <span className="font-mono text-dark-200">{observerInfo.station_code}</span>
+                </span>
+                <span className="badge border-white/10 bg-white/[0.03] text-dark-300">
+                  <span className="text-dark-500">Ward</span>
+                  <span className="text-dark-200">{observerInfo.ward_name}</span>
+                </span>
+              </div>
+            ) : undefined
+          }
+        />
 
         {/* Reporting window status */}
         {submissionWindow && (
@@ -368,7 +384,7 @@ export default function ObserverDashboard() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Form */}
           <div className="lg:col-span-2">
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <h2 className="text-xl font-semibold text-white mb-6">Submit Alternative Result</h2>
 
               {/* Race selector */}
@@ -380,7 +396,7 @@ export default function ObserverDashboard() {
                   value={position}
                   onChange={(e) => setPosition(e.target.value)}
                   disabled={availablePositions.length === 0}
-                  className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm disabled:opacity-50"
+                  className="w-full px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm disabled:opacity-50"
                 >
                   {availablePositions.map((entry) => (
                     <option key={entry.position} value={entry.position}>
@@ -401,7 +417,7 @@ export default function ObserverDashboard() {
                   <label className="block text-sm font-medium text-dark-200 mb-2">
                     Form 34A Photos
                   </label>
-                  <div className="border-2 border-dashed border-dark-700 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+                  <div className="border-2 border-dashed border-white/[0.07] rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
                     <input
                       type="file"
                       accept="image/*"
@@ -447,7 +463,7 @@ export default function ObserverDashboard() {
                         readOnly
                         aria-readonly="true"
                         title="Filled from the polling station record"
-                        className="w-full px-3 py-2 bg-dark-800/60 border border-dark-700 rounded text-dark-300 text-sm cursor-not-allowed"
+                        className="w-full px-3 py-2 bg-white/[0.045] border border-white/[0.07] rounded text-dark-300 text-sm cursor-not-allowed"
                         placeholder="0"
                         required
                         min="0"
@@ -459,7 +475,7 @@ export default function ObserverDashboard() {
                         type="number"
                         value={formData.total_votes_cast}
                         onChange={(e) => setFormData({ ...formData, total_votes_cast: e.target.value })}
-                        className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+                        className="w-full px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm"
                         placeholder="0"
                         required
                         min="0"
@@ -471,7 +487,7 @@ export default function ObserverDashboard() {
                         type="number"
                         value={formData.rejected_votes}
                         onChange={(e) => setFormData({ ...formData, rejected_votes: e.target.value })}
-                        className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+                        className="w-full px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm"
                         placeholder="0"
                         required
                         min="0"
@@ -490,7 +506,7 @@ export default function ObserverDashboard() {
                   ) : candidates.length > 0 ? (
                     <div className="space-y-3">
                       {candidates.map((candidate) => (
-                        <div key={candidate.id} className="bg-dark-900/50 border border-dark-700 rounded-lg p-4">
+                        <div key={candidate.id} className="bg-white/[0.025] border border-white/[0.07] rounded-lg p-4">
                           <div className="flex items-center justify-between gap-4">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
@@ -510,7 +526,7 @@ export default function ObserverDashboard() {
                                 type="number"
                                 value={candidateVotes[candidate.id] || ''}
                                 onChange={(e) => setCandidateVotes({ ...candidateVotes, [candidate.id]: e.target.value })}
-                                className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded text-white text-right"
+                                className="w-full px-3 py-2 bg-white/[0.04] border border-white/10 rounded text-white text-right"
                                 placeholder="0"
                                 required
                                 min="0"
@@ -554,7 +570,7 @@ export default function ObserverDashboard() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* My submissions */}
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">My Submissions</h3>
               {mySubmissions.length === 0 ? (
                 <p className="text-sm text-dark-400">
@@ -565,7 +581,7 @@ export default function ObserverDashboard() {
                   {mySubmissions.slice(0, 5).map((submission) => (
                     <div
                       key={submission.id}
-                      className="bg-dark-900/50 border border-dark-700 rounded-lg p-3"
+                      className="bg-white/[0.025] border border-white/[0.07] rounded-lg p-3"
                     >
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <p className="text-sm text-white font-medium truncate">
@@ -598,7 +614,7 @@ export default function ObserverDashboard() {
             </div>
 
             {/* Polling Station Info */}
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Your Assigned Polling Station</h3>
               {loadingInfo ? (
                 <p className="text-sm text-dark-400">Loading...</p>
@@ -616,12 +632,12 @@ export default function ObserverDashboard() {
                     <p className="text-xs text-dark-400">Registered Voters</p>
                     <p className="text-sm text-white font-medium">{observerInfo.registered_voters?.toLocaleString() || 'N/A'}</p>
                   </div>
-                  <div className="pt-2 border-t border-dark-700">
+                  <div className="pt-2 border-t border-white/[0.07]">
                     <p className="text-xs text-dark-400">Location</p>
                     <p className="text-sm text-white">{observerInfo.ward_name}</p>
                     <p className="text-xs text-dark-400">{observerInfo.constituency_name}, {observerInfo.county_name}</p>
                   </div>
-                  <div className="pt-2 border-t border-dark-700">
+                  <div className="pt-2 border-t border-white/[0.07]">
                     <p className="text-xs text-dark-400">Assignment Type</p>
                     <p className="text-sm text-white font-medium capitalize">{observerInfo.assignment_type}</p>
                   </div>
@@ -632,7 +648,7 @@ export default function ObserverDashboard() {
             </div>
 
             {/* Instructions */}
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Observer Instructions</h3>
               <ul className="space-y-2 text-sm text-dark-300">
                 <li className="flex items-start gap-2">
@@ -659,7 +675,7 @@ export default function ObserverDashboard() {
             </div>
 
             {/* Quick Actions */}
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
               <div className="space-y-3">
                 <button

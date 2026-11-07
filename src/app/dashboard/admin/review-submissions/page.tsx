@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
+import PageHeader from '@/components/PageHeader'
 import SafeImage from '@/components/SafeImage'
 
 interface ReviewSubmission {
@@ -154,15 +155,15 @@ export default function ReviewSubmissionsPage() {
     <div className="min-h-screen bg-dark-950">
       <DashboardNav />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Review Submissions</h1>
-          <p className="text-dark-300">Review and approve pending submissions</p>
-        </div>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <PageHeader
+          eyebrow="Quality control"
+          title="Review Submissions"
+          description="Review and approve pending submissions, with anomalies and flagged results surfaced first."
+        />
 
         {/* Filter Tabs */}
-        <div className="mb-6 flex gap-2">
+        <div className="mb-6 inline-flex flex-wrap gap-1 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-1.5">
           {[
             { key: 'all', label: 'All', badge: submissions.length },
             { key: 'anomalies', label: 'Anomalies', badge: submissions.filter(s => s.has_discrepancy).length },
@@ -172,31 +173,37 @@ export default function ReviewSubmissionsPage() {
             <button
               key={tab.key}
               onClick={() => setFilter(tab.key as any)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
                 filter === tab.key
-                  ? 'bg-blue-500 text-white'
-                  : 'glass-effect text-dark-300 hover:text-white'
+                  ? 'bg-brand-500 text-white shadow-glow'
+                  : 'text-dark-400 hover:bg-white/[0.05] hover:text-white'
               }`}
             >
               {tab.label}
-              {!loading && <span className="ml-2 text-xs opacity-75">({tab.badge})</span>}
+              {!loading && (
+                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                  filter === tab.key ? 'bg-white/20 text-white' : 'bg-white/[0.06] text-dark-400'
+                }`}>
+                  {tab.badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
 
         {/* Submissions List */}
-        <div className="glass-effect rounded-xl p-6">
+        <div className="glass-effect rounded-2xl p-5 sm:p-6">
           {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <p className="mt-4 text-dark-300">Loading submissions...</p>
+            <div className="py-12 text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-brand-400"></div>
+              <p className="mt-4 text-sm text-dark-400">Loading submissions...</p>
             </div>
           ) : submissions.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {submissions.map((submission) => (
                 <div
                   key={submission.id}
-                  className="bg-dark-900/50 rounded-lg p-4 border border-dark-700 hover:border-blue-500 transition-colors"
+                  className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-4 transition-colors hover:border-brand-400/30 hover:bg-white/[0.045]"
                 >
                   <div className="flex items-start justify-between">
                     {/* Left: Submission Info */}
@@ -285,15 +292,15 @@ export default function ReviewSubmissionsPage() {
 
       {/* Detail Modal */}
       {showDetailModal && selectedSubmission && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="glass-effect rounded-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-dark-950/80 p-4 backdrop-blur-md">
+          <div className="glass-effect max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl shadow-soft animate-slide-in-up">
             {/* Modal Header */}
-            <div className="sticky top-0 bg-dark-900 border-b border-dark-700 p-6 flex justify-between items-start">
+            <div className="sticky top-0 z-10 flex items-start justify-between border-b border-white/[0.07] bg-dark-900/95 p-5 backdrop-blur-xl sm:p-6">
               <div>
-                <h2 className="text-2xl font-bold text-white mb-1">
+                <h2 className="mb-1 text-xl font-semibold text-white">
                   {selectedSubmission.polling_station_name}
                 </h2>
-                <p className="text-dark-300">
+                <p className="text-sm text-dark-400">
                   {selectedSubmission.ward_name}, {selectedSubmission.constituency_name}, {selectedSubmission.county_name}
                 </p>
               </div>
@@ -302,9 +309,10 @@ export default function ReviewSubmissionsPage() {
                   setShowDetailModal(false)
                   setReviewNotes('')
                 }}
-                className="text-dark-400 hover:text-white transition-colors"
+                className="rounded-lg p-1.5 text-dark-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                aria-label="Close"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -389,7 +397,7 @@ export default function ReviewSubmissionsPage() {
 
               {/* Results Data */}
               {selectedSubmission.total_votes_cast !== null && (
-                <div className="bg-dark-900/50 rounded-lg p-4 border border-dark-700">
+                <div className="bg-white/[0.025] rounded-lg p-4 border border-white/[0.07]">
                   <h3 className="text-lg font-semibold text-white mb-3">Vote Counts</h3>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -435,7 +443,7 @@ export default function ReviewSubmissionsPage() {
                 <h3 className="text-lg font-semibold text-white mb-3">Submitted Photos</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {selectedSubmission.photos.map((photo) => (
-                    <div key={photo.id} className="bg-dark-900/50 rounded-lg p-3 border border-dark-700">
+                    <div key={photo.id} className="bg-white/[0.025] rounded-lg p-3 border border-white/[0.07]">
                       <p className="text-dark-400 text-xs mb-2 capitalize">
                         {photo.photo_type.replace('_', ' ')}
                       </p>
@@ -444,7 +452,7 @@ export default function ReviewSubmissionsPage() {
                         alt={photo.photo_type}
                         className="w-full h-40 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                         fallback={
-                          <div className="w-full h-40 rounded bg-dark-800 flex items-center justify-center text-xs text-dark-500">
+                          <div className="w-full h-40 rounded bg-white/[0.04] flex items-center justify-center text-xs text-dark-500">
                             Image unavailable
                           </div>
                         }
@@ -456,36 +464,36 @@ export default function ReviewSubmissionsPage() {
 
               {/* Review Notes */}
               <div>
-                <label className="block text-white font-medium mb-2">Review Notes</label>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.08em] text-dark-300">Review notes</label>
                 <textarea
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
-                  className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-white placeholder-dark-400 focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 text-sm"
                   rows={4}
                   placeholder="Add notes about your review decision..."
                 />
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-dark-700">
+              <div className="flex flex-col gap-2.5 border-t border-white/[0.07] pt-4 sm:flex-row">
                 <button
                   onClick={() => handleReviewAction(selectedSubmission.id, 'approve')}
                   disabled={actionLoading}
-                  className="flex-1 px-6 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors font-medium disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-emerald-500 px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-600 disabled:opacity-50"
                 >
                   {actionLoading ? 'Processing...' : '✓ Approve & Verify'}
                 </button>
                 <button
                   onClick={() => handleReviewAction(selectedSubmission.id, 'request_revision')}
                   disabled={actionLoading}
-                  className="flex-1 px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium disabled:opacity-50"
+                  className="flex-1 rounded-xl border border-amber-400/30 bg-amber-500/15 px-6 py-3 font-medium text-amber-200 transition-colors hover:bg-amber-500/25 disabled:opacity-50"
                 >
                   {actionLoading ? 'Processing...' : '↻ Request Revision'}
                 </button>
                 <button
                   onClick={() => handleReviewAction(selectedSubmission.id, 'reject')}
                   disabled={actionLoading}
-                  className="flex-1 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium disabled:opacity-50"
+                  className="btn-danger flex-1 px-6 py-3"
                 >
                   {actionLoading ? 'Processing...' : '✗ Reject'}
                 </button>

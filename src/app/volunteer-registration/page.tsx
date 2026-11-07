@@ -2,11 +2,61 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import PublicNav from '@/components/PublicNav'
+import PageHeader from '@/components/PageHeader'
 import LocationSelector from '@/components/LocationSelector'
 
+const benefits = [
+  {
+    title: 'Training provided',
+    description: 'Complete training on election procedures and result submission.',
+    tone: 'border-brand-400/20 bg-brand-500/10 text-brand-300',
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    ),
+  },
+  {
+    title: 'Secure platform',
+    description: 'Your data is protected with enterprise-grade security measures.',
+    tone: 'border-purple-400/20 bg-purple-500/10 text-purple-300',
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+      />
+    ),
+  },
+  {
+    title: 'Join a community',
+    description: 'Become part of a nationwide network of election observers.',
+    tone: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-300',
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+      />
+    ),
+  },
+]
+
+const instructions = [
+  'Complete the registration form above with accurate information.',
+  'We will contact you for verification and training within 48 hours.',
+  'Attend the online training session on election procedures.',
+  'Receive your observer assignment and credentials.',
+  'Monitor presidential results at your assigned polling station on election day.',
+]
+
 export default function VolunteerRegistrationPage() {
-  const router = useRouter()
   const [volunteerFormData, setVolunteerFormData] = useState({
     full_name: '',
     email: '',
@@ -79,134 +129,123 @@ export default function VolunteerRegistrationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-950">
-      {/* Public Navigation Header */}
-      <nav className="glass-effect border-b border-dark-700/50 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="cursor-pointer">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              UkweliTally
-            </h1>
-          </Link>
-          <div className="space-x-4">
-            <Link href="/" className="text-dark-300 hover:text-blue-400 transition-colors">
-              Home
-            </Link>
-            <a 
-              href="/presidential-results" 
-              className="text-dark-300 hover:text-blue-400 transition-colors"
-            >
-              Results
-            </a>
-            <a 
-              href="/login" 
-              className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-lg hover:from-blue-500 hover:to-blue-400 transition-all hover:shadow-glow"
-            >
-              Login
-            </a>
-          </div>
-        </div>
-      </nav>
+    <div className="relative min-h-screen overflow-hidden">
+      <PublicNav active="volunteer" />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-white mb-4">
-            Volunteer for Presidential Results Monitoring
-          </h1>
-          <p className="text-xl text-dark-300 max-w-2xl mx-auto">
-            Join our network of independent observers specifically for presidential election results. 
-            Help ensure transparent and accurate presidential tallying.
-          </p>
-        </div>
+      <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+        <PageHeader
+          eyebrow="Join the network"
+          title="Volunteer for presidential results monitoring"
+          description="Join our network of independent observers specifically for presidential election results. Help ensure transparent and accurate presidential tallying."
+          meta={
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="badge-brand">Observer onboarding</span>
+              <span className="badge border-white/10 bg-white/[0.03] text-dark-300">Training included</span>
+              <span className="badge border-white/10 bg-white/[0.03] text-dark-300">Nationwide network</span>
+            </div>
+          }
+        />
 
-        <div className="max-w-4xl mx-auto">
-          <div className="glass-effect rounded-2xl p-8">
-            {/* Error/Success Messages */}
+        <div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr] lg:items-start">
+          {/* Form */}
+          <div className="glass-effect rounded-3xl p-5 sm:p-7">
             {volunteerError && (
-              <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm mb-6">
-                {volunteerError}
+              <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{volunteerError}</span>
               </div>
             )}
 
             {volunteerSuccess && (
-              <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 px-4 py-3 rounded-lg text-sm mb-6">
-                {volunteerSuccess}
+              <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+                <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{volunteerSuccess}</span>
               </div>
             )}
 
             <form onSubmit={handleVolunteerSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Full Name */}
+              <div>
+                <h2 className="text-base font-semibold text-white">Your details</h2>
+                <p className="mt-1 text-sm text-dark-400">
+                  Fields marked with an asterisk are required.
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-dark-200 mb-2">
-                    Full Name <span className="text-red-400">*</span>
+                  <label htmlFor="full_name" className="field-label">
+                    Full name <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
+                    id="full_name"
                     name="full_name"
                     value={volunteerFormData.full_name}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 text-sm"
                     placeholder="Enter your full name"
                   />
                 </div>
 
-                {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-dark-200 mb-2">
-                    Email Address <span className="text-red-400">*</span>
+                  <label htmlFor="email" className="field-label">
+                    Email address <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="email"
+                    id="email"
                     name="email"
                     value={volunteerFormData.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter your email"
+                    className="w-full px-4 py-3 text-sm"
+                    placeholder="you@example.com"
                   />
                 </div>
 
-                {/* Phone Number */}
                 <div>
-                  <label className="block text-sm font-medium text-dark-200 mb-2">
-                    Phone Number <span className="text-red-400">*</span>
+                  <label htmlFor="phone" className="field-label">
+                    Phone number <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="tel"
+                    id="phone"
                     name="phone"
                     value={volunteerFormData.phone}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="e.g., 0721 234567"
+                    className="w-full px-4 py-3 text-sm"
+                    placeholder="e.g. 0721 234567"
                   />
                 </div>
 
-                {/* ID Number */}
                 <div>
-                  <label className="block text-sm font-medium text-dark-200 mb-2">
-                    National ID Number <span className="text-red-400">*</span>
+                  <label htmlFor="id_number" className="field-label">
+                    National ID number <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
+                    id="id_number"
                     name="id_number"
                     value={volunteerFormData.id_number}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 text-sm"
                     placeholder="Enter your ID number"
                   />
                 </div>
               </div>
 
-              {/* Polling Station Selection */}
-              <div>
-                <label className="block text-sm font-medium text-dark-200 mb-2">
-                  Preferred Polling Station <span className="text-red-400">*</span>
-                </label>
+              <div className="border-t border-white/[0.07] pt-6">
+                <h2 className="text-base font-semibold text-white">Preferred polling station</h2>
+                <p className="mb-4 mt-1 text-sm text-dark-400">
+                  Choose the station where you would like to observe on election day.
+                </p>
                 <LocationSelector
                   onLocationChange={handleLocationChange}
                   showPollingStations={true}
@@ -214,124 +253,133 @@ export default function VolunteerRegistrationPage() {
                 />
               </div>
 
-              {/* Submit Button */}
-              <div className="flex justify-center pt-4">
-                <button
-                  type="submit"
-                  disabled={volunteerLoading}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-500 hover:to-purple-500 transition-all hover:shadow-glow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {volunteerLoading ? 'Submitting...' : 'Register as Presidential Results Volunteer'}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="max-w-sm text-xs leading-relaxed text-dark-500">
+                  By registering, you agree to our terms of service and privacy policy. You&apos;ll
+                  be contacted for verification and training.
+                </p>
+                <button type="submit" disabled={volunteerLoading} className="btn-primary px-6 py-3">
+                  {volunteerLoading ? (
+                    <>
+                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Register as volunteer
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </>
+                  )}
                 </button>
               </div>
-
-              <p className="text-center text-sm text-dark-400">
-                By registering, you agree to our terms of service and privacy policy.
-                You&apos;ll be contacted for verification and training.
-              </p>
             </form>
           </div>
 
-          {/* Benefits */}
-          <div className="grid md:grid-cols-3 gap-6 mt-12">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+          {/* Sidebar */}
+          <div className="space-y-4">
+            <div className="glass-effect rounded-3xl p-5 sm:p-6">
+              <h2 className="text-base font-semibold text-white">Why volunteer</h2>
+              <div className="mt-4 space-y-4">
+                {benefits.map((benefit) => (
+                  <div key={benefit.title} className="flex items-start gap-3">
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${benefit.tone}`}>
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {benefit.icon}
+                      </svg>
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-white">{benefit.title}</p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-dark-400">{benefit.description}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <h4 className="font-semibold text-white mb-2">Training Provided</h4>
-              <p className="text-dark-300 text-sm">Complete training on election procedures and result submission</p>
             </div>
 
-            <div className="text-center">
-              <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <h4 className="font-semibold text-white mb-2">Secure Platform</h4>
-              <p className="text-dark-300 text-sm">Your data is protected with enterprise-grade security measures</p>
+            <div className="glass-effect rounded-3xl p-5 sm:p-6">
+              <h2 className="text-base font-semibold text-white">What happens next</h2>
+              <ol className="mt-4 space-y-3.5">
+                {instructions.map((instruction, index) => (
+                  <li key={instruction} className="flex gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-brand-400/30 bg-brand-500/10 text-[11px] font-semibold text-brand-200">
+                      {index + 1}
+                    </span>
+                    <span className="text-xs leading-relaxed text-dark-300">{instruction}</span>
+                  </li>
+                ))}
+              </ol>
             </div>
 
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <h4 className="font-semibold text-white mb-2">Join a Community</h4>
-              <p className="text-dark-300 text-sm">Become part of a nationwide network of election observers</p>
+            <div className="rounded-3xl border border-white/[0.07] bg-white/[0.025] p-5">
+              <p className="text-xs leading-relaxed text-dark-500">
+                Not ready to register?{' '}
+                <Link href="/presidential-results" className="font-medium text-brand-300 transition-colors hover:text-brand-200">
+                  View live results
+                </Link>{' '}
+                or{' '}
+                <Link href="/" className="font-medium text-brand-300 transition-colors hover:text-brand-200">
+                  return home
+                </Link>
+                .
+              </p>
             </div>
-          </div>
-
-          {/* Instructions */}
-          <div className="glass-effect rounded-xl p-6 mt-8">
-            <h3 className="text-xl font-semibold text-white mb-4">Volunteer Instructions</h3>
-            <ul className="space-y-3 text-dark-300">
-              <li className="flex items-start gap-3">
-                <span className="text-blue-400 font-bold">1.</span>
-                <span>Complete the registration form above with accurate information</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="text-blue-400 font-bold">2.</span>
-                <span>We will contact you for verification and training within 48 hours</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="text-blue-400 font-bold">3.</span>
-                <span>Attend the online training session on election procedures</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="text-blue-400 font-bold">4.</span>
-                <span>Receive your observer assignment and credentials</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="text-blue-400 font-bold">5.</span>
-                <span>Monitor presidential results at your assigned polling station on election day</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Back to Home */}
-          <div className="text-center mt-8">
-            <button
-              onClick={() => router.push('/')}
-              className="text-blue-400 hover:text-blue-300 transition-colors flex items-center justify-center gap-2 mx-auto"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back to Home Page
-            </button>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="glass-effect border-t border-dark-700/50 py-12 mt-20">
-        <div className="container mx-auto px-4 text-center">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="text-center md:text-left">
-              <h4 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
-                UkweliTally
-              </h4>
-              <p className="text-dark-200">&copy; 2025 UkweliTally. Built for Kenyan Elections.</p>
-              <p className="text-sm mt-1 text-dark-400">
-                Independent platform - Not affiliated with IEBC
+      <footer className="mt-16 border-t border-white/[0.06] bg-dark-950/50">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-sm">
+              <Link href="/" className="inline-flex items-center gap-2.5">
+                <img
+                  src="/icons/icon-192x192.png"
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 rounded-xl ring-1 ring-white/10"
+                />
+                <span className="text-base font-semibold text-white">
+                  Ukweli<span className="gradient-text">Tally</span>
+                </span>
+              </Link>
+              <p className="mt-4 text-sm leading-relaxed text-dark-500">
+                Independent election results tallying for candidates, agents and observers. Not
+                affiliated with IEBC.
+              </p>
+              <p className="mt-4 text-xs text-dark-600">
+                © {new Date().getFullYear()} UkweliTally. Built for Kenyan elections.
               </p>
             </div>
-            <div className="text-center md:text-right">
-              <h4 className="text-lg font-semibold text-white mb-4">Get in Touch</h4>
-              <div className="flex justify-center md:justify-end items-center gap-6">
-                <a href="mailto:elgeiy8@gmail.com" title="Email" className="text-dark-300 hover:text-blue-400 transition-colors">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                </a>
-                <a href="https://wa.me/254721237811" target="_blank" rel="noopener noreferrer" title="WhatsApp" className="text-dark-300 hover:text-green-400 transition-colors">
-                  <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.267.655 4.395 1.906 6.215l-1.036 3.793 3.863-1.025z"></path></svg>
-                </a>
-                <a href="tel:+254721237811" title="Call" className="text-dark-300 hover:text-purple-400 transition-colors">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                </a>
+
+            <div className="flex flex-wrap gap-x-12 gap-y-6">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-dark-500">Platform</p>
+                <div className="mt-3 space-y-2.5 text-sm">
+                  <Link href="/" className="block text-dark-400 transition-colors hover:text-white">Home</Link>
+                  <Link href="/presidential-results" className="block text-dark-400 transition-colors hover:text-white">Live results</Link>
+                  <Link href="/login" className="block text-dark-400 transition-colors hover:text-white">Sign in</Link>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-dark-500">Get in touch</p>
+                <div className="mt-3 flex items-center gap-2">
+                  <a href="mailto:elgeiy8@gmail.com" title="Email" className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-dark-400 transition-colors hover:border-brand-400/30 hover:text-brand-300">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  </a>
+                  <a href="https://wa.me/254721237811" target="_blank" rel="noopener noreferrer" title="WhatsApp" className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-dark-400 transition-colors hover:border-emerald-400/30 hover:text-emerald-300">
+                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.267.655 4.395 1.906 6.215l-1.036 3.793 3.863-1.025z" /></svg>
+                  </a>
+                  <a href="tel:+254721237811" title="Call" className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-dark-400 transition-colors hover:border-purple-400/30 hover:text-purple-300">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                  </a>
+                </div>
               </div>
             </div>
           </div>

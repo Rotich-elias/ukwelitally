@@ -3,17 +3,41 @@ import ServiceWorkerRegistrar from './ServiceWorkerRegistrar'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'UkweliTally - Independent Election Results Tallying',
+  applicationName: 'UkweliTally',
+  title: {
+    default: 'UkweliTally — Independent Election Results Tallying',
+    template: '%s · UkweliTally',
+  },
   description:
-    'Transparent and independent election results tallying platform for candidates and agents',
+    'Transparent, independent election results tallying for candidates, agents and observers — with photo evidence, GPS checks and real-time aggregation.',
   manifest: '/manifest.json',
+  keywords: [
+    'election results',
+    'Kenya elections',
+    'results tallying',
+    'polling stations',
+    'election transparency',
+  ],
+  openGraph: {
+    title: 'UkweliTally — Independent Election Results Tallying',
+    description:
+      'Verify every result with photo evidence, GPS checks and real-time aggregation.',
+    type: 'website',
+    locale: 'en_KE',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'UkweliTally — Independent Election Results Tallying',
+    description:
+      'Verify every result with photo evidence, GPS checks and real-time aggregation.',
+  },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#020617',
+  themeColor: '#050814',
 }
 
 export default function RootLayout({
@@ -22,8 +46,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="font-sans antialiased">
+    <html lang="en" className="dark scroll-smooth">
+      <body className="min-h-screen font-sans antialiased">
         <ServiceWorkerRegistrar />
         {children}
       </body>

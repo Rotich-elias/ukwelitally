@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
+import PageHeader from '@/components/PageHeader'
 import SubmissionControlPanel from '@/components/SubmissionControlPanel'
 import SafeImage from '@/components/SafeImage'
 import type { ReportProfile, ReportResult, ReportSummary } from '@/lib/reportPdf'
@@ -158,38 +159,39 @@ export default function CandidateDashboard() {
     <div className="min-h-screen bg-dark-950">
       <DashboardNav />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header with Electoral Area */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Candidate Dashboard</h1>
-          <p className="text-dark-300">Real-time election results tracking</p>
-          {profile && (
-            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <div>
-                <p className="text-xs text-blue-300">Electoral Area</p>
-                <p className="text-sm font-semibold text-white">{profile.electoral_area}</p>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <PageHeader
+          eyebrow="Campaign overview"
+          title="Candidate Dashboard"
+          description="Real-time election results tracking across your electoral area."
+          meta={
+            profile ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="badge-brand">
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {profile.electoral_area}
+                </span>
+                <span className="badge border-white/10 bg-white/[0.03] text-dark-300">
+                  <span className="text-dark-500">Position</span>
+                  <span className="text-dark-200">{profile.position.replace(/_/g, ' ').toUpperCase()}</span>
+                </span>
+                <span className="badge border-white/10 bg-white/[0.03] text-dark-300">
+                  <span className="text-dark-500">Party</span>
+                  <span className="text-dark-200">{profile.party_name}</span>
+                </span>
               </div>
-              <div className="ml-4 pl-4 border-l border-blue-500/30">
-                <p className="text-xs text-blue-300">Position</p>
-                <p className="text-sm font-semibold text-white">{profile.position.toUpperCase()}</p>
-              </div>
-              <div className="ml-4 pl-4 border-l border-blue-500/30">
-                <p className="text-xs text-blue-300">Party</p>
-                <p className="text-sm font-semibold text-white">{profile.party_name}</p>
-              </div>
-            </div>
-          )}
-        </div>
+            ) : undefined
+          }
+        />
 
         {/* Result submission control */}
         <SubmissionControlPanel />
 
         {/* Election Process Overview */}
-        <div className="glass-effect rounded-xl p-6 mb-8">
+        <div className="glass-effect rounded-2xl p-6 mb-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,7 +207,7 @@ export default function CandidateDashboard() {
           {/* Stats Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Stations */}
-            <div className="bg-dark-800/50 rounded-lg p-4 border border-dark-700">
+            <div className="bg-white/[0.03] rounded-lg p-4 border border-white/[0.07]">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -220,7 +222,7 @@ export default function CandidateDashboard() {
             </div>
 
             {/* Stations Submitted */}
-            <div className="bg-dark-800/50 rounded-lg p-4 border border-dark-700">
+            <div className="bg-white/[0.03] rounded-lg p-4 border border-white/[0.07]">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,7 +238,7 @@ export default function CandidateDashboard() {
             </div>
 
             {/* Pending Stations */}
-            <div className="bg-dark-800/50 rounded-lg p-4 border border-dark-700">
+            <div className="bg-white/[0.03] rounded-lg p-4 border border-white/[0.07]">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,7 +256,7 @@ export default function CandidateDashboard() {
             </div>
 
             {/* Reporting Progress */}
-            <div className="bg-dark-800/50 rounded-lg p-4 border border-dark-700">
+            <div className="bg-white/[0.03] rounded-lg p-4 border border-white/[0.07]">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,7 +276,7 @@ export default function CandidateDashboard() {
         {/* Voter Statistics */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           {/* Registered Voters */}
-          <div className="glass-effect rounded-xl p-6">
+          <div className="glass-effect rounded-2xl p-6">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm text-dark-400 font-medium">Total Registered Voters</p>
               <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
@@ -288,7 +290,7 @@ export default function CandidateDashboard() {
           </div>
 
           {/* Total Votes Cast */}
-          <div className="glass-effect rounded-xl p-6">
+          <div className="glass-effect rounded-2xl p-6">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm text-dark-400 font-medium">Total Votes Cast</p>
               <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
@@ -302,7 +304,7 @@ export default function CandidateDashboard() {
           </div>
 
           {/* Voter Turnout */}
-          <div className="glass-effect rounded-xl p-6">
+          <div className="glass-effect rounded-2xl p-6">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm text-dark-400 font-medium">Voter Turnout</p>
               <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
@@ -319,7 +321,7 @@ export default function CandidateDashboard() {
         </div>
 
         {/* Progress Bar */}
-        <div className="glass-effect rounded-xl p-6 mb-8">
+        <div className="glass-effect rounded-2xl p-6 mb-8">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-lg font-semibold text-white">Submission Progress</h3>
@@ -332,7 +334,7 @@ export default function CandidateDashboard() {
               <p className="text-xs text-dark-400">Complete</p>
             </div>
           </div>
-          <div className="w-full bg-dark-800 rounded-full h-4 relative overflow-hidden">
+          <div className="w-full bg-white/[0.04] rounded-full h-4 relative overflow-hidden">
             <div
               className="bg-gradient-to-r from-blue-500 via-emerald-500 to-purple-500 h-4 rounded-full transition-all duration-500 relative"
               style={{ width: `${getProgressPercentage()}%` }}
@@ -361,7 +363,7 @@ export default function CandidateDashboard() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Results Table */}
           <div className="lg:col-span-2">
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-white">
                   Election Results - {profile?.electoral_area}
@@ -383,14 +385,14 @@ export default function CandidateDashboard() {
                     return (
                       <div
                         key={index}
-                        className={`glass-effect rounded-xl p-6 border-2 transition-all duration-300 hover:shadow-xl ${
+                        className={`glass-effect rounded-2xl p-6 border-2 transition-all duration-300 hover:shadow-xl ${
                           isLeader
                             ? 'border-yellow-400/50 bg-yellow-400/5'
                             : isSecond
                             ? 'border-gray-400/50 bg-gray-400/5'
                             : isThird
                             ? 'border-orange-400/50 bg-orange-400/5'
-                            : 'border-dark-700 hover:border-dark-600'
+                            : 'border-white/[0.07] hover:border-white/10'
                         }`}
                       >
                         <div className="flex items-start gap-6">
@@ -411,7 +413,7 @@ export default function CandidateDashboard() {
                                 <span className="text-white font-bold text-lg">3</span>
                               </div>
                             ) : (
-                              <div className="w-12 h-12 bg-dark-700 rounded-full flex items-center justify-center">
+                              <div className="w-12 h-12 bg-white/[0.06] rounded-full flex items-center justify-center">
                                 <span className="text-dark-400 font-bold text-lg">{index + 1}</span>
                               </div>
                             )}
@@ -422,9 +424,9 @@ export default function CandidateDashboard() {
                             <SafeImage
                               src={result.profile_photo}
                               alt={result.candidate_name}
-                              className="w-24 h-24 rounded-xl object-cover border-2 border-dark-600"
+                              className="w-24 h-24 rounded-xl object-cover border-2 border-white/10"
                               fallback={
-                                <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 border-dark-600 flex items-center justify-center">
+                                <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 border-white/10 flex items-center justify-center">
                                   <svg className="w-12 h-12 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                   </svg>
@@ -484,7 +486,7 @@ export default function CandidateDashboard() {
 
                             {/* Progress Bar */}
                             <div className="relative">
-                              <div className="w-full bg-dark-800 rounded-full h-3 overflow-hidden">
+                              <div className="w-full bg-white/[0.04] rounded-full h-3 overflow-hidden">
                                 <div
                                   className={`h-3 rounded-full transition-all duration-1000 ease-out ${
                                     isLeader
@@ -522,7 +524,7 @@ export default function CandidateDashboard() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Quick Actions */}
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
               <div className="space-y-3">
                 <button
@@ -555,7 +557,7 @@ export default function CandidateDashboard() {
             </div>
 
             {/* Recent Activity */}
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
               {activitiesLoading ? (
                 <div className="text-center py-6">
@@ -595,7 +597,7 @@ export default function CandidateDashboard() {
             </div>
 
             {/* Support */}
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Need Help?</h3>
               <p className="text-sm text-dark-300 mb-4">
                 Contact support if you notice any discrepancies or issues.

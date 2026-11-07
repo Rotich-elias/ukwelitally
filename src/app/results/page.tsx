@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
+import PageHeader from '@/components/PageHeader'
 import LocationSelector from '@/components/LocationSelector'
 import SafeImage from '@/components/SafeImage'
 
@@ -375,47 +376,45 @@ export default function ResultsPage() {
     <div className="min-h-screen bg-dark-950">
       <DashboardNav />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Election Results</h1>
-            <p className="text-dark-300">Real-time results aggregation by location</p>
-          </div>
-
-          {/* Review Submissions Button - Only for Admin and Candidates */}
-          {(userRole === 'admin' || userRole === 'candidate') && (
-            <button
-              onClick={() => router.push('/dashboard/admin/review-submissions')}
-              className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Review Submissions
-            </button>
-          )}
-        </div>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <PageHeader
+          eyebrow="Live tally"
+          title="Election Results"
+          description="Real-time results aggregation by location, with polling-station level reporting status."
+          actions={
+            (userRole === 'admin' || userRole === 'candidate') ? (
+              <button
+                onClick={() => router.push('/dashboard/admin/review-submissions')}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-400/25 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-200 transition-colors hover:bg-amber-500/15"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Review Submissions
+              </button>
+            ) : undefined
+          }
+        />
 
         {/* View Toggle Tabs */}
-        <div className="mb-6 flex gap-4 flex-wrap items-center">
-          <div className="glass-effect rounded-xl p-2 inline-flex gap-2">
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <div className="inline-flex gap-1 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-1.5">
             <button
               onClick={() => setViewMode('aggregate')}
-              className={`px-6 py-2 rounded-lg font-medium transition-all ${
+              className={`rounded-xl px-5 py-2 text-sm font-medium transition-all ${
                 viewMode === 'aggregate'
-                  ? 'bg-blue-500 text-white shadow-lg'
-                  : 'text-dark-300 hover:text-white hover:bg-dark-800'
+                  ? 'bg-brand-500 text-white shadow-glow'
+                  : 'text-dark-400 hover:bg-white/[0.05] hover:text-white'
               }`}
             >
               Aggregated Results
             </button>
             <button
               onClick={() => setViewMode('stations')}
-              className={`px-6 py-2 rounded-lg font-medium transition-all ${
+              className={`rounded-xl px-5 py-2 text-sm font-medium transition-all ${
                 viewMode === 'stations'
-                  ? 'bg-blue-500 text-white shadow-lg'
-                  : 'text-dark-300 hover:text-white hover:bg-dark-800'
+                  ? 'bg-brand-500 text-white shadow-glow'
+                  : 'text-dark-400 hover:bg-white/[0.05] hover:text-white'
               }`}
             >
               Polling Stations
@@ -423,14 +422,14 @@ export default function ResultsPage() {
           </div>
 
           {/* Position Selector - Applies to both views */}
-          <div className="glass-effect rounded-xl p-2 inline-flex items-center gap-2">
-            <span className="text-sm text-dark-400 px-2">Position:</span>
+          <div className="inline-flex items-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-1.5 pl-3">
+            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-dark-500">Position</span>
             <select
               value={selectedPosition}
               onChange={(e) => setSelectedPosition(e.target.value)}
               disabled={!!candidateProfile || userRole === 'observer'}
-              className={`px-4 py-2 bg-dark-800 text-white rounded-lg border border-dark-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-medium uppercase text-sm ${
-                candidateProfile || userRole === 'observer' ? 'opacity-60 cursor-not-allowed' : ''
+              className={`px-3 py-1.5 text-sm font-medium uppercase ${
+                candidateProfile || userRole === 'observer' ? 'cursor-not-allowed opacity-60' : ''
               }`}
             >
               <option value="president">President</option>
@@ -441,10 +440,10 @@ export default function ResultsPage() {
               <option value="mca">Member of County Assembly</option>
             </select>
             {candidateProfile && (
-              <span className="text-xs text-blue-400 px-2">Locked to your position</span>
+              <span className="whitespace-nowrap pr-2 text-[11px] text-brand-300">Locked to your position</span>
             )}
             {userRole === 'observer' && (
-              <span className="text-xs text-blue-400 px-2">Volunteers can only view presidential results</span>
+              <span className="whitespace-nowrap pr-2 text-[11px] text-brand-300">Presidential only</span>
             )}
           </div>
         </div>
@@ -452,15 +451,15 @@ export default function ResultsPage() {
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Filters Sidebar */}
           <div className="lg:col-span-1">
-            <div className="glass-effect rounded-xl p-6 sticky top-4">
-              <h2 className="text-xl font-semibold text-white mb-4">Filter by Location</h2>
+            <div className="glass-effect sticky top-24 rounded-2xl p-5 lg:p-6">
+              <h2 className="mb-4 text-base font-semibold text-white">Filter by location</h2>
 
               {/* Show candidate's electoral area if logged in as candidate */}
               {candidateProfile && (
-                <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                  <p className="text-xs text-blue-300 mb-1">Your Electoral Area</p>
-                  <p className="text-sm font-semibold text-white">{candidateProfile.electoral_area}</p>
-                  <p className="text-xs text-blue-400 mt-1">
+                <div className="mb-4 rounded-xl border border-brand-400/25 bg-brand-500/10 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-300">Your electoral area</p>
+                  <p className="mt-1 text-sm font-semibold text-white">{candidateProfile.electoral_area}</p>
+                  <p className="mt-1 text-xs text-brand-300/80">
                     {candidateProfile.position === 'mca' && 'Results locked to your ward'}
                     {candidateProfile.position === 'mp' && 'Select wards within your constituency'}
                     {(candidateProfile.position === 'governor' ||
@@ -481,46 +480,33 @@ export default function ResultsPage() {
 
               {/* Status Filter - Only for Polling Stations View */}
               {viewMode === 'stations' && (
-                <div className="mt-6 pt-6 border-t border-dark-700">
-                  <h3 className="text-sm font-semibold text-white mb-3">Status Filter</h3>
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => setStationStatusFilter('all')}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                        stationStatusFilter === 'all'
-                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
-                          : 'text-dark-300 hover:bg-dark-800'
-                      }`}
-                    >
-                      All Stations
-                    </button>
-                    <button
-                      onClick={() => setStationStatusFilter('submitted')}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                        stationStatusFilter === 'submitted'
-                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
-                          : 'text-dark-300 hover:bg-dark-800'
-                      }`}
-                    >
-                      Submitted
-                    </button>
-                    <button
-                      onClick={() => setStationStatusFilter('not_submitted')}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                        stationStatusFilter === 'not_submitted'
-                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
-                          : 'text-dark-300 hover:bg-dark-800'
-                      }`}
-                    >
-                      Not Submitted
-                    </button>
+                <div className="mt-6 border-t border-white/[0.07] pt-5">
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-dark-400">Status filter</h3>
+                  <div className="space-y-1.5">
+                    {([
+                      { key: 'all', label: 'All stations' },
+                      { key: 'submitted', label: 'Submitted' },
+                      { key: 'not_submitted', label: 'Not submitted' },
+                    ] as const).map((option) => (
+                      <button
+                        key={option.key}
+                        onClick={() => setStationStatusFilter(option.key)}
+                        className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
+                          stationStatusFilter === option.key
+                            ? 'border-brand-400/30 bg-brand-500/15 text-brand-200'
+                            : 'border-transparent text-dark-400 hover:bg-white/[0.04] hover:text-white'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
 
               {/* Summary Stats - Aggregate View */}
               {viewMode === 'aggregate' && summary && (
-                <div className="mt-6 pt-6 border-t border-dark-700">
+                <div className="mt-6 border-t border-white/[0.07] pt-5">
                   <h3 className="text-sm font-semibold text-white mb-3">Summary</h3>
                   <div className="space-y-3">
                     <div>
@@ -553,7 +539,7 @@ export default function ResultsPage() {
 
               {/* Summary Stats - Stations View */}
               {viewMode === 'stations' && stationsSummary && (
-                <div className="mt-6 pt-6 border-t border-dark-700">
+                <div className="mt-6 border-t border-white/[0.07] pt-5">
                   <h3 className="text-sm font-semibold text-white mb-3">Summary</h3>
                   <div className="space-y-3">
                     <div>
@@ -608,11 +594,11 @@ export default function ResultsPage() {
             {/* Aggregated Results View */}
             {viewMode === 'aggregate' && (
               <>
-                <div className="glass-effect rounded-xl p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-white">Aggregate Results - Votes Per Candidate</h2>
+                <div className="glass-effect rounded-2xl p-5 sm:p-6">
+                  <div className="mb-6 flex items-center justify-between gap-3">
+                    <h2 className="text-lg font-semibold text-white">Aggregate results · votes per candidate</h2>
                     {results.length > 0 && (
-                      <span className="text-sm text-dark-400">{results.length} candidate{results.length !== 1 ? 's' : ''}</span>
+                      <span className="badge border-white/10 bg-white/[0.03] text-dark-300">{results.length} candidate{results.length !== 1 ? 's' : ''}</span>
                     )}
                   </div>
 
@@ -626,37 +612,23 @@ export default function ResultsPage() {
                   {results.map((result, index) => (
                     <div
                       key={index}
-                      className={`glass-effect rounded-xl p-6 border-2 transition-all hover:border-blue-500/50 ${
-                        index === 0 ? 'border-yellow-400/50 bg-yellow-400/5' :
-                        index === 1 ? 'border-gray-400/50 bg-gray-400/5' :
-                        index === 2 ? 'border-orange-400/50 bg-orange-400/5' :
-                        'border-dark-700'
+                      className={`glass-effect card-hover rounded-2xl p-5 transition-all sm:p-6 ${
+                        index === 0 ? 'ring-1 ring-amber-400/40' :
+                        index === 1 ? 'ring-1 ring-slate-300/30' :
+                        index === 2 ? 'ring-1 ring-orange-400/35' :
+                        ''
                       }`}
                     >
                       <div className="flex gap-6">
                         {/* Rank Badge */}
                         <div className="flex-shrink-0">
-                          <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
-                            index === 0 ? 'bg-yellow-400/20 border-2 border-yellow-400' :
-                            index === 1 ? 'bg-gray-400/20 border-2 border-gray-400' :
-                            index === 2 ? 'bg-orange-400/20 border-2 border-orange-400' :
-                            'bg-dark-800 border-2 border-dark-600'
+                          <div className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl border text-base font-semibold ${
+                            index === 0 ? 'border-amber-400/40 bg-amber-400/10 text-amber-300' :
+                            index === 1 ? 'border-slate-300/30 bg-slate-300/10 text-slate-200' :
+                            index === 2 ? 'border-orange-400/35 bg-orange-400/10 text-orange-300' :
+                            'border-white/10 bg-white/[0.03] text-dark-300'
                           }`}>
-                            <div className="text-center">
-                              <div className={`text-3xl font-bold ${
-                                index === 0 ? 'text-yellow-400' :
-                                index === 1 ? 'text-gray-300' :
-                                index === 2 ? 'text-orange-400' :
-                                'text-dark-400'
-                              }`}>
-                                #{index + 1}
-                              </div>
-                              {index === 0 && (
-                                <svg className="w-5 h-5 text-yellow-400 mx-auto mt-1" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                              )}
-                            </div>
+                            #{index + 1}
                           </div>
                         </div>
 
@@ -665,10 +637,10 @@ export default function ResultsPage() {
                           <SafeImage
                             src={result.profile_photo}
                             alt={result.candidate_name}
-                            className="w-24 h-24 rounded-lg object-cover border-2 border-dark-700"
+                            className="h-20 w-20 rounded-2xl border border-white/10 object-cover"
                             fallback={
-                              <div className="w-24 h-24 rounded-lg bg-dark-800 border-2 border-dark-700 flex items-center justify-center">
-                                <svg className="w-12 h-12 text-dark-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03]">
+                                <svg className="h-9 w-9 text-dark-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                               </div>
@@ -680,45 +652,41 @@ export default function ResultsPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-2xl font-bold text-white">{result.candidate_name}</h3>
+                              <div className="mb-2 flex items-center gap-3">
+                                <h3 className="text-xl font-semibold text-white">{result.candidate_name}</h3>
                                 {result.candidate_number && (
-                                  <span className="px-2 py-1 rounded text-xs font-mono bg-dark-800 text-blue-400 border border-dark-700">
-                                    {result.candidate_number}
+                                  <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 font-mono text-[11px] text-brand-300">
+                                    #{result.candidate_number}
                                   </span>
                                 )}
                               </div>
 
-                              <div className="flex flex-wrap gap-2 mb-2">
-                                <span className="inline-flex px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30">
-                                  {result.party_name}
-                                </span>
+                              <div className="mb-2 flex flex-wrap gap-2">
+                                <span className="badge-brand">{result.party_name}</span>
                                 {result.position && (
-                                  <span className="inline-flex px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium border border-purple-500/30 uppercase">
+                                  <span className="badge border-purple-400/25 bg-purple-500/10 text-purple-300 uppercase">
                                     {result.position.replace('_', ' ')}
                                   </span>
                                 )}
                                 {result.electoral_area && (
-                                  <span className="inline-flex px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-medium border border-emerald-500/30">
-                                    {result.electoral_area}
-                                  </span>
+                                  <span className="badge-success">{result.electoral_area}</span>
                                 )}
                               </div>
                             </div>
 
                             {/* Vote Stats */}
-                            <div className="text-right ml-4">
-                              <div className="text-4xl font-bold text-white mb-1">
+                            <div className="ml-4 text-right">
+                              <div className="text-3xl font-semibold tracking-tight text-white">
                                 {result.total_votes.toLocaleString()}
                               </div>
-                              <div className="text-2xl font-bold text-emerald-400 mb-1">
+                              <div className="text-lg font-semibold text-emerald-400">
                                 {result.percentage.toFixed(2)}%
                               </div>
-                              <div className="inline-flex items-center gap-1 px-2 py-1 bg-purple-500/10 rounded-lg border border-purple-500/30">
-                                <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <div className="mt-1 inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1">
+                                <svg className="h-3.5 w-3.5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                 </svg>
-                                <span className="text-xs font-medium text-purple-300">
+                                <span className="text-[11px] font-medium text-dark-300">
                                   {result.polling_stations_count} stations
                                 </span>
                               </div>
@@ -727,17 +695,17 @@ export default function ResultsPage() {
 
                           {/* Vote Share Progress Bar */}
                           <div className="mt-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs text-dark-400 uppercase font-semibold">Vote Share</span>
+                            <div className="mb-2 flex items-center justify-between">
+                              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-dark-400">Vote share</span>
                               <span className="text-xs text-dark-400">{result.percentage.toFixed(2)}%</span>
                             </div>
-                            <div className="bg-dark-800 rounded-full h-4 overflow-hidden border border-dark-700">
+                            <div className="h-2.5 overflow-hidden rounded-full border border-white/[0.06] bg-white/[0.05]">
                               <div
-                                className={`h-4 rounded-full transition-all duration-700 ${
-                                  index === 0 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
-                                  index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
-                                  index === 2 ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
-                                  'bg-gradient-to-r from-blue-500 to-emerald-500'
+                                className={`h-full rounded-full transition-all duration-700 ${
+                                  index === 0 ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+                                  index === 1 ? 'bg-gradient-to-r from-slate-300 to-slate-400' :
+                                  index === 2 ? 'bg-gradient-to-r from-orange-400 to-orange-500' :
+                                  'bg-gradient-to-r from-brand-500 to-cyan-400'
                                 }`}
                                 style={{ width: `${result.percentage}%` }}
                               ></div>
@@ -749,17 +717,17 @@ export default function ResultsPage() {
                   ))}
 
                   {/* Total Summary */}
-                  <div className="glass-effect rounded-xl p-6 border-2 border-emerald-500/50 bg-emerald-500/5 mt-6">
-                    <div className="flex justify-between items-center">
+                  <div className="mt-6 rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.06] p-5 sm:p-6">
+                    <div className="flex items-center justify-between gap-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-white mb-1">Total Valid Votes</h3>
-                        <p className="text-sm text-dark-300">{results.length} candidates competing</p>
+                        <h3 className="text-base font-semibold text-white">Total valid votes</h3>
+                        <p className="mt-0.5 text-sm text-dark-400">{results.length} candidates competing</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-4xl font-bold text-white">
+                        <div className="text-3xl font-semibold tracking-tight text-white">
                           {results.reduce((sum, r) => sum + r.total_votes, 0).toLocaleString()}
                         </div>
-                        <div className="text-lg font-bold text-emerald-400">100%</div>
+                        <div className="text-sm font-semibold text-emerald-400">100%</div>
                       </div>
                     </div>
                   </div>
@@ -789,20 +757,20 @@ export default function ResultsPage() {
 
                 {/* Top Performing Locations */}
                 {results.length > 0 && (
-                  <div className="glass-effect rounded-xl p-6 mt-6">
-                    <h2 className="text-xl font-semibold text-white mb-4">Analysis</h2>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="bg-dark-900/50 rounded-lg p-4 border border-dark-700">
-                        <p className="text-sm text-dark-400 mb-2">Leading Candidate</p>
-                        <p className="text-xl font-bold text-white">{results[0]?.candidate_name}</p>
+                  <div className="glass-effect mt-6 rounded-2xl p-5 sm:p-6">
+                    <h2 className="mb-4 text-lg font-semibold text-white">Analysis</h2>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-4">
+                        <p className="mb-1 text-xs uppercase tracking-[0.08em] text-dark-400">Leading candidate</p>
+                        <p className="text-lg font-semibold text-white">{results[0]?.candidate_name}</p>
                         <p className="text-sm text-emerald-400">
                           {results[0]?.total_votes.toLocaleString()} votes ({results[0]?.percentage.toFixed(2)}%)
                         </p>
                       </div>
-                      <div className="bg-dark-900/50 rounded-lg p-4 border border-dark-700">
-                        <p className="text-sm text-dark-400 mb-2">Total Candidates</p>
-                        <p className="text-xl font-bold text-white">{results.length}</p>
-                        <p className="text-sm text-dark-300">Competing in this race</p>
+                      <div className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-4">
+                        <p className="mb-1 text-xs uppercase tracking-[0.08em] text-dark-400">Total candidates</p>
+                        <p className="text-lg font-semibold text-white">{results.length}</p>
+                        <p className="text-sm text-dark-400">Competing in this race</p>
                       </div>
                     </div>
                   </div>
@@ -813,8 +781,8 @@ export default function ResultsPage() {
             {/* Polling Stations View */}
             {viewMode === 'stations' && (
               <>
-                <div className="glass-effect rounded-xl p-6">
-                  <h2 className="text-xl font-semibold text-white mb-6">Polling Stations Reporting Status</h2>
+                <div className="glass-effect rounded-2xl p-5 sm:p-6">
+                  <h2 className="mb-6 text-lg font-semibold text-white">Polling stations · reporting status</h2>
 
                   {stationsLoading ? (
                     <div className="text-center py-12">
@@ -842,10 +810,10 @@ export default function ResultsPage() {
                           <div
                             key={station.id}
                             onClick={handleStationClick}
-                            className={`bg-dark-900/50 rounded-lg p-4 border border-dark-700 transition-all ${
+                            className={`rounded-xl border border-white/[0.07] bg-white/[0.025] p-4 transition-all ${
                               hasSubmissions
-                                ? 'hover:border-blue-500 cursor-pointer hover:shadow-lg'
-                                : 'opacity-75'
+                                ? 'cursor-pointer hover:border-brand-400/30 hover:bg-white/[0.045]'
+                                : 'opacity-70'
                             }`}
                           >
                             <div className="flex items-start justify-between">
@@ -921,11 +889,11 @@ export default function ResultsPage() {
         {/* Station Details Modal */}
         {selectedStation && (
           <div
-            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-dark-950/80 p-4 backdrop-blur-md"
             onClick={() => setSelectedStation(null)}
           >
             <div
-              className="glass-effect rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              className="glass-effect max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl shadow-soft animate-slide-in-up"
               onClick={(e) => e.stopPropagation()}
             >
               {stationDetailsLoading ? (
@@ -959,29 +927,29 @@ export default function ResultsPage() {
                   </div>
 
                   {/* Summary Card */}
-                  <div className="mb-6 grid md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
-                      <p className="text-xs text-blue-300 mb-1">Registered Voters</p>
-                      <p className="text-2xl font-bold text-white">{selectedStation.polling_station?.registered_voters.toLocaleString()}</p>
+                  <div className="mb-6 grid gap-3 md:grid-cols-3">
+                    <div className="rounded-xl border border-brand-400/25 bg-brand-500/10 p-4">
+                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-300">Registered voters</p>
+                      <p className="text-xl font-semibold text-white">{selectedStation.polling_station?.registered_voters.toLocaleString()}</p>
                     </div>
-                    <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
-                      <p className="text-xs text-green-300 mb-1">Total Submissions</p>
-                      <p className="text-2xl font-bold text-white">{selectedStation.submission_count}</p>
-                      <p className="text-xs text-green-400 mt-1">{selectedStation.verified_count} verified</p>
+                    <div className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 p-4">
+                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-300">Total submissions</p>
+                      <p className="text-xl font-semibold text-white">{selectedStation.submission_count}</p>
+                      <p className="mt-1 text-xs text-emerald-400">{selectedStation.verified_count} verified</p>
                     </div>
                     {selectedStation.aggregate_results && (
-                      <div className="p-4 bg-emerald-500/10 rounded-lg border border-emerald-500/30">
-                        <p className="text-xs text-emerald-300 mb-1">Total Votes Cast</p>
-                        <p className="text-2xl font-bold text-white">{selectedStation.aggregate_results.total_votes_cast.toLocaleString()}</p>
-                        <p className="text-xs text-emerald-400 mt-1">{selectedStation.aggregate_results.rejected_votes.toLocaleString()} rejected</p>
+                      <div className="rounded-xl border border-teal-400/25 bg-teal-500/10 p-4">
+                        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-teal-300">Total votes cast</p>
+                        <p className="text-xl font-semibold text-white">{selectedStation.aggregate_results.total_votes_cast.toLocaleString()}</p>
+                        <p className="mt-1 text-xs text-teal-400">{selectedStation.aggregate_results.rejected_votes.toLocaleString()} rejected</p>
                       </div>
                     )}
                   </div>
 
                   {/* Aggregate Results */}
                   {selectedStation.aggregate_results && selectedStation.aggregate_results.candidates.length > 0 && (
-                    <div className="mb-6 p-6 bg-gradient-to-br from-blue-500/10 to-emerald-500/10 rounded-xl border border-blue-500/30">
-                      <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <div className="mb-6 rounded-2xl border border-brand-400/20 bg-gradient-to-br from-brand-500/10 to-emerald-500/[0.06] p-5 sm:p-6">
+                      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
                         <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
@@ -989,33 +957,33 @@ export default function ResultsPage() {
                       </h3>
                       <div className="space-y-4">
                         {selectedStation.aggregate_results.candidates.map((candidate: any, idx: number) => (
-                          <div key={idx} className="bg-dark-900/50 rounded-lg p-4 border border-dark-700">
-                            <div className="flex items-center justify-between mb-3">
+                          <div key={idx} className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-4">
+                            <div className="mb-3 flex items-center justify-between">
                               <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-2xl font-bold text-emerald-400">#{idx + 1}</span>
+                                <div className="mb-1 flex items-center gap-2">
+                                  <span className="text-lg font-semibold text-emerald-400">#{idx + 1}</span>
                                   <div>
-                                    <p className="text-lg font-semibold text-white">{candidate.candidate_name}</p>
+                                    <p className="text-base font-semibold text-white">{candidate.candidate_name}</p>
                                     <p className="text-sm text-dark-400">{candidate.party_name}</p>
                                   </div>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <p className="text-3xl font-bold text-white">{candidate.total_votes.toLocaleString()}</p>
+                                <p className="text-2xl font-semibold text-white">{candidate.total_votes.toLocaleString()}</p>
                                 <p className="text-sm text-emerald-400">{candidate.percentage.toFixed(2)}% of votes</p>
                               </div>
                             </div>
                             {/* Progress bar */}
-                            <div className="w-full bg-dark-800 rounded-full h-3">
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
                               <div
-                                className="bg-gradient-to-r from-blue-500 to-emerald-500 h-3 rounded-full transition-all"
+                                className="h-full rounded-full bg-gradient-to-r from-brand-500 to-emerald-400 transition-all"
                                 style={{ width: `${candidate.percentage}%` }}
                               ></div>
                             </div>
                           </div>
                         ))}
                       </div>
-                      <div className="mt-4 pt-4 border-t border-dark-700 grid grid-cols-2 gap-4">
+                      <div className="mt-4 grid grid-cols-2 gap-4 border-t border-white/[0.07] pt-4">
                         <div className="text-center">
                           <p className="text-sm text-dark-400">Total Votes Cast</p>
                           <p className="text-xl font-bold text-white">{selectedStation.aggregate_results.total_votes_cast.toLocaleString()}</p>
@@ -1035,7 +1003,7 @@ export default function ResultsPage() {
                     </h3>
                     <div className="space-y-4">
                       {selectedStation.submissions?.map((submission: any) => (
-                        <div key={submission.id} className="p-4 bg-dark-900/30 rounded-lg border border-dark-700">
+                        <div key={submission.id} className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-4">
                           <div className="flex items-start justify-between mb-3">
                             <div>
                               <p className="text-white font-medium">{submission.candidate_name}</p>
@@ -1058,7 +1026,7 @@ export default function ResultsPage() {
                           </div>
 
                           {/* Vote Details Grid */}
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 p-3 bg-dark-800/50 rounded-lg">
+                          <div className="mb-3 grid grid-cols-2 gap-4 rounded-xl border border-white/[0.06] bg-white/[0.025] p-3 md:grid-cols-4">
                             <div className="text-center">
                               <p className="text-xs text-dark-400 mb-1">Votes for Candidate</p>
                               <p className="text-xl text-emerald-400 font-bold">{submission.votes_received?.toLocaleString() || '0'}</p>
@@ -1120,7 +1088,7 @@ export default function ResultsPage() {
                           )}
 
                           {submission.reviews && Array.isArray(submission.reviews) && submission.reviews.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-dark-700">
+                            <div className="mt-3 border-t border-white/[0.07] pt-3">
                               <p className="text-xs text-dark-400 mb-2">Review History:</p>
                               {submission.reviews.map((review: any, idx: number) => (
                                 <div key={idx} className="text-xs text-dark-300 mb-1">

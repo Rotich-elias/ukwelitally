@@ -296,7 +296,7 @@ export default function LocationManager() {
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-dark-700">
+      <div className="flex gap-2 border-b border-white/[0.07]">
         {(
           [
             ['wards', 'Wards'],
@@ -333,7 +333,7 @@ export default function LocationManager() {
       )}
 
       {tab === 'import' ? (
-        <div className="glass-effect rounded-xl p-6 space-y-5">
+        <div className="glass-effect rounded-2xl p-6 space-y-5">
           <div>
             <h3 className="text-lg font-semibold text-white mb-1">Polling station import</h3>
             <p className="text-sm text-dark-300">
@@ -375,7 +375,7 @@ export default function LocationManager() {
                   setImportType(e.target.value)
                   setImportResult(null)
                 }}
-                className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
               >
                 <option value="polling_stations">Polling stations (POLLING_STATIONS.csv)</option>
                 <option value="prune_placeholders">Remove the placeholder wards</option>
@@ -392,7 +392,7 @@ export default function LocationManager() {
                     setImportFile(e.target.files?.[0] || null)
                     setImportResult(null)
                   }}
-                  className="w-full px-4 py-2.5 bg-dark-900/50 border border-dark-700 rounded-lg text-white text-sm"
+                  className="w-full px-4 py-2.5 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white text-sm"
                 />
               </div>
             )}
@@ -408,7 +408,7 @@ export default function LocationManager() {
                   className={`cursor-pointer rounded-lg border p-4 ${
                     importMode === 'update'
                       ? 'border-blue-500/60 bg-blue-500/10'
-                      : 'border-dark-700 bg-dark-900/40'
+                      : 'border-white/[0.07] bg-white/[0.02]'
                   }`}
                 >
                   <input
@@ -432,7 +432,7 @@ export default function LocationManager() {
                   className={`cursor-pointer rounded-lg border p-4 ${
                     importMode === 'replace'
                       ? 'border-red-500/60 bg-red-500/10'
-                      : 'border-dark-700 bg-dark-900/40'
+                      : 'border-white/[0.07] bg-white/[0.02]'
                   }`}
                 >
                   <input
@@ -502,7 +502,7 @@ export default function LocationManager() {
                   )}
               </div>
               <div
-                className="h-2 w-full overflow-hidden rounded-full bg-dark-800"
+                className="h-2 w-full overflow-hidden rounded-full bg-white/[0.04]"
                 role="progressbar"
                 aria-label="CSV upload progress"
                 aria-valuemin={0}
@@ -528,7 +528,7 @@ export default function LocationManager() {
           )}
 
           {importResult && (
-            <div className="bg-dark-900/50 border border-dark-700 rounded-lg p-4 text-sm">
+            <div className="bg-white/[0.025] border border-white/[0.07] rounded-lg p-4 text-sm">
               <p className="text-white font-medium mb-2">{importResult.message}</p>
               {importResult.dry_run && (
                 <p className="text-dark-300 mb-2">Nothing was written yet.</p>
@@ -545,7 +545,7 @@ export default function LocationManager() {
                       ['With errors', importResult.error_rows ?? importResult.errors?.length ?? 0],
                     ] as Array<[string, number]>
                   ).map(([label, value]) => (
-                    <div key={label} className="bg-dark-800/50 rounded px-3 py-2">
+                    <div key={label} className="bg-white/[0.03] rounded px-3 py-2">
                       <p className="text-xs text-dark-400">{label}</p>
                       <p className="text-white font-medium">{value}</p>
                     </div>
@@ -571,7 +571,7 @@ export default function LocationManager() {
                     .filter((row: any) => row.issues?.length > 0)
                     .slice(0, 50)
                     .map((row: any) => (
-                      <div key={row.row} className="border-l-2 border-dark-600 pl-2">
+                      <div key={row.row} className="border-l-2 border-white/10 pl-2">
                         <p className="text-xs text-dark-400">
                           Row {row.row}
                           {row.code ? ` · ${row.code}` : ''}
@@ -607,7 +607,7 @@ export default function LocationManager() {
       ) : (
         <>
           {/* Filters */}
-          <div className="glass-effect rounded-xl p-4">
+          <div className="glass-effect rounded-2xl p-4">
             <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <select
                 value={countyId}
@@ -616,7 +616,7 @@ export default function LocationManager() {
                   setConstituencyId('')
                   setWardId('')
                 }}
-                className="px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+                className="px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm"
               >
                 <option value="">All counties</option>
                 {counties.map((county) => (
@@ -633,7 +633,7 @@ export default function LocationManager() {
                   setWardId('')
                 }}
                 disabled={!countyId}
-                className="px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm disabled:opacity-50"
+                className="px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm disabled:opacity-50"
               >
                 <option value="">All constituencies</option>
                 {filteredConstituencies.map((constituency) => (
@@ -648,7 +648,7 @@ export default function LocationManager() {
                   value={wardId}
                   onChange={(e) => setWardId(e.target.value)}
                   disabled={!constituencyId}
-                  className="px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm disabled:opacity-50"
+                  className="px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm disabled:opacity-50"
                 >
                   <option value="">All wards</option>
                   {wardOptions.map((ward) => (
@@ -664,7 +664,7 @@ export default function LocationManager() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search name or code"
-                className="px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+                className="px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm"
               />
 
               <button
@@ -677,10 +677,10 @@ export default function LocationManager() {
           </div>
 
           {/* Table */}
-          <div className="glass-effect rounded-xl overflow-hidden">
+          <div className="glass-effect rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-dark-800/50 border-b border-dark-700">
+                <thead className="bg-white/[0.03] border-b border-white/[0.07]">
                   <tr>
                     <th className="px-5 py-3 text-left text-xs font-medium text-dark-300 uppercase">
                       {tab === 'stations' ? 'Station' : 'Ward'}
@@ -702,7 +702,7 @@ export default function LocationManager() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-700">
+                <tbody className="divide-y divide-white/[0.06]">
                   {loading ? (
                     <tr>
                       <td colSpan={6} className="px-5 py-8 text-center text-dark-400">
@@ -718,7 +718,7 @@ export default function LocationManager() {
                   ) : (
                     (tab === 'stations' ? (stations as Station[]) : (wards as Ward[])).map(
                       (record) => (
-                        <tr key={record.id} className="hover:bg-dark-800/40">
+                        <tr key={record.id} className="hover:bg-white/[0.025]">
                           <td className="px-5 py-3 text-sm text-white">{record.name}</td>
                           <td className="px-5 py-3 text-sm font-mono text-dark-300">
                             {record.code}

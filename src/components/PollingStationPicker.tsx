@@ -185,7 +185,7 @@ export default function PollingStationPicker({
                 ward_id: '',
               })
             }
-            className="px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+            className="px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm"
           >
             <option value="">All counties</option>
             {countyOptions.map((county) => (
@@ -200,7 +200,7 @@ export default function PollingStationPicker({
               setFilters({ ...filters, constituency_id: e.target.value, ward_id: '' })
             }
             disabled={!filters.county_id}
-            className="px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm disabled:opacity-50"
+            className="px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm disabled:opacity-50"
           >
             <option value="">All constituencies</option>
             {constituencyOptions.map((constituency) => (
@@ -213,7 +213,7 @@ export default function PollingStationPicker({
             value={filters.ward_id}
             onChange={(e) => setFilters({ ...filters, ward_id: e.target.value })}
             disabled={!filters.constituency_id}
-            className="px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm disabled:opacity-50"
+            className="px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm disabled:opacity-50"
           >
             <option value="">All wards</option>
             {wardOptions.map((ward) => (
@@ -230,7 +230,7 @@ export default function PollingStationPicker({
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search by station name or code"
-        className="w-full px-4 py-2.5 bg-dark-900/50 border border-dark-700 rounded-lg text-white text-sm placeholder-dark-500"
+        className="w-full px-4 py-2.5 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white text-sm placeholder-dark-500"
       />
 
       {selected && (
@@ -262,7 +262,7 @@ export default function PollingStationPicker({
       )}
 
       {!selected && (
-        <div className="border border-dark-700 rounded-lg overflow-hidden">
+        <div className="border border-white/[0.07] rounded-lg overflow-hidden">
           {loading ? (
             <div className="px-4 py-6 text-center">
               <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
@@ -278,13 +278,13 @@ export default function PollingStationPicker({
               </p>
             </div>
           ) : (
-            <ul className="divide-y divide-dark-700 max-h-64 overflow-y-auto">
+            <ul className="divide-y divide-white/[0.06] max-h-64 overflow-y-auto">
               {stations.map((station) => (
                 <li key={station.id}>
                   <button
                     type="button"
                     onClick={() => handleSelect(station)}
-                    className="w-full text-left px-4 py-3 hover:bg-dark-800/60 transition-colors"
+                    className="w-full text-left px-4 py-3 hover:bg-white/[0.045] transition-colors"
                   >
                     <p className="text-sm text-white truncate">{station.name}</p>
                     <p className="text-xs text-dark-400 truncate">

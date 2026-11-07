@@ -1,6 +1,16 @@
 /** @type {import('next').NextConfig} */
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
+// Keep dev and production build output in separate directories.
+//
+// `next dev` and `next build` both default to `.next`. Running a build while
+// the dev server is active (or restarting dev without clearing a stale build)
+// leaves the webpack runtime and page chunks from different compilations in
+// the same directory, which surfaces as errors like:
+//   Cannot find module './3897.js'
+// A distinct dev directory makes that collision impossible.
+const distDir = process.env.NEXT_DIST_DIR || (isDevelopment ? '.next-dev' : '.next')
+
 // Next.js dev mode compiles with eval-source-map, which requires
 // 'unsafe-eval'. Without it the browser blocks the dev bundles, React never
 // hydrates, and forms fall back to a native submit (the login page just
@@ -48,6 +58,7 @@ const securityHeaders = [
 ]
 
 const nextConfig = {
+  distDir,
   images: {
     // Photos are served by the application itself (evidence through the
     // authorized route, profile photos from the storage host). The built-in

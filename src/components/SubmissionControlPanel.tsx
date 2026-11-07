@@ -115,7 +115,7 @@ export default function SubmissionControlPanel() {
 
   if (loading) {
     return (
-      <div className="glass-effect rounded-xl p-6 mb-8">
+      <div className="glass-effect rounded-2xl p-6 mb-8">
         <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
         <p className="text-dark-400 text-sm mt-2">Loading the reporting window...</p>
       </div>
@@ -124,7 +124,7 @@ export default function SubmissionControlPanel() {
 
   if (!data) {
     return (
-      <div className="glass-effect rounded-xl p-6 mb-8 border border-red-500/30">
+      <div className="glass-effect rounded-2xl p-6 mb-8 border border-red-500/30">
         <p className="text-red-400 text-sm">{error || 'The reporting window is unavailable.'}</p>
       </div>
     )
@@ -145,7 +145,7 @@ export default function SubmissionControlPanel() {
   ]
 
   return (
-    <div className="glass-effect rounded-xl p-6 mb-8">
+    <div className="glass-effect rounded-2xl p-6 mb-8">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
@@ -176,7 +176,7 @@ export default function SubmissionControlPanel() {
         </div>
       )}
 
-      <div className="bg-dark-800/50 border border-dark-700 rounded-lg p-4 mb-5">
+      <div className="bg-white/[0.03] border border-white/[0.07] rounded-lg p-4 mb-5">
         <p className="text-sm text-dark-200">{reportingWindow.message}</p>
         <div className="mt-3 grid sm:grid-cols-2 gap-3 text-xs">
           <div>
@@ -272,7 +272,7 @@ export default function SubmissionControlPanel() {
       </div>
 
       {showSchedule && (
-        <div className="mt-4 bg-dark-800/50 border border-dark-700 rounded-lg p-4">
+        <div className="mt-4 bg-white/[0.03] border border-white/[0.07] rounded-lg p-4">
           <p className="text-sm text-dark-300 mb-3">
             Times are read as East Africa Time. The window opens and closes on the server, so it
             applies even when you are not signed in.
@@ -284,7 +284,7 @@ export default function SubmissionControlPanel() {
                 type="datetime-local"
                 value={schedule.opens_at}
                 onChange={(e) => setSchedule({ ...schedule, opens_at: e.target.value })}
-                className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+                className="w-full px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm"
               />
             </div>
             <div>
@@ -293,7 +293,7 @@ export default function SubmissionControlPanel() {
                 type="datetime-local"
                 value={schedule.closes_at}
                 onChange={(e) => setSchedule({ ...schedule, closes_at: e.target.value })}
-                className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+                className="w-full px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm"
               />
             </div>
           </div>
@@ -322,12 +322,12 @@ export default function SubmissionControlPanel() {
         <h3 className="text-sm font-semibold text-white mb-3">Submission summary</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {counters.map((counter) => (
-            <div key={counter.label} className="bg-dark-800/50 border border-dark-700 rounded-lg p-3">
+            <div key={counter.label} className="bg-white/[0.03] border border-white/[0.07] rounded-lg p-3">
               <p className="text-xs text-dark-400 uppercase tracking-wide">{counter.label}</p>
               <p className={`text-xl font-bold ${counter.tone}`}>{counter.value}</p>
             </div>
           ))}
-          <div className="bg-dark-800/50 border border-dark-700 rounded-lg p-3">
+          <div className="bg-white/[0.03] border border-white/[0.07] rounded-lg p-3">
             <p className="text-xs text-dark-400 uppercase tracking-wide">Stations in scope</p>
             <p className="text-xl font-bold text-white">{summary.total_stations}</p>
           </div>

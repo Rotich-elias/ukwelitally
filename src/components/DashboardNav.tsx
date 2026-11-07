@@ -1,6 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import InstallAppButton from '@/components/InstallAppButton'
 
@@ -21,8 +22,16 @@ interface Notification {
   sent_at: string
 }
 
+const roleStyles: Record<string, string> = {
+  admin: 'border-purple-400/25 bg-purple-500/10 text-purple-300',
+  candidate: 'border-brand-400/25 bg-brand-500/10 text-brand-300',
+  agent: 'border-cyan-400/25 bg-cyan-500/10 text-cyan-300',
+  observer: 'border-emerald-400/25 bg-emerald-500/10 text-emerald-300',
+}
+
 export default function DashboardNav() {
   const router = useRouter()
+  const pathname = usePathname()
   const [user, setUser] = useState<User | null>(null)
   const [showMenu, setShowMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -35,7 +44,7 @@ export default function DashboardNav() {
 
     try {
       const response = await fetch('/api/notifications', {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
       if (response.ok) {
         const data = await response.json()
@@ -65,7 +74,7 @@ export default function DashboardNav() {
       await fetch('/api/notifications', {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ all: true }),
@@ -91,121 +100,167 @@ export default function DashboardNav() {
 
   if (!user) return null
 
+  const dashboardHref = `/dashboard/${user.role}`
+  const roleLabel = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'
+  const roleClass = roleStyles[user.role] || 'border-white/15 bg-white/[0.05] text-dark-300'
+
+  const navLinks = [
+    { href: dashboardHref, label: 'Dashboard' },
+    ...(user.role !== 'agent' ? [{ href: '/results', label: 'Results' }] : []),
+  ]
+
   return (
-    <nav className="glass-effect border-b border-dark-700/50 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex justify-between items-center">
-          {/* Logo and Navigation */}
-          <div className="flex items-center gap-6">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              UkweliTally
-            </h1>
-            <div className="flex items-center gap-4">
-              <a
-                href={`/dashboard/${user.role}`}
-                className="text-sm text-dark-300 hover:text-white transition-colors"
-              >
-                Dashboard
-              </a>
-              {/* Hide Results link from agents */}
-              {user.role !== 'agent' && (
-                <a
-                  href="/results"
-                  className="text-sm text-dark-300 hover:text-white transition-colors"
+    <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-dark-950/[0.78] backdrop-blur-xl">
+      <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-6">
+          <Link href={dashboardHref} className="flex shrink-0 items-center gap-2.5">
+            <img
+              src="/icons/icon-192x192.png"
+              alt=""
+              width={34}
+              height={34}
+              className="h-8 w-8 rounded-xl ring-1 ring-white/10"
+            />
+            <span className="hidden text-base font-semibold tracking-tight text-white sm:inline">
+              Ukweli<span className="gradient-text">Tally</span>
+            </span>
+          </Link>
+
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Dashboard">
+            {navLinks.map((link) => {
+              const isActive =
+                pathname === link.href ||
+                (link.href !== '/results' && pathname?.startsWith(link.href))
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`rounded-lg px-3.5 py-2 text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-white/[0.07] text-white'
+                      : 'text-dark-400 hover:bg-white/[0.04] hover:text-dark-100'
+                  }`}
                 >
-                  Results
-                </a>
-              )}
-              <span className="text-sm px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full border border-blue-500/30">
-                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-              </span>
-              <InstallAppButton variant="compact" />
-              <button
-                onClick={() => {
-                  setShowNotifications(!showNotifications)
-                  setShowMenu(false)
-                  if (!showNotifications) fetchNotifications()
-                }}
-                className="relative text-sm text-dark-300 hover:text-white transition-colors"
-                aria-label={`Notifications (${unreadCount} unread)`}
-              >
-                Notifications
-                {unreadCount > 0 && (
-                  <span className="absolute -top-2 -right-3 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </button>
-            </div>
+                  {link.label}
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span
+            className={`hidden items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold sm:inline-flex ${roleClass}`}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            {roleLabel}
+          </span>
+
+          <div className="hidden sm:block">
+            <InstallAppButton variant="compact" />
           </div>
 
-          {/* Notifications panel */}
-          {showNotifications && (
-            <div className="absolute right-4 mt-2 w-96 glass-effect rounded-lg shadow-lg py-2 z-50 max-h-[70vh] overflow-y-auto">
-              <div className="flex items-center justify-between px-4 py-2 border-b border-dark-700/50">
-                <span className="text-sm font-semibold text-white">Notifications</span>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={markAllRead}
-                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                  >
-                    Mark all read
-                  </button>
-                )}
-              </div>
-              {notifications.length === 0 ? (
-                <p className="px-4 py-6 text-sm text-dark-400 text-center">
-                  No notifications yet
-                </p>
-              ) : (
-                notifications.map((n) => (
-                  <div
-                    key={n.id}
-                    className={`px-4 py-3 border-b border-dark-700/30 last:border-0 ${
-                      n.read ? 'opacity-60' : ''
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <span
-                        className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${
-                          n.type === 'error'
-                            ? 'bg-red-500'
-                            : n.type === 'warning'
-                            ? 'bg-yellow-500'
-                            : n.type === 'success'
-                            ? 'bg-emerald-500'
-                            : 'bg-blue-500'
-                        }`}
-                      />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-white">{n.title}</p>
-                        <p className="text-xs text-dark-300 mt-0.5">{n.message}</p>
-                        <p className="text-[10px] text-dark-500 mt-1">
-                          {new Date(n.sent_at).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {/* User Menu */}
           <div className="relative">
             <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-dark-800/50 transition-colors"
+              onClick={() => {
+                setShowNotifications(!showNotifications)
+                setShowMenu(false)
+                if (!showNotifications) fetchNotifications()
+              }}
+              className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-dark-300 transition-colors hover:bg-white/[0.07] hover:text-white"
+              aria-label={`Notifications (${unreadCount} unread)`}
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+              <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-dark-950">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/[0.08] bg-dark-900/95 shadow-soft backdrop-blur-xl animate-slide-in-up">
+                <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+                  <span className="text-sm font-semibold text-white">Notifications</span>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllRead}
+                      className="text-xs font-medium text-brand-300 transition-colors hover:text-brand-200"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-[65vh] overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-10 text-center">
+                      <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.04] text-dark-500">
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                      </span>
+                      <p className="mt-3 text-sm text-dark-400">No notifications yet</p>
+                      <p className="mt-1 text-xs text-dark-600">Updates about your submissions will appear here.</p>
+                    </div>
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`border-b border-white/[0.05] px-4 py-3 last:border-0 transition-colors hover:bg-white/[0.025] ${
+                          n.read ? 'opacity-60' : ''
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <span
+                            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
+                              n.type === 'error'
+                                ? 'bg-red-500'
+                                : n.type === 'warning'
+                                  ? 'bg-amber-500'
+                                  : n.type === 'success'
+                                    ? 'bg-emerald-500'
+                                    : 'bg-brand-500'
+                            }`}
+                          />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-white">{n.title}</p>
+                            <p className="mt-0.5 text-xs leading-relaxed text-dark-400">{n.message}</p>
+                            <p className="mt-1 text-[10px] text-dark-600">
+                              {new Date(n.sent_at).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowMenu(!showMenu)
+                setShowNotifications(false)
+              }}
+              className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] p-1 pr-2 transition-colors hover:bg-white/[0.07] sm:pr-3"
+              aria-label="Account menu"
+              aria-expanded={showMenu}
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-cyan-400 text-sm font-semibold text-white">
                 {user.full_name?.charAt(0).toUpperCase() || 'U'}
               </div>
-              <div className="text-left hidden md:block">
-                <p className="text-sm font-medium text-white">{user.full_name}</p>
-                <p className="text-xs text-dark-400">{user.email}</p>
+              <div className="hidden text-left lg:block">
+                <p className="max-w-[9rem] truncate text-xs font-semibold text-white">
+                  {user.full_name}
+                </p>
+                <p className="max-w-[9rem] truncate text-[10px] text-dark-500">{user.email}</p>
               </div>
               <svg
-                className={`w-4 h-4 text-dark-400 transition-transform ${showMenu ? 'rotate-180' : ''}`}
+                className={`hidden h-3.5 w-3.5 text-dark-500 transition-transform sm:block ${showMenu ? 'rotate-180' : ''}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -214,27 +269,66 @@ export default function DashboardNav() {
               </svg>
             </button>
 
-            {/* Dropdown Menu */}
             {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 glass-effect rounded-lg shadow-lg py-2">
-                <a
-                  href="#"
-                  className="block px-4 py-2 text-sm text-dark-200 hover:bg-dark-800/50 transition-colors"
-                >
-                  Profile Settings
-                </a>
-                <hr className="my-2 border-dark-700" />
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-dark-800/50 transition-colors"
-                >
-                  Logout
-                </button>
+              <div className="absolute right-0 mt-2 w-60 overflow-hidden rounded-2xl border border-white/[0.08] bg-dark-900/95 shadow-soft backdrop-blur-xl animate-slide-in-up">
+                <div className="border-b border-white/[0.06] px-4 py-3">
+                  <p className="truncate text-sm font-semibold text-white">{user.full_name}</p>
+                  <p className="truncate text-xs text-dark-500">{user.email}</p>
+                  <span className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${roleClass}`}>
+                    {roleLabel}
+                  </span>
+                </div>
+                <div className="p-1.5">
+                  <Link
+                    href={dashboardHref}
+                    onClick={() => setShowMenu(false)}
+                    className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-dark-300 transition-colors hover:bg-white/[0.06] hover:text-white"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Sign out
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
-    </nav>
+
+      {/* Compact mobile navigation */}
+      <div className="border-t border-white/[0.05] px-4 pb-2 pt-1 md:hidden">
+        <div className="flex items-center gap-1">
+          {navLinks.map((link) => {
+            const isActive =
+              pathname === link.href ||
+              (link.href !== '/results' && pathname?.startsWith(link.href))
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  isActive ? 'bg-white/[0.07] text-white' : 'text-dark-400 hover:text-white'
+                }`}
+              >
+                {link.label}
+              </Link>
+            )
+          })}
+          <span className={`ml-auto inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${roleClass}`}>
+            {roleLabel}
+          </span>
+        </div>
+      </div>
+    </header>
   )
 }

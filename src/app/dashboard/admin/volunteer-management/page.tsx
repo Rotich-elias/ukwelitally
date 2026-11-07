@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
+import PageHeader from '@/components/PageHeader'
 
 interface Volunteer {
   id: number
@@ -279,58 +280,58 @@ export default function VolunteerManagement() {
     <div className="min-h-screen bg-dark-950">
       <DashboardNav />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Presidential Results Volunteers</h1>
-          <p className="text-dark-300">Manage volunteer registrations specifically for presidential election results monitoring</p>
-        </div>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <PageHeader
+          eyebrow="Volunteer programme"
+          title="Presidential Results Volunteers"
+          description="Manage volunteer registrations specifically for presidential election results monitoring."
+        />
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="glass-effect rounded-xl p-4">
-            <div className="flex items-center justify-between">
+        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="glass-effect rounded-2xl p-5">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-dark-300 text-sm">Total Volunteers</p>
-                <p className="text-2xl font-bold text-white">{volunteers.length}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-dark-400">Total volunteers</p>
+                <p className="mt-1 text-2xl font-semibold tracking-tight text-white">{volunteers.length}</p>
               </div>
-              <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-brand-400/20 bg-brand-500/10 text-brand-300">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                 </svg>
-              </div>
+              </span>
             </div>
           </div>
 
-          <div className="glass-effect rounded-xl p-4">
-            <div className="flex items-center justify-between">
+          <div className="glass-effect rounded-2xl p-5">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-dark-300 text-sm">Pending Review</p>
-                <p className="text-2xl font-bold text-yellow-400">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-dark-400">Pending review</p>
+                <p className="mt-1 text-2xl font-semibold tracking-tight text-amber-300">
                   {volunteers.filter(v => v.status === 'pending').length}
                 </p>
               </div>
-              <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-400/20 bg-amber-500/10 text-amber-300">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-              </div>
+              </span>
             </div>
           </div>
 
-          <div className="glass-effect rounded-xl p-4">
-            <div className="flex items-center justify-between">
+          <div className="glass-effect rounded-2xl p-5">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-dark-300 text-sm">Approved</p>
-                <p className="text-2xl font-bold text-blue-400">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-dark-400">Approved</p>
+                <p className="mt-1 text-2xl font-semibold tracking-tight text-emerald-300">
                   {volunteers.filter(v => v.status === 'approved').length}
                 </p>
               </div>
-              <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-400/20 bg-emerald-500/10 text-emerald-300">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-              </div>
+              </span>
             </div>
           </div>
         </div>
@@ -349,8 +350,8 @@ export default function VolunteerManagement() {
         )}
 
         {/* Filters and Search */}
-        <div className="glass-effect rounded-xl p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4 justify-between">
+        <div className="glass-effect mb-6 rounded-2xl p-4">
+          <div className="flex flex-col justify-between gap-4 md:flex-row">
             {/* Search */}
             <div className="flex-1">
               <input
@@ -358,20 +359,20 @@ export default function VolunteerManagement() {
                 placeholder="Search volunteers by name, email, phone, or ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 bg-dark-900/50 border border-dark-700 rounded-lg text-white placeholder-dark-400 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 text-sm"
               />
             </div>
 
             {/* Status Filter */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {['all', 'pending', 'approved', 'rejected'].map((status) => (
                 <button
                   key={status}
                   onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors ${
                     filterStatus === status
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-dark-800 text-dark-300 hover:bg-dark-700'
+                      ? 'border-brand-400/30 bg-brand-500/15 text-brand-200'
+                      : 'border-white/[0.07] bg-white/[0.025] text-dark-400 hover:border-white/[0.14] hover:text-white'
                   }`}
                 >
                   {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -383,7 +384,7 @@ export default function VolunteerManagement() {
   
         {/* Bulk Actions Bar */}
         {selectedVolunteers.length > 0 && (
-          <div className="glass-effect rounded-xl p-4 mb-6 border-2 border-blue-500/50">
+          <div className="glass-effect rounded-2xl p-4 mb-6 border-2 border-blue-500/50">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
@@ -400,7 +401,7 @@ export default function VolunteerManagement() {
               <div className="flex gap-2">
                 <button
                   onClick={clearSelection}
-                  className="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  className="px-4 py-2 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg text-sm font-medium transition-colors"
                 >
                   Clear Selection
                 </button>
@@ -431,10 +432,10 @@ export default function VolunteerManagement() {
         )}
   
         {/* Volunteers Table */}
-        <div className="glass-effect rounded-xl overflow-hidden">
+        <div className="glass-effect rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-dark-800/50 border-b border-dark-700">
+              <thead className="bg-white/[0.03] border-b border-white/[0.07]">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">
                     <div className="flex items-center gap-3">
@@ -442,7 +443,7 @@ export default function VolunteerManagement() {
                         type="checkbox"
                         checked={selectedVolunteers.length > 0 && selectedVolunteers.length === filteredVolunteers.length}
                         onChange={handleSelectAll}
-                        className="w-4 h-4 text-blue-600 bg-dark-700 border-dark-600 rounded focus:ring-blue-500 focus:ring-2"
+                        className="w-4 h-4 text-blue-600 bg-white/[0.06] border-white/10 rounded focus:ring-blue-500 focus:ring-2"
                       />
                       Volunteer
                     </div>
@@ -454,7 +455,7 @@ export default function VolunteerManagement() {
                   <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-dark-700">
+              <tbody className="divide-y divide-white/[0.06]">
                 {loading ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-dark-400">
@@ -469,14 +470,14 @@ export default function VolunteerManagement() {
                   </tr>
                 ) : (
                   filteredVolunteers.map((volunteer) => (
-                    <tr key={volunteer.id} className="hover:bg-dark-800/30 transition-colors">
+                    <tr key={volunteer.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <input
                             type="checkbox"
                             checked={selectedVolunteers.includes(volunteer.id)}
                             onChange={() => handleSelectVolunteer(volunteer.id)}
-                            className="w-4 h-4 text-blue-600 bg-dark-700 border-dark-600 rounded focus:ring-blue-500 focus:ring-2"
+                            className="w-4 h-4 text-blue-600 bg-white/[0.06] border-white/10 rounded focus:ring-blue-500 focus:ring-2"
                           />
                           <div>
                             <p className="text-white font-medium">{volunteer.full_name}</p>
@@ -566,7 +567,7 @@ export default function VolunteerManagement() {
       {/* Volunteer Details Modal */}
       {showDetailsModal && selectedVolunteer && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="glass-effect rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Volunteer Details</h2>
@@ -660,14 +661,14 @@ export default function VolunteerManagement() {
                 {selectedVolunteer.notes && (
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-3">Notes</h3>
-                    <div className="bg-dark-800/50 rounded-lg p-4">
+                    <div className="bg-white/[0.03] rounded-lg p-4">
                       <p className="text-dark-300">{selectedVolunteer.notes}</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-4 mt-6 pt-4 border-t border-dark-700">
+              <div className="flex gap-4 mt-6 pt-4 border-t border-white/[0.07]">
                 <button
                   onClick={() => setShowDetailsModal(false)}
                   className="flex-1 btn-secondary"
@@ -683,7 +684,7 @@ export default function VolunteerManagement() {
       {/* Bulk Action Notes Modal */}
       {showBulkNotesModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-md w-full">
+          <div className="glass-effect rounded-2xl max-w-md w-full">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">
@@ -730,13 +731,13 @@ export default function VolunteerManagement() {
                       onChange={(e) => setBulkNotes(e.target.value)}
                       placeholder="Add any notes about this bulk action..."
                       rows={4}
-                      className="w-full px-4 py-2 bg-dark-900/50 border border-dark-700 rounded-lg text-white placeholder-dark-400 focus:outline-none focus:border-blue-500 resize-none"
+                      className="w-full px-4 py-2 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white placeholder-dark-400 focus:outline-none focus:border-blue-500 resize-none"
                     />
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-4 mt-6 pt-4 border-t border-dark-700">
+              <div className="flex gap-4 mt-6 pt-4 border-t border-white/[0.07]">
                 <button
                   onClick={() => {
                     setShowBulkNotesModal(false)
@@ -772,7 +773,7 @@ export default function VolunteerManagement() {
       {/* Individual Delete Confirmation Modal */}
       {showDeleteModal && volunteerToDelete && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-md w-full">
+          <div className="glass-effect rounded-2xl max-w-md w-full">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Delete Volunteer</h2>
@@ -799,7 +800,7 @@ export default function VolunteerManagement() {
                   </p>
                 </div>
 
-                <div className="bg-dark-800/50 rounded-lg p-4">
+                <div className="bg-white/[0.03] rounded-lg p-4">
                   <p className="text-dark-300 text-sm">
                     <strong>Email:</strong> {volunteerToDelete.email}<br />
                     <strong>Phone:</strong> {volunteerToDelete.phone}<br />
@@ -809,7 +810,7 @@ export default function VolunteerManagement() {
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-6 pt-4 border-t border-dark-700">
+              <div className="flex gap-4 mt-6 pt-4 border-t border-white/[0.07]">
                 <button
                   onClick={() => {
                     setShowDeleteModal(false)

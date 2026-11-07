@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import DashboardNav from '@/components/DashboardNav'
+import PageHeader from '@/components/PageHeader'
 import SafeImage from '@/components/SafeImage'
 
 /**
@@ -201,19 +202,17 @@ export default function ObserverReviewPage() {
     <div className="min-h-screen bg-dark-950">
       <DashboardNav />
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Observer Review Queue</h1>
-            <p className="text-dark-300">
-              Alternative results submitted by your observers. A fallback can only be approved when
-              no agent result exists for that polling station.
-            </p>
-          </div>
-          <Link href="/dashboard/candidate" className="btn-secondary text-sm py-2 text-center">
-            Back to dashboard
-          </Link>
-        </div>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <PageHeader
+          eyebrow="Observer fallback"
+          title="Observer Review Queue"
+          description="Alternative results submitted by your observers. A fallback can only be approved when no agent result exists for that polling station."
+          actions={
+            <Link href="/dashboard/candidate" className="btn-secondary px-4 py-2.5">
+              Back to dashboard
+            </Link>
+          }
+        />
 
         {error && (
           <div className="mb-4 bg-red-500/10 border border-red-500/40 rounded-lg px-4 py-3">
@@ -227,7 +226,7 @@ export default function ObserverReviewPage() {
         )}
 
         {conflicts.length > 0 && (
-          <div className="glass-effect rounded-xl p-6 mb-8 border border-orange-500/30">
+          <div className="glass-effect rounded-2xl p-6 mb-8 border border-orange-500/30">
             <h2 className="text-lg font-bold text-white mb-1">Conflicts to resolve</h2>
             <p className="text-sm text-dark-300 mb-4">
               An agent result arrived for a station where you already approved an observer
@@ -237,7 +236,7 @@ export default function ObserverReviewPage() {
               {conflicts.map((conflict) => (
                 <div
                   key={conflict.id}
-                  className="bg-dark-800/50 border border-orange-500/30 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3"
+                  className="bg-white/[0.03] border border-orange-500/30 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3"
                 >
                   <div>
                     <p className="text-white font-medium">{conflict.polling_station_name}</p>
@@ -271,7 +270,7 @@ export default function ObserverReviewPage() {
           </div>
         )}
 
-        <div className="glass-effect rounded-xl p-6">
+        <div className="glass-effect rounded-2xl p-6">
           <div className="flex flex-wrap gap-2 mb-5">
             {FILTERS.map((option) => (
               <button
@@ -280,7 +279,7 @@ export default function ObserverReviewPage() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                   filter === option.value
                     ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
-                    : 'border-dark-700 text-dark-300 hover:border-blue-500/40 hover:text-white'
+                    : 'border-white/[0.07] text-dark-300 hover:border-blue-500/40 hover:text-white'
                 }`}
               >
                 {option.label}
@@ -302,7 +301,7 @@ export default function ObserverReviewPage() {
               {submissions.map((submission) => (
                 <div
                   key={submission.id}
-                  className="bg-dark-800/50 border border-dark-700 rounded-lg p-5"
+                  className="bg-white/[0.03] border border-white/[0.07] rounded-lg p-5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                     <div>
@@ -368,7 +367,7 @@ export default function ObserverReviewPage() {
                   </div>
 
                   {submission.submitted_votes.length > 0 && (
-                    <div className="bg-dark-900/40 border border-dark-700 rounded-lg p-3 mb-4">
+                    <div className="bg-white/[0.02] border border-white/[0.07] rounded-lg p-3 mb-4">
                       <p className="text-xs text-dark-400 uppercase tracking-wide mb-2">
                         Submitted figures
                       </p>
@@ -389,7 +388,7 @@ export default function ObserverReviewPage() {
                   )}
 
                   {submission.photos && submission.photos.length > 0 && (
-                    <div className="bg-dark-900/40 border border-dark-700 rounded-lg p-3 mb-4">
+                    <div className="bg-white/[0.02] border border-white/[0.07] rounded-lg p-3 mb-4">
                       <p className="text-xs text-dark-400 uppercase tracking-wide mb-2">
                         Supporting evidence
                       </p>
@@ -405,9 +404,9 @@ export default function ObserverReviewPage() {
                             <SafeImage
                               src={photo.file_path}
                               alt={String(photo.photo_type || 'evidence').replace(/_/g, ' ')}
-                              className="w-full h-20 object-cover rounded border border-dark-700"
+                              className="w-full h-20 object-cover rounded border border-white/[0.07]"
                               fallback={
-                                <div className="w-full h-20 rounded bg-dark-800 border border-dark-700 flex items-center justify-center text-[10px] text-dark-500">
+                                <div className="w-full h-20 rounded bg-white/[0.04] border border-white/[0.07] flex items-center justify-center text-[10px] text-dark-500">
                                   Unavailable
                                 </div>
                               }
@@ -441,7 +440,7 @@ export default function ObserverReviewPage() {
                             setReasons({ ...reasons, [submission.id]: e.target.value })
                           }
                           placeholder="e.g. Agent did not report for this station"
-                          className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+                          className="w-full px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm"
                         />
                       </div>
                       <div className="flex gap-2">

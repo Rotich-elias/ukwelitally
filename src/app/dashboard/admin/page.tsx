@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
+import PageHeader from '@/components/PageHeader'
 import LocationSelector from '@/components/LocationSelector'
 import LocationManager from '@/components/admin/LocationManager'
 
@@ -730,127 +731,107 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-dark-950">
       <DashboardNav />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
-            <p className="text-dark-300">Manage system users and ballot candidates</p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => router.push('/dashboard/admin/volunteer-management')}
-              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-              </svg>
-              Manage Volunteers
-            </button>
-            <button
-              onClick={() => router.push('/dashboard/admin/review-submissions')}
-              className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Review Submissions
-            </button>
-            {viewMode === 'users' ? (
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <PageHeader
+          eyebrow="Administration"
+          title="Admin Dashboard"
+          description="Manage system users, ballot candidates and polling station data."
+          actions={
+            <>
               <button
-                onClick={() => {
-                  setShowCreateModal(true)
-                  setUserError('')
-                  setUserSuccess('')
-                }}
-                className="btn-primary"
+                onClick={() => router.push('/dashboard/admin/volunteer-management')}
+                className="btn-secondary px-4 py-2.5"
               >
-                + Create User
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
+                Volunteers
               </button>
-            ) : viewMode === 'ballot_candidates' ? (
-              <>
-                <button
-                  onClick={() => setShowImportModal(true)}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
-                >
-                  Import CSV
-                </button>
+              <button
+                onClick={() => router.push('/dashboard/admin/review-submissions')}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-400/25 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-200 transition-colors hover:bg-amber-500/15"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Review Submissions
+              </button>
+              {viewMode === 'users' ? (
                 <button
                   onClick={() => {
-                    setShowBallotModal(true)
-                    setEditingBallot(null)
-                    setProfilePhotoFile(null)
-                    setBallotLocationData({
-                      county_id: undefined,
-                      constituency_id: undefined,
-                      ward_id: undefined,
-                    })
-                    setBallotError('')
-                    setBallotSuccess('')
+                    setShowCreateModal(true)
+                    setUserError('')
+                    setUserSuccess('')
                   }}
-                  className="btn-primary"
+                  className="btn-primary px-4 py-2.5"
                 >
-                  + Add Ballot Candidate
+                  + Create User
                 </button>
-              </>
-            ) : null}
-          </div>
-        </div>
+              ) : viewMode === 'ballot_candidates' ? (
+                <>
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-200 transition-colors hover:bg-emerald-500/15"
+                  >
+                    Import CSV
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowBallotModal(true)
+                      setEditingBallot(null)
+                      setProfilePhotoFile(null)
+                      setBallotLocationData({
+                        county_id: undefined,
+                        constituency_id: undefined,
+                        ward_id: undefined,
+                      })
+                      setBallotError('')
+                      setBallotSuccess('')
+                    }}
+                    className="btn-primary px-4 py-2.5"
+                  >
+                    + Add Ballot Candidate
+                  </button>
+                </>
+              ) : null}
+            </>
+          }
+        />
 
         {/* View Mode Tabs */}
-        <div className="mb-6 flex gap-2 border-b border-dark-700">
-          <button
-            onClick={() => setViewMode('users')}
-            className={`px-6 py-3 font-medium transition-colors relative ${
-              viewMode === 'users'
-                ? 'text-blue-400'
-                : 'text-dark-400 hover:text-white'
-            }`}
-          >
-            System Users
-            {viewMode === 'users' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
-            )}
-          </button>
-          <button
-            onClick={() => setViewMode('ballot_candidates')}
-            className={`px-6 py-3 font-medium transition-colors relative ${
-              viewMode === 'ballot_candidates'
-                ? 'text-blue-400'
-                : 'text-dark-400 hover:text-white'
-            }`}
-          >
-            Ballot Candidates
-            {viewMode === 'ballot_candidates' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
-            )}
-          </button>
-          <button
-            onClick={() => setViewMode('locations')}
-            className={`px-6 py-3 font-medium transition-colors relative ${
-              viewMode === 'locations'
-                ? 'text-blue-400'
-                : 'text-dark-400 hover:text-white'
-            }`}
-          >
-            Locations
-            {viewMode === 'locations' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
-            )}
-          </button>
+        <div className="mb-6 inline-flex flex-wrap gap-1 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-1.5">
+          {(
+            [
+              { key: 'users', label: 'System Users' },
+              { key: 'ballot_candidates', label: 'Ballot Candidates' },
+              { key: 'locations', label: 'Locations' },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setViewMode(tab.key)}
+              className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                viewMode === tab.key
+                  ? 'bg-brand-500 text-white shadow-glow'
+                  : 'text-dark-400 hover:bg-white/[0.05] hover:text-white'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Filter - Only for System Users */}
         {viewMode === 'users' && (
-          <div className="mb-6 flex gap-2">
+          <div className="mb-6 flex flex-wrap gap-2">
             {['all', 'candidate', 'agent', 'observer'].map((role) => (
               <button
                 key={role}
                 onClick={() => setFilterRole(role)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors ${
                   filterRole === role
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-dark-800 text-dark-300 hover:bg-dark-700'
+                    ? 'border-brand-400/30 bg-brand-500/15 text-brand-200'
+                    : 'border-white/[0.07] bg-white/[0.025] text-dark-400 hover:border-white/[0.14] hover:text-white'
                 }`}
               >
                 {role.charAt(0).toUpperCase() + role.slice(1)}
@@ -861,7 +842,7 @@ export default function AdminDashboard() {
 
         {/* Content - System Users or Ballot Candidates */}
         {viewMode === 'users' ? (
-          <div className="glass-effect rounded-xl overflow-hidden">
+          <div className="glass-effect rounded-2xl overflow-hidden">
             {/* Info Box */}
             <div className="bg-blue-500/10 border-b border-blue-500/30 p-4 mx-6 mt-6 rounded-lg">
               <div className="flex items-start gap-3">
@@ -920,14 +901,14 @@ export default function AdminDashboard() {
 
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-dark-800/50 border-b border-dark-700">
+                <thead className="bg-white/[0.03] border-b border-white/[0.07]">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase w-12">
                       <input
                         type="checkbox"
                         checked={selectedUserIds.length === users.length && users.length > 0}
                         onChange={(e) => handleSelectAllUsers(e.target.checked)}
-                        className="w-4 h-4 text-blue-500 bg-dark-800 border-dark-600 rounded focus:ring-blue-500 focus:ring-2"
+                        className="w-4 h-4 text-blue-500 bg-white/[0.04] border-white/10 rounded focus:ring-blue-500 focus:ring-2"
                       />
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Name</th>
@@ -941,7 +922,7 @@ export default function AdminDashboard() {
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-700">
+                <tbody className="divide-y divide-white/[0.06]">
                   {loading ? (
                     <tr>
                       <td colSpan={10} className="px-6 py-8 text-center text-dark-400">
@@ -956,13 +937,13 @@ export default function AdminDashboard() {
                     </tr>
                   ) : (
                     users.map((user) => (
-                      <tr key={user.id} className="hover:bg-dark-800/30 transition-colors">
+                      <tr key={user.id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-6 py-4 text-center">
                           <input
                             type="checkbox"
                             checked={selectedUserIds.includes(user.id)}
                             onChange={(e) => handleSelectUser(user.id, e.target.checked)}
-                            className="w-4 h-4 text-blue-500 bg-dark-800 border-dark-600 rounded focus:ring-blue-500 focus:ring-2"
+                            className="w-4 h-4 text-blue-500 bg-white/[0.04] border-white/10 rounded focus:ring-blue-500 focus:ring-2"
                           />
                         </td>
                         <td className="px-6 py-4 text-white font-medium">{user.full_name}</td>
@@ -1104,7 +1085,7 @@ export default function AdminDashboard() {
         </div>
         ) : viewMode === 'ballot_candidates' ? (
           // Ballot Candidates View
-          <div className="glass-effect rounded-xl overflow-hidden">
+          <div className="glass-effect rounded-2xl overflow-hidden">
             {ballotSuccess && (
               <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 px-4 py-3 mb-4 mx-6 mt-6 rounded-lg text-sm">
                 {ballotSuccess}
@@ -1156,14 +1137,14 @@ export default function AdminDashboard() {
 
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-dark-800/50 border-b border-dark-700">
+                <thead className="bg-white/[0.03] border-b border-white/[0.07]">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase w-12">
                       <input
                         type="checkbox"
                         checked={selectedCandidateIds.length === ballotCandidates.length && ballotCandidates.length > 0}
                         onChange={(e) => handleSelectAllCandidates(e.target.checked)}
-                        className="w-4 h-4 text-blue-500 bg-dark-800 border-dark-600 rounded focus:ring-blue-500 focus:ring-2"
+                        className="w-4 h-4 text-blue-500 bg-white/[0.04] border-white/10 rounded focus:ring-blue-500 focus:ring-2"
                       />
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Candidate #</th>
@@ -1175,7 +1156,7 @@ export default function AdminDashboard() {
                     <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-700">
+                <tbody className="divide-y divide-white/[0.06]">
                   {loadingBallot ? (
                     <tr>
                       <td colSpan={7} className="px-6 py-8 text-center text-dark-400">
@@ -1190,17 +1171,17 @@ export default function AdminDashboard() {
                     </tr>
                   ) : (
                     ballotCandidates.map((candidate) => (
-                      <tr key={candidate.id} className="hover:bg-dark-800/30 transition-colors">
+                      <tr key={candidate.id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-6 py-4 text-center">
                           <input
                             type="checkbox"
                             checked={selectedCandidateIds.includes(candidate.id)}
                             onChange={(e) => handleSelectCandidate(candidate.id, e.target.checked)}
-                            className="w-4 h-4 text-blue-500 bg-dark-800 border-dark-600 rounded focus:ring-blue-500 focus:ring-2"
+                            className="w-4 h-4 text-blue-500 bg-white/[0.04] border-white/10 rounded focus:ring-blue-500 focus:ring-2"
                           />
                         </td>
                         <td className="px-6 py-4">
-                          <span className="px-2 py-1 rounded text-xs font-mono bg-dark-800 text-blue-400 border border-dark-700">
+                          <span className="px-2 py-1 rounded text-xs font-mono bg-white/[0.04] text-blue-400 border border-white/[0.07]">
                             {candidate.candidate_number || 'N/A'}
                           </span>
                         </td>
@@ -1277,7 +1258,7 @@ export default function AdminDashboard() {
       {/* Create Ballot Candidate Modal */}
       {showBallotModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+          <div className="glass-effect rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">
@@ -1304,7 +1285,7 @@ export default function AdminDashboard() {
                     required
                     value={ballotFormData.full_name}
                     onChange={(e) => setBallotFormData({ ...ballotFormData, full_name: e.target.value })}
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                    className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                     placeholder="John Doe"
                   />
                 </div>
@@ -1315,7 +1296,7 @@ export default function AdminDashboard() {
                     required
                     value={ballotFormData.position}
                     onChange={(e) => setBallotFormData({ ...ballotFormData, position: e.target.value })}
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                    className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                   >
                     <option value="president">President</option>
                     <option value="governor">Governor</option>
@@ -1328,7 +1309,7 @@ export default function AdminDashboard() {
 
                 {/* Location Selector - show based on position */}
                 {ballotFormData.position !== 'president' && (
-                  <div className="border border-dark-700 rounded-lg p-4 bg-dark-900/30">
+                  <div className="border border-white/[0.07] rounded-lg p-4 bg-white/[0.02]">
                     <h3 className="text-sm font-medium text-dark-200 mb-3">
                       Electoral Area *
                     </h3>
@@ -1367,7 +1348,7 @@ export default function AdminDashboard() {
                     type="text"
                     value={ballotFormData.party_name}
                     onChange={(e) => setBallotFormData({ ...ballotFormData, party_name: e.target.value })}
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                    className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                     placeholder="Independent"
                   />
                 </div>
@@ -1378,7 +1359,7 @@ export default function AdminDashboard() {
                     type="text"
                     value={ballotFormData.party_abbreviation}
                     onChange={(e) => setBallotFormData({ ...ballotFormData, party_abbreviation: e.target.value })}
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                    className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                     placeholder="IND"
                   />
                 </div>
@@ -1389,7 +1370,7 @@ export default function AdminDashboard() {
                     type="file"
                     accept="image/jpeg,image/jpg,image/png,image/webp"
                     onChange={(e) => setProfilePhotoFile(e.target.files?.[0] || null)}
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
+                    className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
                   />
                   <p className="mt-1 text-xs text-dark-400">
                     Optional: Upload candidate&apos;s profile photo (max 5MB, JPEG/PNG/WebP)
@@ -1425,7 +1406,7 @@ export default function AdminDashboard() {
                       setShowBallotModal(false)
                       setEditingBallot(null)
                     }}
-                    className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
+                    className="px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg transition-colors"
                   >
                     Cancel
                   </button>
@@ -1439,7 +1420,7 @@ export default function AdminDashboard() {
       {/* Import CSV Modal */}
       {showImportModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="glass-effect rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Bulk Import Ballot Candidates from CSV</h2>
@@ -1499,7 +1480,7 @@ export default function AdminDashboard() {
                     className={`cursor-pointer rounded-lg border p-4 ${
                       importMode === 'update'
                         ? 'border-blue-500/60 bg-blue-500/10'
-                        : 'border-dark-700 bg-dark-900/40'
+                        : 'border-white/[0.07] bg-white/[0.02]'
                     }`}
                   >
                     <input
@@ -1523,7 +1504,7 @@ export default function AdminDashboard() {
                     className={`cursor-pointer rounded-lg border p-4 ${
                       importMode === 'replace'
                         ? 'border-red-500/60 bg-red-500/10'
-                        : 'border-dark-700 bg-dark-900/40'
+                        : 'border-white/[0.07] bg-white/[0.02]'
                     }`}
                   >
                     <input
@@ -1560,7 +1541,7 @@ export default function AdminDashboard() {
                       setError('')
                     }
                   }}
-                  className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-dark-700 file:text-white hover:file:bg-dark-600"
+                  className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white/[0.06] file:text-white hover:file:bg-white/[0.08]"
                 />
                 {selectedFile && (
                   <p className="mt-2 text-sm text-emerald-400">
@@ -1638,7 +1619,7 @@ export default function AdminDashboard() {
                     setImportResult(null)
                     setError('')
                   }}
-                  className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
+                  className="px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg transition-colors"
                 >
                   Close
                 </button>
@@ -1651,7 +1632,7 @@ export default function AdminDashboard() {
       {/* Create User Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="glass-effect rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Create New User</h2>
@@ -1668,7 +1649,7 @@ export default function AdminDashboard() {
               {userSuccess && (
                 <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 px-4 py-3 rounded-lg text-sm mb-4">
                   {userSuccess}
-                  <div className="mt-2 p-2 bg-dark-900/50 rounded font-mono text-xs">
+                  <div className="mt-2 p-2 bg-white/[0.025] rounded font-mono text-xs">
                     <strong>Save these credentials:</strong><br/>
                     Email: {formData.email}<br/>
                     Password: {formData.password}
@@ -1700,7 +1681,7 @@ export default function AdminDashboard() {
                       required
                       value={formData.full_name}
                       onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                       placeholder="John Doe"
                     />
                   </div>
@@ -1712,7 +1693,7 @@ export default function AdminDashboard() {
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                       placeholder="john@example.com"
                     />
                   </div>
@@ -1724,7 +1705,7 @@ export default function AdminDashboard() {
                       required
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                       placeholder="+254712345678"
                     />
                   </div>
@@ -1737,7 +1718,7 @@ export default function AdminDashboard() {
                       pattern="\d{7,8}"
                       value={formData.id_number}
                       onChange={(e) => setFormData({ ...formData, id_number: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                       placeholder="12345678"
                     />
                   </div>
@@ -1748,7 +1729,7 @@ export default function AdminDashboard() {
                       required
                       value={formData.role}
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                     >
                       <option value="candidate">Candidate</option>
                       <option value="agent">Agent</option>
@@ -1764,13 +1745,13 @@ export default function AdminDashboard() {
                         required
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="flex-1 px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                        className="flex-1 px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                         placeholder="Password123"
                       />
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, password: generatePassword() })}
-                        className="px-4 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg text-sm"
+                        className="px-4 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg text-sm"
                       >
                         Generate
                       </button>
@@ -1785,7 +1766,7 @@ export default function AdminDashboard() {
                           type="text"
                           value={formData.party_name}
                           onChange={(e) => setFormData({ ...formData, party_name: e.target.value })}
-                          className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                          className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                           placeholder="Independent"
                         />
                       </div>
@@ -1795,7 +1776,7 @@ export default function AdminDashboard() {
                         <select
                           value={formData.position}
                           onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                          className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                          className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                         >
                           <option value="president">President (National)</option>
                           <option value="governor">Governor (County)</option>
@@ -1817,7 +1798,7 @@ export default function AdminDashboard() {
 
                 {/* Location Selector for Candidates */}
                 {formData.role === 'candidate' && formData.position !== 'president' && (
-                  <div className="border-t border-dark-700 pt-4 mt-4">
+                  <div className="border-t border-white/[0.07] pt-4 mt-4">
                     <h3 className="text-lg font-semibold text-white mb-3">
                       Electoral Area *
                       <span className="text-sm text-dark-400 font-normal ml-2">
@@ -1853,7 +1834,7 @@ export default function AdminDashboard() {
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
+                    className="px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg transition-colors"
                   >
                     Cancel
                   </button>
@@ -1867,7 +1848,7 @@ export default function AdminDashboard() {
       {/* View User Details Modal */}
       {showViewModal && selectedUser && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="glass-effect rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">User Details</h2>
@@ -1938,7 +1919,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {selectedUser.profile && selectedUser.role === 'candidate' && (
-                  <div className="border-t border-dark-700 pt-4 mt-4">
+                  <div className="border-t border-white/[0.07] pt-4 mt-4">
                     <h3 className="text-lg font-semibold text-white mb-3">Candidate Information</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -1976,7 +1957,7 @@ export default function AdminDashboard() {
                 )}
 
                 {selectedUser.profile && selectedUser.role === 'agent' && (
-                  <div className="border-t border-dark-700 pt-4 mt-4">
+                  <div className="border-t border-white/[0.07] pt-4 mt-4">
                     <h3 className="text-lg font-semibold text-white mb-3">Agent Information</h3>
                     <div className="space-y-3">
                       <div>
@@ -2000,7 +1981,7 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              <div className="flex gap-4 mt-6 pt-4 border-t border-dark-700">
+              <div className="flex gap-4 mt-6 pt-4 border-t border-white/[0.07]">
                 <button
                   onClick={() => setShowViewModal(false)}
                   className="flex-1 btn-secondary"
@@ -2016,7 +1997,7 @@ export default function AdminDashboard() {
       {/* Edit User Modal */}
       {showEditModal && selectedUser && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="glass-effect rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Edit User</h2>
@@ -2037,7 +2018,7 @@ export default function AdminDashboard() {
                     type="text"
                     value={selectedUser.full_name}
                     onChange={(e) => setSelectedUser({ ...selectedUser, full_name: e.target.value })}
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                    className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                   />
                 </div>
 
@@ -2047,7 +2028,7 @@ export default function AdminDashboard() {
                     type="email"
                     value={selectedUser.email}
                     onChange={(e) => setSelectedUser({ ...selectedUser, email: e.target.value })}
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                    className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                   />
                 </div>
 
@@ -2057,7 +2038,7 @@ export default function AdminDashboard() {
                     type="tel"
                     value={selectedUser.phone}
                     onChange={(e) => setSelectedUser({ ...selectedUser, phone: e.target.value })}
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                    className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                   />
                 </div>
 
@@ -2066,7 +2047,7 @@ export default function AdminDashboard() {
                   <select
                     value={selectedUser.active ? 'active' : 'inactive'}
                     onChange={(e) => setSelectedUser({ ...selectedUser, active: e.target.value === 'active' })}
-                    className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                    className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -2085,12 +2066,12 @@ export default function AdminDashboard() {
                         onChange={(e) => setEditPassword(e.target.value)}
                         placeholder="Leave blank to keep the current password"
                         autoComplete="new-password"
-                        className="flex-1 px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                        className="flex-1 px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                       />
                       <button
                         type="button"
                         onClick={generateAgentPassword}
-                        className="px-4 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors whitespace-nowrap"
+                        className="px-4 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg transition-colors whitespace-nowrap"
                       >
                         Generate
                       </button>
@@ -2113,7 +2094,7 @@ export default function AdminDashboard() {
                       onChange={(e) =>
                         setSelectedUser({ ...selectedUser, access_status: e.target.value })
                       }
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                     >
                       <option value="active">Active</option>
                       <option value="suspended">Suspended</option>
@@ -2134,7 +2115,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-6 pt-4 border-t border-dark-700">
+              <div className="flex gap-4 mt-6 pt-4 border-t border-white/[0.07]">
                 <button
                   onClick={handleSaveEdit}
                   className="flex-1 btn-primary"
@@ -2143,7 +2124,7 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
+                  className="px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -2156,7 +2137,7 @@ export default function AdminDashboard() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedUser && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-md w-full">
+          <div className="glass-effect rounded-2xl max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
@@ -2193,7 +2174,7 @@ export default function AdminDashboard() {
                     setShowDeleteModal(false)
                     setSelectedUser(null)
                   }}
-                  className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
+                  className="px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -2206,7 +2187,7 @@ export default function AdminDashboard() {
       {/* Bulk Delete Confirmation Modal */}
       {showBulkDeleteModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-md w-full">
+          <div className="glass-effect rounded-2xl max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
@@ -2242,7 +2223,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={() => setShowBulkDeleteModal(false)}
                   disabled={bulkActionLoading}
-                  className="px-6 py-3 bg-dark-700 hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                  className="px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -2255,7 +2236,7 @@ export default function AdminDashboard() {
       {/* Bulk Candidate Delete Confirmation Modal */}
       {showBulkCandidateDeleteModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-md w-full">
+          <div className="glass-effect rounded-2xl max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
@@ -2291,7 +2272,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={() => setShowBulkCandidateDeleteModal(false)}
                   disabled={bulkCandidateActionLoading}
-                  className="px-6 py-3 bg-dark-700 hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                  className="px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -2304,7 +2285,7 @@ export default function AdminDashboard() {
       {/* Payment Management Modal */}
       {showPaymentModal && selectedUser && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="glass-effect rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
@@ -2338,7 +2319,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Payment Summary */}
-              <div className="bg-dark-800/50 rounded-lg p-4 mb-6 border border-dark-700">
+              <div className="bg-white/[0.03] rounded-lg p-4 mb-6 border border-white/[0.07]">
                 <h4 className="text-sm font-medium text-dark-300 mb-3">Payment Summary</h4>
                 <div className="grid grid-cols-3 gap-4 mb-4">
                   <div>
@@ -2364,7 +2345,7 @@ export default function AdminDashboard() {
                       <span className="text-dark-400">Progress</span>
                       <span className="text-white">{Math.min(100, Math.round((totalPaid / expectedAmount) * 100))}%</span>
                     </div>
-                    <div className="w-full bg-dark-700 rounded-full h-2">
+                    <div className="w-full bg-white/[0.06] rounded-full h-2">
                       <div
                         className={`h-2 rounded-full ${totalPaid >= expectedAmount ? 'bg-emerald-500' : 'bg-yellow-500'}`}
                         style={{ width: `${Math.min(100, (totalPaid / expectedAmount) * 100)}%` }}
@@ -2424,7 +2405,7 @@ export default function AdminDashboard() {
                     step="0.01"
                     value={paymentFormData.expected_payment_amount}
                     onChange={(e) => setPaymentFormData({ ...paymentFormData, expected_payment_amount: e.target.value })}
-                    className="flex-1 px-4 py-2 bg-dark-800 border border-dark-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                    className="flex-1 px-4 py-2 bg-white/[0.04] border border-white/[0.07] rounded-lg text-white focus:outline-none focus:border-blue-500"
                     placeholder="Expected amount (KSh)"
                   />
                   <button
@@ -2516,7 +2497,7 @@ export default function AdminDashboard() {
                       step="0.01"
                       value={paymentFormData.payment_amount}
                       onChange={(e) => setPaymentFormData({ ...paymentFormData, payment_amount: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.07] rounded-lg text-white focus:outline-none focus:border-blue-500"
                       placeholder="Enter amount"
                     />
                   </div>
@@ -2529,7 +2510,7 @@ export default function AdminDashboard() {
                     <select
                       value={paymentFormData.payment_method}
                       onChange={(e) => setPaymentFormData({ ...paymentFormData, payment_method: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.07] rounded-lg text-white focus:outline-none focus:border-blue-500"
                     >
                       <option value="M-Pesa">M-Pesa</option>
                       <option value="Bank Transfer">Bank Transfer</option>
@@ -2548,7 +2529,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={paymentFormData.payment_reference}
                       onChange={(e) => setPaymentFormData({ ...paymentFormData, payment_reference: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.07] rounded-lg text-white focus:outline-none focus:border-blue-500"
                       placeholder="M-Pesa code, transaction ID, etc."
                     />
                   </div>
@@ -2561,7 +2542,7 @@ export default function AdminDashboard() {
                     <textarea
                       value={paymentFormData.payment_notes}
                       onChange={(e) => setPaymentFormData({ ...paymentFormData, payment_notes: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.07] rounded-lg text-white focus:outline-none focus:border-blue-500"
                       rows={3}
                       placeholder="Additional notes about this payment..."
                     />
@@ -2577,14 +2558,14 @@ export default function AdminDashboard() {
               </form>
 
               {/* Payment History */}
-              <div className="mt-6 pt-6 border-t border-dark-700">
+              <div className="mt-6 pt-6 border-t border-white/[0.07]">
                 <h4 className="text-sm font-medium text-dark-300 mb-3">Payment History ({paymentHistory.length})</h4>
                 {paymentHistory.length === 0 ? (
                   <p className="text-dark-400 text-sm text-center py-4">No payments recorded yet</p>
                 ) : (
                   <div className="space-y-3 max-h-64 overflow-y-auto">
                     {paymentHistory.map((payment: any) => (
-                      <div key={payment.id} className="bg-dark-800/50 rounded-lg p-4 border border-dark-700">
+                      <div key={payment.id} className="bg-white/[0.03] rounded-lg p-4 border border-white/[0.07]">
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <p className="text-emerald-400 font-semibold text-lg">KSh {parseFloat(payment.amount).toLocaleString()}</p>

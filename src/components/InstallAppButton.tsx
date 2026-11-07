@@ -97,7 +97,7 @@ export default function InstallAppButton({
 
       {showInstructions && (
         <div
-          className={`absolute z-50 mt-2 w-72 glass-effect rounded-lg shadow-lg border border-dark-700 p-4 text-left ${
+          className={`absolute z-50 mt-2 w-72 glass-effect rounded-2xl shadow-lg border border-white/[0.07] p-4 text-left ${
             compact ? 'right-0' : 'left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0'
           }`}
           role="dialog"

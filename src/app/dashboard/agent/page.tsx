@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
+import PageHeader from '@/components/PageHeader'
 import SafeImage from '@/components/SafeImage'
 
 interface AgentInfo {
@@ -348,12 +349,30 @@ export default function AgentDashboard() {
     <div className="min-h-screen bg-dark-950">
       <DashboardNav />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Agent Dashboard</h1>
-          <p className="text-dark-300">Submit polling station results</p>
-        </div>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <PageHeader
+          eyebrow="Field reporting"
+          title="Agent Dashboard"
+          description="Submit polling station results with photo evidence and GPS verification."
+          meta={
+            agentInfo ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="badge-brand">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand-300" />
+                  {agentInfo.station_name}
+                </span>
+                <span className="badge border-white/10 bg-white/[0.03] text-dark-300">
+                  <span className="text-dark-500">Code</span>
+                  <span className="font-mono text-dark-200">{agentInfo.station_code}</span>
+                </span>
+                <span className="badge border-white/10 bg-white/[0.03] text-dark-300">
+                  <span className="text-dark-500">Ward</span>
+                  <span className="text-dark-200">{agentInfo.ward_name}</span>
+                </span>
+              </div>
+            ) : undefined
+          }
+        />
 
         {/* Reporting window status */}
         {submissionWindow && (
@@ -451,7 +470,7 @@ export default function AgentDashboard() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Form */}
           <div className="lg:col-span-2">
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               {/* Progress Indicator */}
               <div className="mb-6">
                 <div className="flex items-center justify-center gap-4">
@@ -461,9 +480,9 @@ export default function AgentDashboard() {
                     </div>
                     <span className="text-sm font-medium">Upload Photos</span>
                   </div>
-                  <div className="h-0.5 w-16 bg-dark-700"></div>
+                  <div className="h-0.5 w-16 bg-white/[0.06]"></div>
                   <div className={`flex items-center gap-2 ${step === 'results' ? 'text-blue-400' : 'text-dark-500'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'results' ? 'bg-blue-500' : 'bg-dark-700'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'results' ? 'bg-blue-500' : 'bg-white/[0.06]'}`}>
                       2
                     </div>
                     <span className="text-sm font-medium">Enter Results</span>
@@ -504,7 +523,7 @@ export default function AgentDashboard() {
                           setFormData({ ...formData, revision_reason: e.target.value })
                         }
                         placeholder="e.g. Corrected the rejected votes total from 12 to 21"
-                        className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+                        className="w-full px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm"
                       />
                       <p className="text-xs text-dark-400 mt-1">
                         Your previous submission is kept as an earlier version. The reason is
@@ -518,7 +537,7 @@ export default function AgentDashboard() {
                     <label className="block text-sm font-medium text-dark-200 mb-2">
                       Form 34A Photos
                     </label>
-                    <div className="border-2 border-dashed border-dark-700 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+                    <div className="border-2 border-dashed border-white/[0.07] rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
                       <input
                         type="file"
                         accept="image/*"
@@ -598,7 +617,7 @@ export default function AgentDashboard() {
                           readOnly
                           aria-readonly="true"
                           title="Filled from the polling station record"
-                          className="w-full px-3 py-2 bg-dark-800/60 border border-dark-700 rounded text-dark-300 text-sm cursor-not-allowed"
+                          className="w-full px-3 py-2 bg-white/[0.045] border border-white/[0.07] rounded text-dark-300 text-sm cursor-not-allowed"
                           placeholder="0"
                           required
                           min="0"
@@ -610,7 +629,7 @@ export default function AgentDashboard() {
                           type="number"
                           value={formData.total_votes_cast}
                           onChange={(e) => setFormData({ ...formData, total_votes_cast: e.target.value })}
-                          className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+                          className="w-full px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm"
                           placeholder="0"
                           required
                           min="0"
@@ -622,7 +641,7 @@ export default function AgentDashboard() {
                           type="number"
                           value={formData.rejected_votes}
                           onChange={(e) => setFormData({ ...formData, rejected_votes: e.target.value })}
-                          className="w-full px-3 py-2 bg-dark-900/50 border border-dark-700 rounded text-white text-sm"
+                          className="w-full px-3 py-2 bg-white/[0.025] border border-white/[0.07] rounded text-white text-sm"
                           placeholder="0"
                           required
                           min="0"
@@ -639,7 +658,7 @@ export default function AgentDashboard() {
                     ) : candidates.length > 0 ? (
                       <div className="space-y-3">
                         {candidates.map((candidate) => (
-                          <div key={candidate.id} className="bg-dark-900/50 border border-dark-700 rounded-lg p-4">
+                          <div key={candidate.id} className="bg-white/[0.025] border border-white/[0.07] rounded-lg p-4">
                             <div className="flex items-center justify-between gap-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
@@ -659,7 +678,7 @@ export default function AgentDashboard() {
                                   type="number"
                                   value={candidateVotes[candidate.id] || ''}
                                   onChange={(e) => setCandidateVotes({ ...candidateVotes, [candidate.id]: e.target.value })}
-                                  className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded text-white text-right"
+                                  className="w-full px-3 py-2 bg-white/[0.04] border border-white/10 rounded text-white text-right"
                                   placeholder="0"
                                   required
                                   min="0"
@@ -681,7 +700,7 @@ export default function AgentDashboard() {
                     <button
                       type="button"
                       onClick={() => setStep('upload')}
-                      className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
+                      className="px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg transition-colors"
                     >
                       Back
                     </button>
@@ -705,7 +724,7 @@ export default function AgentDashboard() {
           {/* Sidebar - Quick Stats */}
           <div className="space-y-6">
             {/* Station Info */}
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Polling Station</h3>
               {loadingInfo ? (
                 <p className="text-sm text-dark-400">Loading...</p>
@@ -723,12 +742,12 @@ export default function AgentDashboard() {
                     <p className="text-xs text-dark-400">Registered Voters</p>
                     <p className="text-sm text-white font-medium">{agentInfo.registered_voters?.toLocaleString() || 'N/A'}</p>
                   </div>
-                  <div className="pt-2 border-t border-dark-700">
+                  <div className="pt-2 border-t border-white/[0.07]">
                     <p className="text-xs text-dark-400">Location</p>
                     <p className="text-sm text-white">{agentInfo.ward_name}</p>
                     <p className="text-xs text-dark-400">{agentInfo.constituency_name}, {agentInfo.county_name}</p>
                   </div>
-                  <div className="pt-2 border-t border-dark-700">
+                  <div className="pt-2 border-t border-white/[0.07]">
                     <p className="text-xs text-dark-400">Representing</p>
                     <p className="text-sm text-white font-medium">{agentInfo.candidate_name}</p>
                   </div>
@@ -739,7 +758,7 @@ export default function AgentDashboard() {
             </div>
 
             {/* Instructions */}
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Instructions</h3>
               <ul className="space-y-2 text-sm text-dark-300">
                 <li className="flex items-start gap-2">
@@ -762,7 +781,7 @@ export default function AgentDashboard() {
             </div>
 
             {/* Recent Submissions */}
-            <div className="glass-effect rounded-xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Recent Submissions</h3>
 
               {loadingSubmissions ? (
@@ -775,7 +794,7 @@ export default function AgentDashboard() {
                   {recentSubmissions.slice(0, 5).map((submission) => (
                     <div
                       key={submission.id}
-                      className="bg-dark-900/50 border border-dark-700 rounded-lg p-3 hover:border-blue-500 transition-colors"
+                      className="bg-white/[0.025] border border-white/[0.07] rounded-lg p-3 hover:border-blue-500 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex-1 min-w-0">
@@ -834,13 +853,13 @@ export default function AgentDashboard() {
                       </div>
 
                       {submission.has_discrepancy && (
-                        <div className="mt-2 pt-2 border-t border-dark-700">
+                        <div className="mt-2 pt-2 border-t border-white/[0.07]">
                           <p className="text-xs text-red-400">⚠ Has discrepancy</p>
                         </div>
                       )}
 
                       {Array.isArray(submission.photos) && submission.photos.length > 0 && (
-                        <div className="mt-2 pt-2 border-t border-dark-700">
+                        <div className="mt-2 pt-2 border-t border-white/[0.07]">
                           <p className="text-xs text-dark-400 mb-2">
                             Evidence ({submission.photos.length})
                           </p>
@@ -856,9 +875,9 @@ export default function AgentDashboard() {
                                 <SafeImage
                                   src={photo.file_path}
                                   alt={String(photo.photo_type || 'evidence').replace(/_/g, ' ')}
-                                  className="w-full h-16 object-cover rounded border border-dark-700"
+                                  className="w-full h-16 object-cover rounded border border-white/[0.07]"
                                   fallback={
-                                    <div className="w-full h-16 rounded bg-dark-800 border border-dark-700 flex items-center justify-center text-[10px] text-dark-500">
+                                    <div className="w-full h-16 rounded bg-white/[0.04] border border-white/[0.07] flex items-center justify-center text-[10px] text-dark-500">
                                       Unavailable
                                     </div>
                                   }

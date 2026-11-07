@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
+import PageHeader from '@/components/PageHeader'
 import PollingStationPicker from '@/components/PollingStationPicker'
 
 interface Agent {
@@ -187,72 +188,75 @@ export default function ManageAgentsPage() {
     <div className="min-h-screen bg-dark-950">
       <DashboardNav />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Manage Agents</h1>
-            <p className="text-dark-300">Create and manage your polling station agents</p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                setShowImportModal(true)
-                setError('')
-                setImportResult(null)
-                setSelectedFile(null)
-              }}
-              className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors font-medium"
-            >
-              📄 Bulk Import CSV
-            </button>
-            <button
-              onClick={() => {
-                setShowCreateModal(true)
-                setError('')
-                setSuccess('')
-              }}
-              className="btn-primary"
-            >
-              + Create Agent
-            </button>
-          </div>
-        </div>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <PageHeader
+          eyebrow="Field team"
+          title="Manage Agents"
+          description="Create and manage your polling station agents, or import a full team from CSV."
+          actions={
+            <>
+              <button
+                onClick={() => {
+                  setShowImportModal(true)
+                  setError('')
+                  setImportResult(null)
+                  setSelectedFile(null)
+                }}
+                className="btn-secondary px-4 py-2.5"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+                Bulk import CSV
+              </button>
+              <button
+                onClick={() => {
+                  setShowCreateModal(true)
+                  setError('')
+                  setSuccess('')
+                }}
+                className="btn-primary px-4 py-2.5"
+              >
+                + Create Agent
+              </button>
+            </>
+          }
+        />
 
         {/* Stats */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="glass-effect rounded-xl p-6">
-            <p className="text-dark-400 text-sm mb-2">Total Agents</p>
-            <p className="text-3xl font-bold text-white">{agents.length}</p>
+        <div className="mb-8 grid gap-3 sm:grid-cols-3">
+          <div className="glass-effect rounded-2xl p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-dark-400">Total agents</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-white">{agents.length}</p>
           </div>
-          <div className="glass-effect rounded-xl p-6">
-            <p className="text-dark-400 text-sm mb-2">Assigned to Stations</p>
-            <p className="text-3xl font-bold text-white">
+          <div className="glass-effect rounded-2xl p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-dark-400">Assigned to stations</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
               {agents.filter(a => a.polling_station_id).length}
             </p>
           </div>
-          <div className="glass-effect rounded-xl p-6">
-            <p className="text-dark-400 text-sm mb-2">Active</p>
-            <p className="text-3xl font-bold text-white">
+          <div className="glass-effect rounded-2xl p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-dark-400">Active</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
               {agents.filter(a => a.active).length}
             </p>
           </div>
         </div>
 
         {/* Agents Table */}
-        <div className="glass-effect rounded-xl overflow-hidden">
+        <div className="glass-effect overflow-hidden rounded-2xl">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-dark-800/50 border-b border-dark-700">
+              <thead className="border-b border-white/[0.07] bg-white/[0.025]">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Name</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Contact</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Polling Station</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Type</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Status</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-dark-400">Name</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-dark-400">Contact</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-dark-400">Polling Station</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-dark-400">Type</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-dark-400">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-dark-700">
+              <tbody className="divide-y divide-white/[0.06]">
                 {loading ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-dark-400">
@@ -267,7 +271,7 @@ export default function ManageAgentsPage() {
                   </tr>
                 ) : (
                   agents.map((agent) => (
-                    <tr key={agent.agent_id} className="hover:bg-dark-800/30 transition-colors">
+                    <tr key={agent.agent_id} className="transition-colors hover:bg-white/[0.025]">
                       <td className="px-6 py-4 text-white font-medium">{agent.full_name}</td>
                       <td className="px-6 py-4 text-dark-300 text-sm">
                         <div>{agent.email}</div>
@@ -313,7 +317,7 @@ export default function ManageAgentsPage() {
       {/* Create Agent Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="glass-effect rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Create New Agent</h2>
@@ -330,7 +334,7 @@ export default function ManageAgentsPage() {
               {success && (
                 <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 px-4 py-3 rounded-lg text-sm mb-4">
                   {success}
-                  <div className="mt-2 p-2 bg-dark-900/50 rounded font-mono text-xs">
+                  <div className="mt-2 p-2 bg-white/[0.025] rounded font-mono text-xs">
                     <strong>Save these credentials:</strong><br/>
                     Email: {formData.email}<br/>
                     Password: {formData.password}
@@ -353,7 +357,7 @@ export default function ManageAgentsPage() {
                       required
                       value={formData.full_name}
                       onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                       placeholder="John Doe"
                     />
                   </div>
@@ -365,7 +369,7 @@ export default function ManageAgentsPage() {
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                       placeholder="john@example.com"
                     />
                   </div>
@@ -377,7 +381,7 @@ export default function ManageAgentsPage() {
                       required
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                       placeholder="+254712345678"
                     />
                   </div>
@@ -390,7 +394,7 @@ export default function ManageAgentsPage() {
                       pattern="\d{7,8}"
                       value={formData.id_number}
                       onChange={(e) => setFormData({ ...formData, id_number: e.target.value })}
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                       placeholder="12345678"
                     />
                   </div>
@@ -403,13 +407,13 @@ export default function ManageAgentsPage() {
                         required
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="flex-1 px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                        className="flex-1 px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                         placeholder="Agent1234"
                       />
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, password: generatePassword() })}
-                        className="px-4 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg text-sm"
+                        className="px-4 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg text-sm"
                       >
                         Generate
                       </button>
@@ -421,7 +425,7 @@ export default function ManageAgentsPage() {
                     <select
                       value={formData.is_primary ? 'primary' : 'backup'}
                       onChange={(e) => setFormData({ ...formData, is_primary: e.target.value === 'primary' })}
-                      className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white"
+                      className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
                     >
                       <option value="primary">Primary Agent</option>
                       <option value="backup">Backup Agent</option>
@@ -450,7 +454,7 @@ export default function ManageAgentsPage() {
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
+                    className="px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg transition-colors"
                   >
                     Cancel
                   </button>
@@ -464,7 +468,7 @@ export default function ManageAgentsPage() {
       {/* CSV Import Modal */}
       {showImportModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-effect rounded-xl max-w-2xl w-full">
+          <div className="glass-effect rounded-2xl max-w-2xl w-full">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Bulk Import Agents from CSV</h2>
@@ -505,7 +509,7 @@ export default function ManageAgentsPage() {
                     className={`cursor-pointer rounded-lg border p-4 ${
                       importMode === 'update'
                         ? 'border-blue-500/60 bg-blue-500/10'
-                        : 'border-dark-700 bg-dark-900/40'
+                        : 'border-white/[0.07] bg-white/[0.02]'
                     }`}
                   >
                     <input
@@ -530,7 +534,7 @@ export default function ManageAgentsPage() {
                     className={`cursor-pointer rounded-lg border p-4 ${
                       importMode === 'replace'
                         ? 'border-red-500/60 bg-red-500/10'
-                        : 'border-dark-700 bg-dark-900/40'
+                        : 'border-white/[0.07] bg-white/[0.02]'
                     }`}
                   >
                     <input
@@ -563,7 +567,7 @@ export default function ManageAgentsPage() {
                   type="file"
                   accept=".csv"
                   onChange={handleFileSelect}
-                  className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-dark-700 file:text-white hover:file:bg-dark-600"
+                  className="w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white/[0.06] file:text-white hover:file:bg-white/[0.08]"
                 />
                 {selectedFile && (
                   <p className="mt-2 text-sm text-emerald-400">
@@ -636,7 +640,7 @@ export default function ManageAgentsPage() {
                 <button
                   type="button"
                   onClick={() => setShowImportModal(false)}
-                  className="px-6 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg transition-colors"
+                  className="px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg transition-colors"
                 >
                   Close
                 </button>

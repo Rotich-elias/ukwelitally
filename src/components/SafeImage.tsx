@@ -26,7 +26,7 @@ export default function SafeImage({ src, alt, className = '', fallback }: SafeIm
       <>
         {fallback ?? (
           <div
-            className={`${className} bg-dark-800 flex items-center justify-center overflow-hidden`}
+            className={`${className} bg-white/[0.04] flex items-center justify-center overflow-hidden`}
             role="img"
             aria-label={`${alt} (no photo available)`}
           >

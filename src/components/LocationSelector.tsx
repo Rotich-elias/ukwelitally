@@ -210,7 +210,7 @@ export default function LocationSelector({
     setSelectedStation(value)
   }
 
-  const selectClassName = "w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+  const selectClassName = "w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
 
   return (
     <div className="space-y-4">
