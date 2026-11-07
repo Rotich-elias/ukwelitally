@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import PublicNav from '@/components/PublicNav'
 import InstallAppButton from '@/components/InstallAppButton'
@@ -133,8 +133,79 @@ const audiences = [
   },
 ]
 
+interface PresidentialResult {
+  candidate_name: string
+  party_name: string
+  total_votes: number
+  percentage: number
+  polling_stations_count: number
+}
+
+interface PresidentialSummary {
+  total_votes_cast: number
+  registered_voters: number
+  rejected_votes: number
+  turnout_percentage: number
+  total_stations: number
+  stations_reported: number
+  reporting_percentage: number
+}
+
+const candidateTones = ['from-brand-400 to-cyan-400', 'from-purple-400 to-fuchsia-400', 'from-emerald-400 to-teal-400']
+
 export default function Home() {
   const [isContactModalOpen, setContactModalOpen] = useState(false)
+  const [previewResults, setPreviewResults] = useState<PresidentialResult[]>([])
+  const [previewSummary, setPreviewSummary] = useState<PresidentialSummary | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(true)
+  const [previewError, setPreviewError] = useState(false)
+
+  // The hero preview shows the same verified national tally as the public
+  // presidential results page, not placeholder numbers.
+  useEffect(() => {
+    let cancelled = false
+
+    const loadPreview = async () => {
+      try {
+        const response = await fetch('/api/results/aggregate?position=president', {
+          cache: 'no-store',
+        })
+        if (!response.ok) throw new Error('Failed to load presidential results')
+
+        const data = await response.json()
+        if (cancelled) return
+
+        setPreviewResults(Array.isArray(data.results) ? data.results : [])
+        setPreviewSummary(data.summary ?? null)
+        setPreviewError(false)
+      } catch {
+        if (!cancelled) setPreviewError(true)
+      } finally {
+        if (!cancelled) setPreviewLoading(false)
+      }
+    }
+
+    loadPreview()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const previewStats = [
+    {
+      label: 'Stations',
+      value: previewSummary ? previewSummary.stations_reported.toLocaleString() : '—',
+    },
+    {
+      label: 'Turnout',
+      value: previewSummary ? `${previewSummary.turnout_percentage.toFixed(1)}%` : '—',
+    },
+    {
+      label: 'Reporting',
+      value: previewSummary ? `${previewSummary.reporting_percentage.toFixed(1)}%` : '—',
+    },
+  ]
 
   return (
     <main className="relative overflow-hidden">
@@ -209,18 +280,18 @@ export default function Home() {
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                     </span>
-                    Live · updating now
+                    Live · verified results
                   </p>
                 </div>
-                <span className="badge-brand">47 counties</span>
+                <span className="badge-brand">
+                  {previewLoading
+                    ? 'Syncing'
+                    : `${previewResults.length} candidate${previewResults.length === 1 ? '' : 's'}`}
+                </span>
               </div>
 
               <div className="mt-5 grid grid-cols-3 gap-2.5">
-                {[
-                  { label: 'Reported', value: '38,214' },
-                  { label: 'Turnout', value: '64.8%' },
-                  { label: 'Verified', value: '99.2%' },
-                ].map((item) => (
+                {previewStats.map((item) => (
                   <div key={item.label} className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-3">
                     <p className="text-[10px] uppercase tracking-wide text-dark-500">{item.label}</p>
                     <p className="mt-1 text-base font-semibold text-white">{item.value}</p>
@@ -228,43 +299,89 @@ export default function Home() {
                 ))}
               </div>
 
-              <div className="mt-5 space-y-4">
-                {[
-                  { name: 'Candidate A', party: 'Party of Progress', value: 46.2, tone: 'from-brand-400 to-cyan-400' },
-                  { name: 'Candidate B', party: 'United Alliance', value: 33.7, tone: 'from-purple-400 to-fuchsia-400' },
-                  { name: 'Candidate C', party: 'Reform Movement', value: 20.1, tone: 'from-emerald-400 to-teal-400' },
-                ].map((candidate, index) => (
-                  <div key={candidate.name}>
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[11px] font-semibold text-dark-300">
-                          {index + 1}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="truncate text-xs font-semibold text-white">{candidate.name}</p>
-                          <p className="truncate text-[10px] text-dark-500">{candidate.party}</p>
+              {previewLoading ? (
+                <div className="mt-5 space-y-4" aria-hidden="true">
+                  {[0, 1, 2].map((item) => (
+                    <div key={item} className="animate-pulse">
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-7 w-7 rounded-full bg-white/[0.06]" />
+                          <div className="space-y-1.5">
+                            <div className="h-2.5 w-24 rounded bg-white/[0.08]" />
+                            <div className="h-2 w-16 rounded bg-white/[0.05]" />
+                          </div>
+                        </div>
+                        <div className="h-3 w-10 rounded bg-white/[0.08]" />
+                      </div>
+                      <div className="h-1.5 rounded-full bg-white/[0.06]" />
+                    </div>
+                  ))}
+                </div>
+              ) : previewResults.length > 0 ? (
+                <div className="mt-5 space-y-4">
+                  {previewResults.slice(0, 3).map((candidate, index) => (
+                    <div key={`${candidate.candidate_name}-${index}`}>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[11px] font-semibold text-dark-300">
+                            {index + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-semibold text-white">
+                              {candidate.candidate_name}
+                            </p>
+                            <p className="truncate text-[10px] text-dark-500">
+                              {candidate.party_name || 'Independent'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-xs font-semibold text-white">
+                            {candidate.percentage.toFixed(1)}%
+                          </p>
+                          <p className="text-[10px] text-dark-500">
+                            {candidate.total_votes.toLocaleString()} votes
+                          </p>
                         </div>
                       </div>
-                      <p className="shrink-0 text-xs font-semibold text-white">{candidate.value}%</p>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${
+                            candidateTones[index] ?? candidateTones[0]
+                          }`}
+                          style={{ width: `${Math.min(Math.max(candidate.percentage, 0), 100)}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                      <div
-                        className={`h-full rounded-full bg-gradient-to-r ${candidate.tone}`}
-                        style={{ width: `${candidate.value}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.02] px-4 py-6 text-center">
+                  <p className="text-sm font-medium text-white">
+                    {previewError ? 'Live tally unavailable' : 'Awaiting verified results'}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-dark-500">
+                    {previewError
+                      ? 'Open the live results page to try again.'
+                      : 'The national tally will appear here as polling stations report and results are verified.'}
+                  </p>
+                </div>
+              )}
 
-              <div className="mt-5 flex items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3">
-                <div className="flex items-center gap-2 text-[11px] text-dark-400">
-                  <svg className="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3">
+                <div className="flex min-w-0 items-center gap-2 text-[11px] text-dark-400">
+                  <svg className="h-4 w-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Evidence attached
+                  <span className="truncate">
+                    {previewSummary
+                      ? `${previewSummary.total_votes_cast.toLocaleString()} votes counted`
+                      : 'Verified submissions'}
+                  </span>
                 </div>
-                <span className="text-[10px] text-dark-500">Updated just now</span>
+                <span className="shrink-0 text-[10px] text-dark-500">
+                  {previewError ? 'Not refreshed' : 'Updated just now'}
+                </span>
               </div>
             </div>
 
