@@ -5,6 +5,14 @@ import { parseFormData, saveCandidatePhoto } from '@/lib/fileUpload'
 import { getFileUrl } from '@/lib/storage'
 import { validateCandidateLocation } from '@/lib/candidateLocation'
 
+// Location filters only accept positive integer ids. Anything else is treated
+// as "no filter" so a malformed query string cannot break the listing.
+function parseLocationId(value: string | null): number | null {
+  if (!value) return null
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null
+}
+
 // Generate unique candidate number
 async function generateCandidateNumber(): Promise<string> {
   const year = new Date().getFullYear()
@@ -40,6 +48,9 @@ async function handleGet(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const position = searchParams.get('position')
+    const countyId = parseLocationId(searchParams.get('county_id'))
+    const constituencyId = parseLocationId(searchParams.get('constituency_id'))
+    const wardId = parseLocationId(searchParams.get('ward_id'))
 
     let sql = `
       SELECT
@@ -70,6 +81,23 @@ async function handleGet(req: NextRequest) {
     if (position) {
       sql += ` AND c.position = $${paramIndex++}`
       params.push(position)
+    }
+
+    // Location filters. An id that is not a positive integer is ignored rather
+    // than sent to PostgreSQL, where it would fail the integer cast with a 500.
+    if (countyId !== null) {
+      sql += ` AND c.county_id = $${paramIndex++}`
+      params.push(countyId)
+    }
+
+    if (constituencyId !== null) {
+      sql += ` AND c.constituency_id = $${paramIndex++}`
+      params.push(constituencyId)
+    }
+
+    if (wardId !== null) {
+      sql += ` AND c.ward_id = $${paramIndex++}`
+      params.push(wardId)
     }
 
     sql += ' ORDER BY c.position, c.full_name'

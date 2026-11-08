@@ -48,6 +48,11 @@ interface LocationSelectorProps {
   showConstituency?: boolean
   showWard?: boolean
   required?: boolean
+  /**
+   * `inline` lays the selectors out side by side instead of stacking them.
+   * Used by filter bars where vertical space is scarce.
+   */
+  variant?: 'default' | 'inline'
   initialValues?: {
     countyId?: number
     constituencyId?: number
@@ -63,6 +68,7 @@ export default function LocationSelector({
   showConstituency = true,
   showWard = true,
   required = false,
+  variant = 'default',
   initialValues,
 }: LocationSelectorProps) {
   const [counties, setCounties] = useState<County[]>([])
@@ -213,7 +219,13 @@ export default function LocationSelector({
   const selectClassName = "w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
 
   return (
-    <div className="space-y-4">
+    <div
+      className={
+        variant === 'inline'
+          ? 'grid grid-cols-1 gap-3 sm:grid-cols-3'
+          : 'space-y-4'
+      }
+    >
       {/* County Selector */}
       {showCounty && (
         <div>

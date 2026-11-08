@@ -69,6 +69,14 @@ export default function AdminDashboard() {
   const [filterRole, setFilterRole] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'users' | 'ballot_candidates' | 'locations' | 'reset'>('users')
   const [ballotCandidates, setBallotCandidates] = useState<any[]>([])
+  const [ballotFilters, setBallotFilters] = useState<{
+    position: string
+    county_id?: number
+    constituency_id?: number
+    ward_id?: number
+  }>({ position: 'all' })
+  // Remounts the location selector so "Clear filters" also resets its selects.
+  const [ballotFilterKey, setBallotFilterKey] = useState(0)
   const [loadingBallot, setLoadingBallot] = useState(false)
   const [showBallotModal, setShowBallotModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
@@ -135,6 +143,50 @@ export default function AdminDashboard() {
     }
   }, [filterRole])
 
+  const fetchBallotCandidates = useCallback(async () => {
+    setLoadingBallot(true)
+    try {
+      const token = localStorage.getItem('token')
+
+      // The filters are applied by the API so the table only receives the
+      // candidates of the selected position and electoral area.
+      const params = new URLSearchParams()
+      if (ballotFilters.position !== 'all') {
+        params.set('position', ballotFilters.position)
+      }
+      if (ballotFilters.county_id) {
+        params.set('county_id', String(ballotFilters.county_id))
+      }
+      if (ballotFilters.constituency_id) {
+        params.set('constituency_id', String(ballotFilters.constituency_id))
+      }
+      if (ballotFilters.ward_id) {
+        params.set('ward_id', String(ballotFilters.ward_id))
+      }
+      const query = params.toString()
+
+      const response = await fetch(
+        `/api/ballot-candidates${query ? `?${query}` : ''}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        setBallotCandidates(data.candidates || [])
+        // Rows hidden by a filter must not stay selected for a bulk action.
+        setSelectedCandidateIds([])
+      }
+    } catch (error) {
+      console.error('Failed to fetch ballot candidates:', error)
+    } finally {
+      setLoadingBallot(false)
+    }
+  }, [ballotFilters])
+
   useEffect(() => {
     const token = localStorage.getItem('token')
     const user = localStorage.getItem('user')
@@ -154,32 +206,17 @@ export default function AdminDashboard() {
       return
     }
 
-    fetchUsers()
-
-    if (viewMode === 'ballot_candidates') {
+    if (viewMode === 'users') {
+      fetchUsers()
+    } else if (viewMode === 'ballot_candidates') {
       fetchBallotCandidates()
     }
-  }, [router, viewMode, fetchUsers])
+  }, [router, viewMode, fetchUsers, fetchBallotCandidates])
 
-  const fetchBallotCandidates = async () => {
-    setLoadingBallot(true)
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/ballot-candidates', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setBallotCandidates(data.candidates || [])
-      }
-    } catch (error) {
-      console.error('Failed to fetch ballot candidates:', error)
-    } finally {
-      setLoadingBallot(false)
-    }
+  const clearBallotFilters = () => {
+    setBallotFilters({ position: 'all' })
+    setBallotFilterKey((key) => key + 1)
+    setSelectedCandidateIds([])
   }
 
   const handleCreateBallotCandidate = async (e: React.FormEvent) => {
@@ -839,6 +876,83 @@ export default function AdminDashboard() {
                 {role.charAt(0).toUpperCase() + role.slice(1)}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Filter - Ballot Candidates by position and electoral area */}
+        {viewMode === 'ballot_candidates' && (
+          <div className="mb-6 glass-effect rounded-2xl p-4 sm:p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-white">Filter candidates</h2>
+                <p className="text-xs text-dark-400">
+                  Narrow the list by position, county, constituency or ward.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={clearBallotFilters}
+                className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-2 text-xs font-semibold text-dark-300 transition-colors hover:border-white/[0.14] hover:text-white"
+              >
+                Clear filters
+              </button>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-dark-200">
+                  Position
+                </label>
+                <select
+                  value={ballotFilters.position}
+                  onChange={(e) =>
+                    setBallotFilters((prev) => ({
+                      ...prev,
+                      position: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-lg border border-white/[0.07] bg-dark-900 px-4 py-3 text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All positions</option>
+                  <option value="president">President</option>
+                  <option value="governor">Governor</option>
+                  <option value="senator">Senator</option>
+                  <option value="women_rep">Women Representative</option>
+                  <option value="mp">MP</option>
+                  <option value="mca">MCA</option>
+                </select>
+              </div>
+
+              <LocationSelector
+                key={ballotFilterKey}
+                variant="inline"
+                initialValues={{
+                  countyId: ballotFilters.county_id,
+                  constituencyId: ballotFilters.constituency_id,
+                  wardId: ballotFilters.ward_id,
+                }}
+                onLocationChange={(location) => {
+                  setBallotFilters((prev) => {
+                    if (
+                      prev.county_id === location.countyId &&
+                      prev.constituency_id === location.constituencyId &&
+                      prev.ward_id === location.wardId
+                    ) {
+                      // The selector reports its state on mount; avoid a
+                      // pointless refetch when nothing actually changed.
+                      return prev
+                    }
+                    return {
+                      ...prev,
+                      county_id: location.countyId,
+                      constituency_id: location.constituencyId,
+                      ward_id: location.wardId,
+                    }
+                  })
+                }}
+                showPollingStations={false}
+              />
+            </div>
           </div>
         )}
 
