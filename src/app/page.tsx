@@ -94,7 +94,7 @@ const features = [
   {
     title: 'Opinion polls with a share link',
     description:
-      'Publish a poll in minutes and share one public link. One vote per browser, no account needed, with results that update live beside the official tally.',
+      'Publish a poll in minutes — no account needed — and share one public link. One vote per browser, with results that update live beside the official tally.',
     icon: (
       <>
         <path
@@ -658,6 +658,9 @@ export default function Home() {
                 <button onClick={() => setContactModalOpen(true)} className="btn-primary px-6 py-3.5">
                   Create your account
                 </button>
+                <Link href="/polls/create" className="btn-secondary px-5 py-3.5">
+                  Create a poll
+                </Link>
                 <Link href="/presidential-results" className="btn-secondary px-5 py-3.5">
                   Explore live results
                 </Link>
@@ -698,6 +701,7 @@ export default function Home() {
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-dark-500">Platform</p>
                 <div className="mt-3 space-y-2.5 text-sm">
                   <Link href="/presidential-results" className="block text-dark-400 transition-colors hover:text-white">Live results</Link>
+                  <Link href="/polls/create" className="block text-dark-400 transition-colors hover:text-white">Create a poll</Link>
                   <Link href="/volunteer-registration" className="block text-dark-400 transition-colors hover:text-white">Volunteer</Link>
                   <Link href="/login" className="block text-dark-400 transition-colors hover:text-white">Sign in</Link>
                 </div>

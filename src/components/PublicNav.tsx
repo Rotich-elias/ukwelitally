@@ -4,13 +4,14 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 interface PublicNavProps {
-  active?: 'home' | 'results' | 'volunteer'
+  active?: 'home' | 'results' | 'volunteer' | 'polls'
   onGetStarted?: () => void
 }
 
 const links = [
   { label: 'How it works', href: '/#how-it-works', key: 'home' as const },
   { label: 'Results', href: '/presidential-results', key: 'results' as const },
+  { label: 'Create poll', href: '/polls/create', key: 'polls' as const },
   { label: 'Volunteer', href: '/volunteer-registration', key: 'volunteer' as const },
 ]
 

@@ -17,7 +17,7 @@ export interface OpinionPoll {
   slug: string
   title: string
   description: string | null
-  created_by: number
+  created_by: number | null
   candidate_id: number | null
   status: PollStatus
   is_public: boolean
@@ -87,7 +87,7 @@ export async function getPollBySlug(slug: string): Promise<OpinionPollWithOption
   const poll = await queryOne<OpinionPoll>(
     `SELECT p.*, u.full_name AS creator_name, c.full_name AS candidate_name
        FROM opinion_polls p
-       JOIN users u ON u.id = p.created_by
+       LEFT JOIN users u ON u.id = p.created_by
        LEFT JOIN candidates c ON c.id = p.candidate_id
       WHERE p.slug = $1`,
     [slug]
@@ -102,7 +102,7 @@ export async function getPollById(id: number): Promise<OpinionPollWithOptions | 
   const poll = await queryOne<OpinionPoll>(
     `SELECT p.*, u.full_name AS creator_name, c.full_name AS candidate_name
        FROM opinion_polls p
-       JOIN users u ON u.id = p.created_by
+       LEFT JOIN users u ON u.id = p.created_by
        LEFT JOIN candidates c ON c.id = p.candidate_id
       WHERE p.id = $1`,
     [id]
@@ -157,10 +157,88 @@ export interface CreatePollInput {
   title: string
   description?: string | null
   options: Array<{ label: string; description?: string | null }>
-  createdBy: number
+  createdBy: number | null
   candidateId?: number | null
   endsAt?: string | null
   isPublic?: boolean
+}
+
+export interface ParsedPollInput {
+  title: string
+  description: string
+  options: Array<{ label: string; description: string | null }>
+  endsAt: string | null
+}
+
+export type PollInputResult =
+  | { ok: true; value: ParsedPollInput }
+  | { ok: false; error: string }
+
+/**
+ * Validate the body of a poll-create request.
+ *
+ * Shared by the signed-in manager endpoint and the public, account-free
+ * endpoint so both enforce exactly the same limits. Only the shape of the
+ * poll is checked here; authorization stays with the caller.
+ */
+export function parsePollInput(body: any): PollInputResult {
+  const title = typeof body?.title === 'string' ? body.title.trim() : ''
+  const description = typeof body?.description === 'string' ? body.description.trim() : ''
+  const rawOptions = Array.isArray(body?.options) ? body.options : []
+  const endsAt = typeof body?.ends_at === 'string' && body.ends_at ? body.ends_at : null
+
+  if (title.length < 3 || title.length > 200) {
+    return { ok: false, error: 'Poll title must be between 3 and 200 characters' }
+  }
+
+  if (description.length > 1000) {
+    return { ok: false, error: 'Poll description must be at most 1000 characters' }
+  }
+
+  if (rawOptions.length < 2) {
+    return { ok: false, error: 'A poll needs at least two options' }
+  }
+  if (rawOptions.length > MAX_POLL_OPTIONS) {
+    return { ok: false, error: `A poll can have at most ${MAX_POLL_OPTIONS} options` }
+  }
+
+  const options: Array<{ label: string; description: string | null }> = []
+  const seen = new Set<string>()
+
+  for (const raw of rawOptions) {
+    const label = typeof raw === 'string' ? raw : raw?.label
+    const rawDescription = typeof raw === 'object' && raw ? raw.description : null
+    const trimmed = typeof label === 'string' ? label.trim() : ''
+
+    if (!trimmed || trimmed.length > 120) {
+      return { ok: false, error: 'Every option needs a label of 1 to 120 characters' }
+    }
+
+    const optionDescription = typeof rawDescription === 'string' ? rawDescription.trim() : ''
+    if (optionDescription.length > 300) {
+      return { ok: false, error: 'Option descriptions must be at most 300 characters' }
+    }
+
+    const key = trimmed.toLowerCase()
+    if (seen.has(key)) {
+      return { ok: false, error: 'Poll options must be unique' }
+    }
+    seen.add(key)
+
+    options.push({ label: trimmed, description: optionDescription || null })
+  }
+
+  if (endsAt) {
+    const parsed = new Date(endsAt)
+    if (Number.isNaN(parsed.getTime())) {
+      return { ok: false, error: 'Invalid poll end date' }
+    }
+    if (parsed.getTime() <= Date.now()) {
+      return { ok: false, error: 'The poll end date must be in the future' }
+    }
+  }
+
+  return { ok: true, value: { title, description, options, endsAt } }
 }
 
 export async function createOpinionPoll(input: CreatePollInput): Promise<OpinionPollWithOptions> {

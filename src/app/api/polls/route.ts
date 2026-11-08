@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { queryMany, queryOne } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import {
-  MAX_POLL_OPTIONS,
   createOpinionPoll,
   getCandidateProfileForUser,
   isPollManager,
+  parsePollInput,
   type OpinionPoll,
 } from '@/lib/polls'
 
@@ -24,7 +24,7 @@ async function handleGet(req: NextRequest) {
              COUNT(DISTINCT o.id)::int AS option_count,
              COUNT(DISTINCT v.id)::int AS total_votes
         FROM opinion_polls p
-        JOIN users u ON u.id = p.created_by
+        LEFT JOIN users u ON u.id = p.created_by
         LEFT JOIN candidates c ON c.id = p.candidate_id
         LEFT JOIN opinion_poll_options o ON o.poll_id = p.id
         LEFT JOIN opinion_poll_votes v ON v.poll_id = p.id
@@ -65,48 +65,10 @@ async function handlePost(req: NextRequest) {
       return NextResponse.json({ error: 'Only candidates and administrators can create polls' }, { status: 403 })
     }
 
-    const body = await req.json()
-    const title = typeof body.title === 'string' ? body.title.trim() : ''
-    const description = typeof body.description === 'string' ? body.description.trim() : ''
-    const rawOptions = Array.isArray(body.options) ? body.options : []
-    const endsAt = typeof body.ends_at === 'string' && body.ends_at ? body.ends_at : null
-
-    if (title.length < 3 || title.length > 200) {
-      return NextResponse.json({ error: 'Poll title must be between 3 and 200 characters' }, { status: 400 })
-    }
-
-    if (rawOptions.length < 2) {
-      return NextResponse.json({ error: 'A poll needs at least two options' }, { status: 400 })
-    }
-    if (rawOptions.length > MAX_POLL_OPTIONS) {
-      return NextResponse.json({ error: `A poll can have at most ${MAX_POLL_OPTIONS} options` }, { status: 400 })
-    }
-
-    const options: Array<{ label: string; description?: string | null }> = []
-    const seen = new Set<string>()
-    for (const raw of rawOptions) {
-      const label = typeof raw === 'string' ? raw : raw?.label
-      const optionDescription = typeof raw === 'object' && raw ? raw.description : null
-      const trimmed = typeof label === 'string' ? label.trim() : ''
-      if (!trimmed || trimmed.length > 120) {
-        return NextResponse.json({ error: 'Every option needs a label of 1 to 120 characters' }, { status: 400 })
-      }
-      const key = trimmed.toLowerCase()
-      if (seen.has(key)) {
-        return NextResponse.json({ error: 'Poll options must be unique' }, { status: 400 })
-      }
-      seen.add(key)
-      options.push({ label: trimmed, description: optionDescription })
-    }
-
-    if (endsAt) {
-      const parsed = new Date(endsAt)
-      if (Number.isNaN(parsed.getTime())) {
-        return NextResponse.json({ error: 'Invalid poll end date' }, { status: 400 })
-      }
-      if (parsed.getTime() <= Date.now()) {
-        return NextResponse.json({ error: 'The poll end date must be in the future' }, { status: 400 })
-      }
+    const body = await req.json().catch(() => ({}))
+    const parsed = parsePollInput(body)
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 })
     }
 
     let candidateId: number | null = null
@@ -128,12 +90,9 @@ async function handlePost(req: NextRequest) {
     }
 
     const poll = await createOpinionPoll({
-      title,
-      description,
-      options,
+      ...parsed.value,
       createdBy: user.userId,
       candidateId,
-      endsAt,
       isPublic: body.is_public !== false,
     })
 

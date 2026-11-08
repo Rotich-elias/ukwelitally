@@ -151,6 +151,10 @@ export const RATE_LIMITS = {
   fallbackDecision: { limit: 30, windowMs: 60 * 1000 },
   agentCreate: { limit: 30, windowMs: 60 * 60 * 1000 },
   pollVote: { limit: 30, windowMs: 60 * 60 * 1000 },
+  // Anonymous poll creation is public, so it gets a tighter budget than the
+  // signed-in manager endpoint. Five polls per address per hour is enough for
+  // a real organiser and expensive for a spammer.
+  pollCreate: { limit: 5, windowMs: 60 * 60 * 1000 },
 } as const
 
 /**

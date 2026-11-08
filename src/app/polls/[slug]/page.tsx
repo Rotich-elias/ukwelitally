@@ -353,6 +353,16 @@ export default function PublicPollPage() {
                       </span>
                     ))}
                   </div>
+
+                  <Link
+                    href="/polls/create"
+                    className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-300 transition-colors hover:text-brand-200"
+                  >
+                    Create your own poll — no account needed
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </Link>
                 </div>
 
                 <div className="flex shrink-0 flex-col gap-2 sm:w-48">
