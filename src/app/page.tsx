@@ -146,32 +146,6 @@ const features = [
       </>
     ),
   },
-  {
-    title: 'A clean slate, safely',
-    description:
-      'Archive an election or poll cycle in one step. Results are kept in an archive record while users, candidates, agents and polling stations stay untouched.',
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.8}
-        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-      />
-    ),
-  },
-  {
-    title: 'Election stats at a glance',
-    description:
-      'Agents and observers see live results for the race and area they are assigned to, right beside their reporting tools, so progress is never a dashboard away.',
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.8}
-        d="M3 3v18h18M7 15l4-4 3 3 5-6"
-      />
-    ),
-  },
 ]
 
 const steps = [
