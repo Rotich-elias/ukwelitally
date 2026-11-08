@@ -153,7 +153,8 @@ export default function PublicPollPage() {
             </Link>
           </div>
         ) : poll ? (
-          <div className="glass-effect rounded-3xl p-6 sm:p-8">
+          <>
+            <div className="glass-effect rounded-3xl p-6 sm:p-8">
             <div className="flex flex-wrap items-center gap-2">
               <span className="badge-brand">Opinion poll</span>
               {poll.candidate_name && (
@@ -257,6 +258,63 @@ export default function PublicPollPage() {
               </Link>
             </div>
           </div>
+
+            {/* App advert: poll visitors are potential agents, observers and
+                candidates, so this points them at the verified tally. */}
+            <aside className="glass-effect relative mt-6 overflow-hidden rounded-3xl p-6 sm:p-8">
+              <div className="glow-orb -right-20 -top-24 h-56 w-56 bg-brand-500/20" />
+              <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="max-w-xl">
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src="/icons/icon-192x192.png"
+                      alt=""
+                      width={32}
+                      height={32}
+                      className="h-8 w-8 rounded-xl ring-1 ring-white/10"
+                    />
+                    <span className="text-base font-semibold tracking-tight text-white">
+                      Ukweli<span className="gradient-text">Tally</span>
+                    </span>
+                  </div>
+
+                  <h2 className="mt-4 text-xl font-semibold tracking-tight text-white sm:text-2xl">
+                    Beyond the poll: results you can verify
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-dark-400">
+                    Every result on UkweliTally is backed by Form 34A photos, GPS
+                    checks and a confidence score you can inspect. Follow the live
+                    national tally, or join as an agent or observer.
+                  </p>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-dark-400">
+                    {['Evidence photos', 'GPS checks', 'Live national tally'].map((item) => (
+                      <span key={item} className="inline-flex items-center gap-1.5">
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
+                          <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </span>
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 flex-col gap-2 sm:w-48">
+                  <Link href="/" className="btn-primary justify-center px-5 py-3 text-sm">
+                    Explore UkweliTally
+                  </Link>
+                  <Link
+                    href="/presidential-results"
+                    className="btn-secondary justify-center px-5 py-3 text-sm"
+                  >
+                    See live results
+                  </Link>
+                </div>
+              </div>
+            </aside>
+          </>
         ) : null}
       </div>
     </div>

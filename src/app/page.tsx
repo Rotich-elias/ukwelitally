@@ -91,6 +91,87 @@ const features = [
       />
     ),
   },
+  {
+    title: 'Opinion polls with a share link',
+    description:
+      'Publish a poll in minutes and share one public link. One vote per browser, no account needed, with results that update live beside the official tally.',
+    icon: (
+      <>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"
+        />
+      </>
+    ),
+  },
+  {
+    title: 'Confidence you can explain',
+    description:
+      'Every result carries a confidence score built from GPS distance, evidence photos, OCR, arithmetic checks, timeliness and anomalies — with the full breakdown visible to reviewers.',
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"
+      />
+    ),
+  },
+  {
+    title: 'Training for every role',
+    description:
+      'Candidates, agents and observers each get a role-specific guide they can download as a PDF, so the field team knows exactly what to capture and when.',
+    icon: (
+      <>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M12 11v6m0 0l-2-2m2 2l2-2"
+        />
+      </>
+    ),
+  },
+  {
+    title: 'A clean slate, safely',
+    description:
+      'Archive an election or poll cycle in one step. Results are kept in an archive record while users, candidates, agents and polling stations stay untouched.',
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+      />
+    ),
+  },
+  {
+    title: 'Election stats at a glance',
+    description:
+      'Agents and observers see live election stats beside their reporting tools, so turnout, progress and the national picture are never a dashboard away.',
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M3 3v18h18M7 15l4-4 3 3 5-6"
+      />
+    ),
+  },
 ]
 
 const steps = [
@@ -116,19 +197,19 @@ const audiences = [
   {
     role: 'For candidates',
     description: 'See your race as it happens, station by station, with a clear view of where results are still missing.',
-    points: ['Live vote share', 'Station-level progress', 'Downloadable PDF report'],
+    points: ['Live vote share', 'Station-level progress', 'PDF report & opinion polls'],
     href: '/login',
   },
   {
     role: 'For agents',
     description: 'Submit the result from the polling station in under a minute, even when the signal is poor.',
-    points: ['Guided two-step form', 'Offline-friendly', 'Photo and GPS verification'],
+    points: ['Guided two-step form', 'Offline-friendly', 'Photo, GPS & training guide'],
     href: '/login',
   },
   {
     role: 'For observers',
     description: 'Report an independent result where no agent is present, and help close the gaps in the tally.',
-    points: ['Alternative result capture', 'Independent review', 'Presidential oversight'],
+    points: ['Alternative result capture', 'Independent review', 'Training guide & live stats'],
     href: '/volunteer-registration',
   },
 ]
@@ -422,8 +503,8 @@ export default function Home() {
               Built for the reality of election day
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-dark-400 sm:text-base">
-              Slow networks, missing agents, contested numbers. Every part of the
-              platform is designed around the conditions on the ground.
+              Slow networks, missing agents, contested numbers — and public opinion.
+              Every part of the platform is designed around the conditions on the ground.
             </p>
           </div>
 
