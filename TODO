@@ -1,0 +1,20 @@
+- [x] Allow a candidate or system user to create an opinion poll and share it as a link
+      Candidate/admin poll manager at /dashboard/polls, public poll page at /polls/[slug], one vote per browser, archive instead of hard delete.
+
+- [x] Review the OCR implementation
+      Optional Google Vision OCR (GOOGLE_VISION_API_KEY) reads full-form/close-up photos, stores text + confidence per photo and feeds the confidence score. Degrades gracefully when the key is absent.
+
+- [x] Add reset buttons for election data and opinion polls
+      Admin Reset & Archive tab archives rows into data_archives as JSON before deleting only result-chain and poll rows. Users, candidates, agents, observers and polling stations are never deleted.
+
+- [x] Let observers choose their own password at registration
+      Password hash stored on volunteer_registrations, reused when the account is approved. Legacy rows still fall back to a generated password.
+
+- [x] Add a training PDF for each user role after login
+      Role guides for admin, candidate, agent and observer. Download from the account menu or the dashboard header; PDF is built on demand.
+
+- [x] Make confidence scores reflect actual evidence
+      New explainable score from GPS distance, photo evidence, OCR readability, arithmetic validation, timeliness and anomaly flags. Stored breakdown + admin bulk recalculation.
+
+- [x] Add an election statistics snippet for agents and observers
+      Live ElectionStatsCard on both dashboards, sourced from /api/results/aggregate.

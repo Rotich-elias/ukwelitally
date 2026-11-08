@@ -9,9 +9,15 @@ async function handleGet(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status') || 'all'
 
+    // Never expose the password hash through the admin listing. The boolean
+    // tells the UI whether the volunteer can sign in with their own password.
     let sql = `
       SELECT 
-        vr.*,
+        vr.id, vr.full_name, vr.email, vr.phone, vr.id_number,
+        vr.county_id, vr.constituency_id, vr.ward_id, vr.polling_station_id,
+        vr.status, vr.notes, vr.assigned_candidate_id, vr.assigned_agent_id,
+        vr.assigned_at, vr.created_at, vr.updated_at, vr.password_set_at,
+        (vr.password_hash IS NOT NULL) as password_set,
         co.name as county_name,
         c.name as constituency_name,
         w.name as ward_name,
@@ -133,9 +139,13 @@ async function handlePost(req: NextRequest) {
       }
     }
 
-    // Generate random password and hash it
-    const password = 'Pass' + Math.floor(Math.random() * 9000 + 1000)
-    const hashedPassword = await hashPassword(password)
+    // Reuse the password the volunteer chose at registration. Only a
+    // registration without one needs a generated password, which is shown to
+    // the administrator once.
+    const password = volunteer.password_hash
+      ? null
+      : 'Pass' + Math.floor(Math.random() * 9000 + 1000)
+    const hashedPassword = volunteer.password_hash || (await hashPassword(password!))
 
     // Start transaction
     const result = await query('BEGIN')
@@ -218,7 +228,8 @@ async function handlePost(req: NextRequest) {
         },
         credentials: {
           email: volunteer.email,
-          password: password
+          ...(password ? { password } : {}),
+          password_source: volunteer.password_hash ? 'self_service' : 'generated',
         }
       }, { status: 201 })
 

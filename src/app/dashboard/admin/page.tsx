@@ -6,6 +6,7 @@ import DashboardNav from '@/components/DashboardNav'
 import PageHeader from '@/components/PageHeader'
 import LocationSelector from '@/components/LocationSelector'
 import LocationManager from '@/components/admin/LocationManager'
+import ResetManager from '@/components/admin/ResetManager'
 
 interface User {
   id: number
@@ -66,7 +67,7 @@ export default function AdminDashboard() {
   const [totalPaid, setTotalPaid] = useState(0)
   const [expectedAmount, setExpectedAmount] = useState(0)
   const [filterRole, setFilterRole] = useState<string>('all')
-  const [viewMode, setViewMode] = useState<'users' | 'ballot_candidates' | 'locations'>('users')
+  const [viewMode, setViewMode] = useState<'users' | 'ballot_candidates' | 'locations' | 'reset'>('users')
   const [ballotCandidates, setBallotCandidates] = useState<any[]>([])
   const [loadingBallot, setLoadingBallot] = useState(false)
   const [showBallotModal, setShowBallotModal] = useState(false)
@@ -149,7 +150,7 @@ export default function AdminDashboard() {
       return
     }
 
-    if (viewMode === 'locations') {
+    if (viewMode === 'locations' || viewMode === 'reset') {
       return
     }
 
@@ -805,6 +806,7 @@ export default function AdminDashboard() {
               { key: 'users', label: 'System Users' },
               { key: 'ballot_candidates', label: 'Ballot Candidates' },
               { key: 'locations', label: 'Locations' },
+              { key: 'reset', label: 'Reset & Archive' },
             ] as const
           ).map((tab) => (
             <button
@@ -1249,6 +1251,8 @@ export default function AdminDashboard() {
               </table>
             </div>
           </div>
+        ) : viewMode === 'reset' ? (
+          <ResetManager />
         ) : (
           // Locations View
           <LocationManager />

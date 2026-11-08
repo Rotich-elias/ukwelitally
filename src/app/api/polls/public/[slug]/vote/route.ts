@@ -1,0 +1,90 @@
+import crypto from 'crypto'
+import { NextRequest, NextResponse } from 'next/server'
+import { queryOne } from '@/lib/db'
+import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
+import { getPollBySlug, isPollOpen, voterFingerprint } from '@/lib/polls'
+
+export const dynamic = 'force-dynamic'
+
+// POST /api/polls/public/[slug]/vote - Cast one vote in a public poll.
+export async function POST(req: NextRequest, context: any) {
+  try {
+    const ip = getClientIp(req)
+    const limit = checkRateLimit(
+      rateLimitKey('poll_vote', ip),
+      RATE_LIMITS.pollVote.limit,
+      RATE_LIMITS.pollVote.windowMs
+    )
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many votes from this connection. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
+      )
+    }
+
+    const params = await Promise.resolve(context?.params)
+    const slug = params?.slug
+    if (!slug) {
+      return NextResponse.json({ error: 'Poll not found' }, { status: 404 })
+    }
+
+    const body = await req.json().catch(() => ({}))
+    const optionId = parseInt(body.option_id)
+    if (!optionId) {
+      return NextResponse.json({ error: 'Choose an option before voting' }, { status: 400 })
+    }
+
+    const poll = await getPollBySlug(slug)
+    if (!poll || !poll.is_public || poll.status === 'archived' || poll.status === 'draft') {
+      return NextResponse.json({ error: 'Poll not found' }, { status: 404 })
+    }
+
+    if (!isPollOpen(poll)) {
+      return NextResponse.json({ error: 'This poll is closed' }, { status: 403 })
+    }
+
+    const option = poll.options.find((entry) => entry.id === optionId)
+    if (!option) {
+      return NextResponse.json({ error: 'That option does not belong to this poll' }, { status: 400 })
+    }
+
+    // The browser contributes a random key stored locally, so a shared IP
+    // (office, campus, mobile carrier NAT) does not prevent other people from
+    // voting. The key is combined with the address and user agent and hashed;
+    // the raw address is never stored.
+    const voterKey = typeof body.voter_key === 'string' ? body.voter_key.slice(0, 128) : ''
+    const userAgent = (req.headers.get('user-agent') || '').slice(0, 500)
+    const fingerprint = voterFingerprint(
+      poll.slug,
+      `${ip}:${voterKey}`,
+      userAgent
+    )
+    const ipHash = crypto.createHash('sha256').update(`${ip}`).digest('hex')
+
+    const inserted = await queryOne<{ id: number }>(
+      `INSERT INTO opinion_poll_votes
+         (poll_id, option_id, voter_fingerprint, ip_hash, user_agent)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (poll_id, voter_fingerprint) DO NOTHING
+       RETURNING id`,
+      [poll.id, optionId, fingerprint, ipHash, userAgent]
+    )
+
+    if (!inserted) {
+      return NextResponse.json(
+        { error: 'You have already voted in this poll', already_voted: true },
+        { status: 409 }
+      )
+    }
+
+    const updated = await getPollBySlug(slug)
+
+    return NextResponse.json({
+      message: 'Vote recorded',
+      poll: updated ? { ...updated, is_open: isPollOpen(updated) } : null,
+    })
+  } catch (error) {
+    console.error('Error recording poll vote:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

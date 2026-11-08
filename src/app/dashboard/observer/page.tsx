@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
 import PageHeader from '@/components/PageHeader'
+import ElectionStatsCard from '@/components/ElectionStatsCard'
+import TrainingGuideButton from '@/components/TrainingGuideButton'
 
 interface ObserverInfo {
   assignment_id: number
@@ -306,6 +308,7 @@ export default function ObserverDashboard() {
           eyebrow="Independent observation"
           title="Election Observer"
           description={`Welcome, ${user?.full_name || 'observer'}. Submit alternative results for your assigned polling station.`}
+          actions={<TrainingGuideButton role="observer" />}
           meta={
             observerInfo ? (
               <div className="flex flex-wrap items-center gap-2">
@@ -325,6 +328,10 @@ export default function ObserverDashboard() {
             ) : undefined
           }
         />
+
+        <div className="mb-6">
+          <ElectionStatsCard title="Live presidential statistics" />
+        </div>
 
         {/* Reporting window status */}
         {submissionWindow && (

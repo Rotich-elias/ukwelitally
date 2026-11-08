@@ -66,6 +66,8 @@ export default function VolunteerRegistrationPage() {
     constituency_id: undefined as number | undefined,
     ward_id: undefined as number | undefined,
     polling_station_id: undefined as number | undefined,
+    password: '',
+    confirm_password: '',
   })
   const [volunteerLoading, setVolunteerLoading] = useState(false)
   const [volunteerError, setVolunteerError] = useState('')
@@ -78,12 +80,27 @@ export default function VolunteerRegistrationPage() {
     setVolunteerLoading(true)
 
     try {
+      if (volunteerFormData.password.length < 8) {
+        throw new Error('Choose a password of at least 8 characters.')
+      }
+      if (
+        !/[A-Z]/.test(volunteerFormData.password) ||
+        !/[a-z]/.test(volunteerFormData.password) ||
+        !/[0-9]/.test(volunteerFormData.password)
+      ) {
+        throw new Error('Password must contain an uppercase letter, a lowercase letter and a number.')
+      }
+      if (volunteerFormData.password !== volunteerFormData.confirm_password) {
+        throw new Error('The two passwords do not match.')
+      }
+
+      const { confirm_password, ...payload } = volunteerFormData
       const response = await fetch('/api/volunteers', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(volunteerFormData),
+        body: JSON.stringify(payload),
       })
 
       const data = await response.json()
@@ -102,6 +119,8 @@ export default function VolunteerRegistrationPage() {
         constituency_id: undefined,
         ward_id: undefined,
         polling_station_id: undefined,
+        password: '',
+        confirm_password: '',
       })
     } catch (err: any) {
       setVolunteerError(err.message || 'Failed to submit registration. Please try again.')
@@ -238,6 +257,50 @@ export default function VolunteerRegistrationPage() {
                     className="w-full px-4 py-3 text-sm"
                     placeholder="Enter your ID number"
                   />
+                </div>
+              </div>
+
+              <div className="border-t border-white/[0.07] pt-6">
+                <h2 className="text-base font-semibold text-white">Account password</h2>
+                <p className="mb-4 mt-1 text-sm text-dark-400">
+                  Choose the password you will use to sign in once your observer account is approved.
+                  Use at least 8 characters with an uppercase letter, a lowercase letter and a number.
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="password" className="field-label">
+                      Password <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      value={volunteerFormData.password}
+                      onChange={handleInputChange}
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      className="w-full px-4 py-3 text-sm"
+                      placeholder="Create a strong password"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="confirm_password" className="field-label">
+                      Confirm password <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      id="confirm_password"
+                      name="confirm_password"
+                      value={volunteerFormData.confirm_password}
+                      onChange={handleInputChange}
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      className="w-full px-4 py-3 text-sm"
+                      placeholder="Repeat your password"
+                    />
+                  </div>
                 </div>
               </div>
 

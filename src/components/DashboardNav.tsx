@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import InstallAppButton from '@/components/InstallAppButton'
+import TrainingGuideButton from '@/components/TrainingGuideButton'
 
 interface User {
   id: string
@@ -106,6 +107,9 @@ export default function DashboardNav() {
 
   const navLinks = [
     { href: dashboardHref, label: 'Dashboard' },
+    ...(user.role === 'candidate' || user.role === 'admin'
+      ? [{ href: '/dashboard/polls', label: 'Polls' }]
+      : []),
     ...(user.role !== 'agent' ? [{ href: '/results', label: 'Results' }] : []),
   ]
 
@@ -289,6 +293,7 @@ export default function DashboardNav() {
                     </svg>
                     Dashboard
                   </Link>
+                  <TrainingGuideButton role={user.role} variant="menu" />
                   <button
                     onClick={handleLogout}
                     className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200"

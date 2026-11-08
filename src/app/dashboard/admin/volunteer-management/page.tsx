@@ -24,6 +24,8 @@ interface Volunteer {
   ward_name?: string
   polling_station_name?: string
   polling_station_code?: string
+  /** True when the volunteer chose a password at registration. */
+  password_set?: boolean
 }
 
 export default function VolunteerManagement() {
@@ -482,6 +484,11 @@ export default function VolunteerManagement() {
                           <div>
                             <p className="text-white font-medium">{volunteer.full_name}</p>
                             <p className="text-dark-400 text-sm">ID: {volunteer.id_number}</p>
+                            {volunteer.password_set && (
+                              <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                                Password set
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>

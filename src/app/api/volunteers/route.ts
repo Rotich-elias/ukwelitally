@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
 import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
+import { hashPassword } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,7 +39,8 @@ export async function POST(req: NextRequest) {
       county_id, 
       constituency_id, 
       ward_id, 
-      polling_station_id 
+      polling_station_id,
+      password,
     } = body
 
     // Validate required fields
@@ -76,6 +78,28 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // A volunteer may choose their password now so that the account can be
+    // used as soon as an administrator approves the registration. The
+    // password is optional for backwards compatibility: registrations without
+    // one still get a generated password at approval time.
+    let passwordHash: string | null = null
+    if (password !== undefined && password !== null && String(password).length > 0) {
+      const candidatePassword = String(password)
+      if (candidatePassword.length < 8) {
+        return NextResponse.json(
+          { error: 'Password must be at least 8 characters long' },
+          { status: 400 }
+        )
+      }
+      if (!/[A-Z]/.test(candidatePassword) || !/[a-z]/.test(candidatePassword) || !/[0-9]/.test(candidatePassword)) {
+        return NextResponse.json(
+          { error: 'Password must contain an uppercase letter, a lowercase letter and a number' },
+          { status: 400 }
+        )
+      }
+      passwordHash = await hashPassword(candidatePassword)
+    }
+
     // Check if volunteer already exists with same email, phone, or ID
     const existingVolunteer = await queryOne(
       `SELECT id FROM volunteer_registrations 
@@ -90,12 +114,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Create volunteer registration
+    // Create volunteer registration. The hash is never returned: the public
+    // response only carries the id and status needed by the form.
     const volunteer = await queryOne(
       `INSERT INTO volunteer_registrations 
-       (full_name, email, phone, id_number, county_id, constituency_id, ward_id, polling_station_id, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
-       RETURNING *`,
+       (full_name, email, phone, id_number, county_id, constituency_id, ward_id, polling_station_id, status, password_hash, password_set_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10)
+       RETURNING id, full_name, status`,
       [
         full_name.trim(),
         email.toLowerCase().trim(),
@@ -105,6 +130,8 @@ export async function POST(req: NextRequest) {
         constituency_id || null,
         ward_id || null,
         polling_station_id || null,
+        passwordHash,
+        passwordHash ? new Date() : null,
       ]
     )
 
@@ -121,7 +148,8 @@ export async function POST(req: NextRequest) {
           email,
           phone,
           id_number,
-          location: { county_id, constituency_id, ward_id, polling_station_id }
+          location: { county_id, constituency_id, ward_id, polling_station_id },
+          self_service_password: Boolean(passwordHash),
         }),
       ]
     )

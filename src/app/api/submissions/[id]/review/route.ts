@@ -5,6 +5,7 @@ import { compareWithIebcResults, compareWithPrimarySubmission } from '@/lib/veri
 import { notifyAdmins, notifySubmissionOwner, createNotification } from '@/lib/notifications'
 import { recordAgentFallbackConflict } from '@/lib/fallback'
 import { markSuperseded } from '@/lib/submissionRevisions'
+import { recalculateSubmissionConfidence } from '@/lib/confidence'
 import { Submission } from '@/types/database'
 
 // POST /api/submissions/[id]/review - Admin review action
@@ -180,6 +181,11 @@ async function handlePost(
          VALUES ($1, $2, $3, $4)`,
         [submissionId, user.userId, action, review_notes || null]
       )
+
+      // The review decision does not change the evidence, but the score is
+      // recalculated here so a submission reviewed after its result was
+      // entered carries the arithmetic and anomaly components.
+      await recalculateSubmissionConfidence(submissionId, client)
 
       // A submission that is no longer approved must not stay the selected
       // result: a report would otherwise count figures that were flagged or

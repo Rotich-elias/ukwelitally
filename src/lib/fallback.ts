@@ -2,6 +2,7 @@ import { query, queryOne, queryMany, transaction, type PoolClient } from '@/lib/
 import { recordAudit } from '@/lib/audit'
 import { createNotification } from '@/lib/notifications'
 import { markSuperseded } from '@/lib/submissionRevisions'
+import { recalculateSubmissionConfidence } from '@/lib/confidence'
 
 /**
  * Observer alternative submissions and candidate approved fallbacks.
@@ -551,6 +552,10 @@ export async function approveObserverFallback(params: {
       ]
     )
 
+    // An approved fallback is the station's result, so its score is refreshed
+    // in the same transaction as the approval.
+    await recalculateSubmissionConfidence(submission.id, client)
+
     await client.query(
       `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, new_values)
        VALUES ($1, 'observer_fallback_approved', 'submission', $2, $3)`,
@@ -680,6 +685,8 @@ export async function rejectObserverFallback(params: {
         params.reason ? `Rejected as a fallback result: ${params.reason}` : 'Rejected as a fallback result',
       ]
     )
+
+    await recalculateSubmissionConfidence(submission.id, client)
 
     // A rejected submission is not the result of the station any more. The
     // selection is released so a report stops counting figures that were

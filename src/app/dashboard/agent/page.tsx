@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
 import PageHeader from '@/components/PageHeader'
 import SafeImage from '@/components/SafeImage'
+import ElectionStatsCard from '@/components/ElectionStatsCard'
+import TrainingGuideButton from '@/components/TrainingGuideButton'
 
 interface AgentInfo {
   agent_id: number
@@ -354,6 +356,7 @@ export default function AgentDashboard() {
           eyebrow="Field reporting"
           title="Agent Dashboard"
           description="Submit polling station results with photo evidence and GPS verification."
+          actions={<TrainingGuideButton role="agent" />}
           meta={
             agentInfo ? (
               <div className="flex flex-wrap items-center gap-2">
@@ -373,6 +376,10 @@ export default function AgentDashboard() {
             ) : undefined
           }
         />
+
+        <div className="mb-6">
+          <ElectionStatsCard />
+        </div>
 
         {/* Reporting window status */}
         {submissionWindow && (

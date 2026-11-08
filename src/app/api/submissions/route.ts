@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne, queryMany, transaction } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import { parseFormData, saveUploadedFile } from '@/lib/fileUpload'
-import { verifyLocation, calculateConfidenceScore } from '@/lib/validation'
+import { verifyLocation } from '@/lib/validation'
+import { computeConfidenceScore, recalculateSubmissionConfidence } from '@/lib/confidence'
+import { ocrSubmissionPhotos, isOcrConfigured, type OcrPhotoInput } from '@/lib/ocr'
 import { getObserverAssignment, getPlaceholderCandidateId } from '@/lib/observer'
 import { getFileUrl, getEvidenceUrl } from '@/lib/storage'
 import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
@@ -146,6 +148,8 @@ async function handlePost(req: NextRequest) {
     const submittedLng = fields.submitted_lng ? parseFloat(fields.submitted_lng) : null
     const deviceId = fields.device_id || null
     const deviceType = fields.device_type || null
+    const formCapturedAt = fields.form_captured_at ? new Date(fields.form_captured_at) : null
+    const capturedAt = formCapturedAt && !Number.isNaN(formCapturedAt.getTime()) ? formCapturedAt : null
 
     if (!pollingStationId) {
       return NextResponse.json(
@@ -397,8 +401,9 @@ async function handlePost(req: NextRequest) {
           submission_origin, review_status, scope_candidate_id,
           supersedes_submission_id, revision_number, revision_reason,
           submitted_lat, submitted_lng, location_verified,
+          form_captured_at,
           device_id, device_type, ip_address, confidence_score
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING *`,
         [
           pollingStationId,
@@ -417,6 +422,7 @@ async function handlePost(req: NextRequest) {
           submittedLat,
           submittedLng,
           locationVerified,
+          capturedAt,
           deviceId,
           deviceType,
           req.headers.get('x-forwarded-for') || 'unknown',
@@ -431,6 +437,7 @@ async function handlePost(req: NextRequest) {
       const uploadedPhotos: any[] = []
       const skippedPhotos: Array<{ type: string; reason: string }> = []
       const photoHashes = new Set<string>()
+      const ocrPhotos: OcrPhotoInput[] = []
       let attemptedPhotos = 0
       let storageFailures = 0
 
@@ -484,6 +491,26 @@ async function handlePost(req: NextRequest) {
                 type: photoType,
                 ...fileInfo,
               })
+
+              // Keep the original bytes for the optional OCR pass. OCR runs
+              // after the transaction commits so a slow provider cannot hold
+              // the database connection open.
+              if (
+                isOcrConfigured() &&
+                ocrPhotos.length < 2 &&
+                (photoType === 'full_form' || photoType === 'closeup') &&
+                photoRecord.rows[0]?.id
+              ) {
+                try {
+                  ocrPhotos.push({
+                    id: photoRecord.rows[0].id,
+                    type: photoType,
+                    buffer: Buffer.from(await file.arrayBuffer()),
+                  })
+                } catch (error) {
+                  console.error('Could not read the photo for OCR:', error)
+                }
+              }
             } catch (error) {
               await client.query('ROLLBACK TO SAVEPOINT photo_insert')
               console.error('Error uploading photo:', error)
@@ -515,23 +542,26 @@ async function handlePost(req: NextRequest) {
         throw new Error(`The evidence photos could not be saved. ${reason}`)
       }
 
-      // Calculate confidence score
-      const hasAllRequiredPhotos = ['full_form', 'signature'].every((type) =>
-        uploadedPhotos.some((p) => p.type === type)
-      )
-      const confidenceScore = calculateConfidenceScore({
+      // Calculate a provisional confidence score from the evidence captured so
+      // far. The arithmetic component is unknown until the result figures are
+      // entered; it is added when the result route recalculates the score.
+      const confidence = computeConfidenceScore({
         locationVerified,
-        distance,
-        photoCount: uploadedPhotos.length,
-        hasAllRequiredPhotos,
-        mathValid: true, // Will be validated when results are entered
-        submittedWithinHours: 1, // Assume timely for now
-        historicalMatch: false, // Would need historical data
+        distanceMeters: distance,
+        locationRadiusMeters: pollingStation.location_radius ?? null,
+        photoTypes: uploadedPhotos.map((photo) => photo.type),
+        ocrConfidences: [],
+        ocrAvailable: false,
+        mathValid: null,
+        submittedAt: new Date(),
+        formCapturedAt: capturedAt,
+        hasAnomalies: false,
       })
+      const confidenceScore = confidence.score
 
       // Auto-verify primary agents with good confidence scores
       let status = 'pending'
-      let verifiedAt = null
+      let verifiedAt: Date | null = null
 
       if (isPrimaryAgent && submissionType === 'primary' && confidenceScore >= 60) {
         status = 'verified'
@@ -540,21 +570,46 @@ async function handlePost(req: NextRequest) {
 
       // Update submission with confidence score and auto-verification
       await client.query(
-        'UPDATE submissions SET confidence_score = $1, status = $2, verified_at = $3 WHERE id = $4',
-        [confidenceScore, status, verifiedAt, submission.id]
+        `UPDATE submissions
+            SET confidence_score = $1,
+                confidence_breakdown = $2,
+                confidence_updated_at = NOW(),
+                status = $3,
+                verified_at = $4
+          WHERE id = $5`,
+        [confidenceScore, JSON.stringify(confidence.breakdown), status, verifiedAt, submission.id]
       )
 
       return {
         submission: {
           ...submission,
           confidence_score: confidenceScore,
+          confidence_breakdown: confidence.breakdown,
           status,
           verified_at: verifiedAt
         },
         uploadedPhotos,
-        skippedPhotos
+        skippedPhotos,
+        ocrPhotos
       }
     })
+
+    // Read the form photo when an OCR provider is configured. This is best
+    // effort: an OCR failure must not reject an otherwise valid submission.
+    if (result.ocrPhotos.length > 0) {
+      try {
+        const ocr = await ocrSubmissionPhotos(result.submission.id, result.ocrPhotos)
+        if (ocr.available && ocr.processed > 0) {
+          const recalculated = await recalculateSubmissionConfidence(result.submission.id)
+          if (recalculated) {
+            result.submission.confidence_score = recalculated.score
+            ;(result.submission as any).confidence_breakdown = recalculated.breakdown
+          }
+        }
+      } catch (error) {
+        console.error('OCR pass failed, keeping the provisional score:', error)
+      }
+    }
 
     // Audit log
     await query(

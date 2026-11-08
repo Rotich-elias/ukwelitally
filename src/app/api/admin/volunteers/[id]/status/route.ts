@@ -29,9 +29,21 @@ async function handlePut(req: NextRequest, { params }: { params: Promise<{ id: s
       )
     }
 
-    // Check if volunteer exists
-    const volunteer = await queryOne(
-      'SELECT * FROM volunteer_registrations WHERE id = $1',
+    // Check if volunteer exists. The password hash is read explicitly so the
+    // approval can reuse a password the volunteer chose at registration.
+    const volunteer = await queryOne<{
+      id: number
+      full_name: string
+      email: string
+      phone: string
+      id_number: string
+      status: string
+      polling_station_id: number | null
+      password_hash: string | null
+    }>(
+      `SELECT id, full_name, email, phone, id_number, status, polling_station_id, password_hash
+         FROM volunteer_registrations
+        WHERE id = $1`,
       [volunteerId]
     )
 
@@ -70,10 +82,16 @@ async function handlePut(req: NextRequest, { params }: { params: Promise<{ id: s
         )
       }
 
-      // Generate a strong random password for the observer account.
-      // It is shown to the admin once and never stored in plain text.
-      generatedPassword = 'Obs' + crypto.randomBytes(6).toString('hex')
-      const hashedPassword = await hashPassword(generatedPassword)
+      // Reuse the password the volunteer chose at registration. Only a
+      // registration without a self-service password needs a generated one,
+      // which is shown to the admin once and never stored in plain text.
+      let hashedPassword: string
+      if (volunteer.password_hash) {
+        hashedPassword = volunteer.password_hash
+      } else {
+        generatedPassword = 'Obs' + crypto.randomBytes(6).toString('hex')
+        hashedPassword = await hashPassword(generatedPassword)
+      }
 
       // Create user account with role 'observer' for presidential results monitoring
       userAccount = await queryOne(
@@ -127,7 +145,8 @@ async function handlePut(req: NextRequest, { params }: { params: Promise<{ id: s
             email: volunteer.email,
             role: 'observer',
             polling_station_id: volunteer.polling_station_id,
-            observer_assignment_id: observerAssignment?.id || null
+            observer_assignment_id: observerAssignment?.id || null,
+            self_service_password: Boolean(volunteer.password_hash),
           })
         ]
       )
@@ -140,7 +159,10 @@ async function handlePut(req: NextRequest, { params }: { params: Promise<{ id: s
            notes = COALESCE(notes || ' ', '') || $2,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $3
-       RETURNING *`,
+       RETURNING id, full_name, email, phone, id_number, county_id,
+                 constituency_id, ward_id, polling_station_id, status, notes,
+                 assigned_candidate_id, assigned_agent_id, assigned_at,
+                 password_set_at, created_at, updated_at`,
       [
         status,
         `Status changed to ${status} by admin on ${new Date().toLocaleDateString()}. ${notes || ''}`,
@@ -169,11 +191,18 @@ async function handlePut(req: NextRequest, { params }: { params: Promise<{ id: s
     const accountCreated = status === 'approved' && volunteer.status !== 'approved'
     return NextResponse.json({
       message: accountCreated
-        ? 'Volunteer approved and account created successfully. Share the login credentials shown here with the volunteer.'
+        ? volunteer.password_hash
+          ? 'Volunteer approved. They can sign in with the password they chose at registration.'
+          : 'Volunteer approved and account created successfully. Share the login credentials shown here with the volunteer.'
         : 'Volunteer status updated successfully',
       volunteer: updatedVolunteer,
       account_created: accountCreated,
-      ...(accountCreated && userAccount
+      password_source: accountCreated
+        ? volunteer.password_hash
+          ? 'self_service'
+          : 'generated'
+        : null,
+      ...(accountCreated && userAccount && generatedPassword
         ? { credentials: { email: volunteer.email, password: generatedPassword } }
         : {}),
     })

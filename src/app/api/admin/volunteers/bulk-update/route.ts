@@ -33,9 +33,19 @@ async function handlePost(req: NextRequest) {
 
     // Validate all volunteer IDs exist and are in pending status
     const placeholders = volunteer_ids.map((_, i) => `$${i + 1}`).join(',')
-    const volunteers = await queryMany(
-      `SELECT * FROM volunteer_registrations 
-       WHERE id IN (${placeholders}) AND status = 'pending'`,
+    const volunteers = await queryMany<{
+      id: number
+      full_name: string
+      email: string
+      phone: string
+      id_number: string
+      polling_station_id: number | null
+      password_hash: string | null
+      status: string
+    }>(
+      `SELECT id, full_name, email, phone, id_number, polling_station_id, password_hash, status
+         FROM volunteer_registrations
+        WHERE id IN (${placeholders}) AND status = 'pending'`,
       volunteer_ids
     )
 
@@ -91,9 +101,15 @@ async function handlePost(req: NextRequest) {
             throw new Error(`A user with email ${volunteer.email} already exists`)
           }
 
-          // Generate a strong random password for the observer account.
-          const generatedPassword = 'Obs' + crypto.randomBytes(6).toString('hex')
-          const hashedPassword = await hashPassword(generatedPassword)
+          // Reuse the password the volunteer chose at registration. Only a
+          // registration without one needs a generated password.
+          const selfServicePassword = Boolean(volunteer.password_hash)
+          const generatedPassword = selfServicePassword
+            ? null
+            : 'Obs' + crypto.randomBytes(6).toString('hex')
+          const hashedPassword = selfServicePassword
+            ? volunteer.password_hash!
+            : await hashPassword(generatedPassword!)
 
           // Create user account with role 'observer' for presidential results monitoring
           userAccount = await queryOne(
@@ -146,7 +162,8 @@ async function handlePost(req: NextRequest) {
                 email: volunteer.email,
                 role: 'observer',
                 polling_station_id: volunteer.polling_station_id,
-                observer_assignment_id: observerAssignment?.id || null
+                observer_assignment_id: observerAssignment?.id || null,
+                self_service_password: selfServicePassword,
               })
             ]
           )
@@ -155,7 +172,10 @@ async function handlePost(req: NextRequest) {
             volunteer_id: volunteer.id,
             user_id: userAccount.id,
             email: volunteer.email,
-            password: generatedPassword
+            password_source: selfServicePassword ? 'self_service' : 'generated',
+            // A self-service password is never returned: only a generated one
+            // needs to be shown to the administrator.
+            ...(generatedPassword ? { password: generatedPassword } : {}),
           })
         }
 
@@ -166,7 +186,10 @@ async function handlePost(req: NextRequest) {
                notes = COALESCE(notes || ' ', '') || $2,
                updated_at = CURRENT_TIMESTAMP
            WHERE id = $3
-           RETURNING *`,
+           RETURNING id, full_name, email, phone, id_number, county_id,
+                     constituency_id, ward_id, polling_station_id, status, notes,
+                     assigned_candidate_id, assigned_agent_id, assigned_at,
+                     password_set_at, created_at, updated_at`,
           [
             status,
             `Status changed to ${status} by admin in bulk update on ${new Date().toLocaleDateString()}. ${notes || ''}`,

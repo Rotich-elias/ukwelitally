@@ -150,6 +150,7 @@ export const RATE_LIMITS = {
   submission: { limit: 60, windowMs: 60 * 1000 },
   fallbackDecision: { limit: 30, windowMs: 60 * 1000 },
   agentCreate: { limit: 30, windowMs: 60 * 60 * 1000 },
+  pollVote: { limit: 30, windowMs: 60 * 60 * 1000 },
 } as const
 
 /**

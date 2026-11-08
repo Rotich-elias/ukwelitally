@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne, queryMany, transaction } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import { validateVoteCounts, detectAnomalies } from '@/lib/validation'
+import { recalculateSubmissionConfidence } from '@/lib/confidence'
 import {
   evaluateSubmissionAuthorization,
   getAgentWindowContext,
@@ -280,21 +281,19 @@ async function handlePost(req: NextRequest) {
         )
       }
 
-      // Update submission confidence score if math is invalid
-      if (!validation.valid) {
-        await client.query(
-          'UPDATE submissions SET confidence_score = confidence_score - 20 WHERE id = $1',
-          [submission_id]
-        )
-      }
-
-      // Flag submission if anomalies detected
+      // Flag submission if anomalies detected. The confidence score is
+      // recalculated afterwards so the anomaly penalty is part of it.
       if (anomalyCheck.hasAnomalies) {
         await client.query(
           'UPDATE submissions SET has_discrepancy = TRUE, flagged_reason = $1 WHERE id = $2',
           [anomalyCheck.flags.join('; '), submission_id]
         )
       }
+
+      // Recompute from persisted evidence now that the vote figures exist.
+      // The old code simply subtracted 20 points when the math was wrong,
+      // which produced the same low score for almost every submission.
+      await recalculateSubmissionConfidence(submission_id, client)
 
       // Auto-verify submission for primary agents with valid data
       const autoVerifies =
