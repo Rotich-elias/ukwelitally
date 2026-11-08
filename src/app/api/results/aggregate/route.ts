@@ -56,6 +56,16 @@ export async function GET(req: NextRequest) {
           position = raceScope.position
         }
       }
+
+      // A field user without an active assignment has no race to report.
+      // Returning the national tally here would hand them results that are
+      // not theirs, so the request is refused instead.
+      if ((userRole === 'agent' || userRole === 'observer') && !raceScope) {
+        return NextResponse.json(
+          { error: 'No active reporting assignment' },
+          { status: 403 }
+        )
+      }
     }
 
     // Support both new filtering approach and legacy level-based approach

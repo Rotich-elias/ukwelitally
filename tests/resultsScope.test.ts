@@ -278,6 +278,23 @@ describe('GET /api/results/aggregate', () => {
     expect(submittedQuery.params).toEqual(['mca', 5])
   })
 
+  it('refuses a field user without an active assignment', async () => {
+    register({
+      match: /FROM agents a\s+JOIN candidates c ON c\.id = a\.candidate_id/,
+      handler: () => [],
+    })
+
+    const response = await aggregateGet(
+      request('/api/results/aggregate?position=president', AGENT)
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(body.error).toBe('No active reporting assignment')
+    // The national tally must not be used as a fallback.
+    expect(queriesMatching(/WITH scoped_results AS/)).toHaveLength(0)
+  })
+
   it('keeps a presidential observer race national', async () => {
     register({
       match: /FROM observer_assignments oa\s+JOIN polling_stations ps/,

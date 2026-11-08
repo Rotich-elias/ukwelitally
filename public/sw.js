@@ -4,7 +4,7 @@
 // navigations therefore go to the network first: a new deployment is picked
 // up on the next load instead of being hidden behind an old cached page.
 // Cached pages are only a fallback for a user who is offline.
-const CACHE_NAME = 'ukwelitally-v3'
+const CACHE_NAME = 'ukwelitally-v4'
 const OFFLINE_URL = '/offline'
 
 // Assets to cache on install. The start page is not precached: it is
@@ -54,13 +54,13 @@ self.addEventListener('fetch', (event) => {
   if (!request.url.startsWith(self.location.origin)) return
   if (request.method !== 'GET') return
 
-  // API requests are network-first: a stale response is worse than none.
+  // API requests are never cached by the service worker. The same URL can
+  // return different data for different signed in users (results are scoped
+  // to the agent's or observer's race), and the browser cache key does not
+  // include the Authorization header. A cached response could therefore show
+  // one field user the results of another user's area.
   if (request.url.includes('/api/')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => cacheResponse(request, response))
-        .catch(() => caches.match(request))
-    )
+    event.respondWith(fetch(request))
     return
   }
 
