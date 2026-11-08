@@ -330,7 +330,7 @@ export default function ObserverDashboard() {
         />
 
         <div className="mb-6">
-          <ElectionStatsCard title="Live presidential statistics" />
+          <ElectionStatsCard position={position} />
         </div>
 
         {/* Reporting window status */}
@@ -660,11 +660,11 @@ export default function ObserverDashboard() {
               <ul className="space-y-2 text-sm text-dark-300">
                 <li className="flex items-start gap-2">
                   <span className="text-blue-400">1.</span>
-                  <span>Take clear photos of Form 34A (Presidential)</span>
+                  <span>Take clear photos of the results form for the race you are reporting</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-400">2.</span>
-                  <span>Fill in all presidential candidate vote counts accurately</span>
+                  <span>Fill in every candidate vote count for the selected race accurately</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-400">3.</span>
@@ -676,7 +676,7 @@ export default function ObserverDashboard() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-400">5.</span>
-                  <span>Focus only on presidential results</span>
+                  <span>Focus only on the race you are assigned to observe</span>
                 </li>
               </ul>
             </div>

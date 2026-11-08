@@ -20,10 +20,20 @@ interface StatsSummary {
   reporting_percentage: number
 }
 
+interface StatsScope {
+  position: string
+  position_label: string
+  level: 'ward' | 'constituency' | 'county' | 'national'
+  area_name: string
+  candidate_name?: string | null
+}
+
 interface ElectionStatsCardProps {
   position?: string
   title?: string
   subtitle?: string
+  /** Hide the link to the full results page (e.g. for agents, who cannot open it). */
+  showFullResults?: boolean
 }
 
 function formatNumber(value: number): string {
@@ -40,10 +50,12 @@ function formatNumber(value: number): string {
  */
 export default function ElectionStatsCard({
   position = 'president',
-  title = 'Live election statistics',
-  subtitle = 'From verified, selected results only',
+  title,
+  subtitle,
+  showFullResults = true,
 }: ElectionStatsCardProps) {
   const [summary, setSummary] = useState<StatsSummary | null>(null)
+  const [scope, setScope] = useState<StatsScope | null>(null)
   const [leaders, setLeaders] = useState<StatsCandidate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -64,6 +76,7 @@ export default function ElectionStatsCard({
 
         const results: StatsCandidate[] = Array.isArray(data.results) ? data.results : []
         setSummary(data.summary || null)
+        setScope(data.scope || null)
         setLeaders(
           [...results]
             .sort((a, b) => Number(b.total_votes) - Number(a.total_votes))
@@ -96,6 +109,13 @@ export default function ElectionStatsCard({
   }
 
   const maxVotes = leaders[0]?.total_votes || 0
+  const cardTitle =
+    title || (scope ? `Live ${scope.position_label} results` : 'Live election statistics')
+  const cardSubtitle =
+    subtitle ||
+    (scope
+      ? `${scope.area_name}${scope.candidate_name ? ` · ${scope.candidate_name}` : ''} · From verified, selected results only`
+      : 'From verified, selected results only')
 
   return (
     <div className="glass-effect overflow-hidden rounded-2xl">
@@ -106,13 +126,15 @@ export default function ElectionStatsCard({
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
             </span>
-            {title}
+            {cardTitle}
           </h2>
-          <p className="mt-0.5 text-xs text-dark-500">{subtitle}</p>
+          <p className="mt-0.5 text-xs text-dark-500">{cardSubtitle}</p>
         </div>
-        <Link href="/results" className="text-xs font-semibold text-brand-300 hover:text-brand-200">
-          Full results →
-        </Link>
+        {showFullResults && (
+          <Link href="/results" className="text-xs font-semibold text-brand-300 hover:text-brand-200">
+            Full results →
+          </Link>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-px bg-white/[0.06] sm:grid-cols-4">

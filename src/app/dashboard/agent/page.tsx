@@ -378,7 +378,7 @@ export default function AgentDashboard() {
         />
 
         <div className="mb-6">
-          <ElectionStatsCard />
+          <ElectionStatsCard showFullResults={false} />
         </div>
 
         {/* Reporting window status */}

@@ -162,7 +162,7 @@ const features = [
   {
     title: 'Election stats at a glance',
     description:
-      'Agents and observers see live election stats beside their reporting tools, so turnout, progress and the national picture are never a dashboard away.',
+      'Agents and observers see live results for the race and area they are assigned to, right beside their reporting tools, so progress is never a dashboard away.',
     icon: (
       <path
         strokeLinecap="round"

@@ -88,6 +88,8 @@ import { GET as detailedResultsGet } from '@/app/api/polling-stations/[id]/detai
 
 const ADMIN = { id: 1, role: 'admin' as const }
 const CANDIDATE = { id: 10, role: 'candidate' as const }
+const AGENT = { id: 20, role: 'agent' as const }
+const OBSERVER = { id: 30, role: 'observer' as const }
 
 function token(user: { id: number; role: string }) {
   return generateToken({
@@ -118,7 +120,9 @@ beforeEach(() => {
   handlers.push({
     match: /SELECT id, email, role, active, token_version[\s\S]*FROM users/,
     handler: (_text, params) => {
-      const user = [ADMIN, CANDIDATE].find((candidate) => candidate.id === params?.[0])
+      const user = [ADMIN, CANDIDATE, AGENT, OBSERVER].find(
+        (candidate) => candidate.id === params?.[0]
+      )
       if (!user) return []
       return [
         {
@@ -199,6 +203,109 @@ describe('GET /api/results/aggregate', () => {
     expect(submittedQuery).toBeDefined()
     expect(submittedQuery.params?.[0]).toBe('mca')
     expect(submittedQuery.params?.[1]).toBe(5)
+  })
+
+  it('scopes an agent to the race and area of their assigned candidate', async () => {
+    register({
+      match: /FROM agents a\s+JOIN candidates c ON c\.id = a\.candidate_id/,
+      handler: () => [
+        {
+          position: 'mp',
+          county_id: 1,
+          constituency_id: 7,
+          ward_id: null,
+          candidate_name: 'Jane Wanjiku',
+          county_name: 'Nairobi',
+          constituency_name: 'Westlands',
+          ward_name: null,
+        },
+      ],
+    })
+    aggregateHandlers()
+
+    const response = await aggregateGet(
+      request('/api/results/aggregate?position=president&county_id=99', AGENT)
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.scope).toMatchObject({
+      position: 'mp',
+      position_label: 'Member of Parliament',
+      level: 'constituency',
+      area_name: 'Westlands',
+      candidate_name: 'Jane Wanjiku',
+    })
+
+    // The client's presidential request and county filter are discarded.
+    const [submittedQuery] = queriesMatching(/as stations_with_submissions/)
+    expect(submittedQuery).toBeDefined()
+    expect(submittedQuery.params).toEqual(['mp', 7])
+  })
+
+  it('scopes an observer to the selected race in their station area', async () => {
+    register({
+      match: /FROM observer_assignments oa\s+JOIN polling_stations ps/,
+      handler: () => [
+        {
+          ward_id: 5,
+          constituency_id: 2,
+          county_id: 1,
+          ward_name: 'Ward Five',
+          constituency_name: 'Constituency Two',
+          county_name: 'County One',
+        },
+      ],
+    })
+    aggregateHandlers()
+
+    const response = await aggregateGet(
+      request('/api/results/aggregate?position=mca&ward_id=999', OBSERVER)
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.scope).toMatchObject({
+      position: 'mca',
+      position_label: 'Member of County Assembly',
+      level: 'ward',
+      area_name: 'Ward Five',
+      candidate_name: null,
+    })
+
+    const [submittedQuery] = queriesMatching(/as stations_with_submissions/)
+    expect(submittedQuery).toBeDefined()
+    expect(submittedQuery.params).toEqual(['mca', 5])
+  })
+
+  it('keeps a presidential observer race national', async () => {
+    register({
+      match: /FROM observer_assignments oa\s+JOIN polling_stations ps/,
+      handler: () => [
+        {
+          ward_id: 5,
+          constituency_id: 2,
+          county_id: 1,
+          ward_name: 'Ward Five',
+          constituency_name: 'Constituency Two',
+          county_name: 'County One',
+        },
+      ],
+    })
+    aggregateHandlers()
+
+    const response = await aggregateGet(
+      request('/api/results/aggregate?position=president&county_id=1', OBSERVER)
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.scope.level).toBe('national')
+    expect(body.scope.area_name).toBe('National')
+
+    const [submittedQuery] = queriesMatching(/as stations_with_submissions/)
+    expect(submittedQuery).toBeDefined()
+    expect(submittedQuery.params).toEqual(['president'])
   })
 })
 

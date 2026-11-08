@@ -4,6 +4,11 @@ import { getCandidateRestrictions } from '@/lib/candidate-restrictions'
 import { buildCandidateBreakdown, computeReportingPercentage, computeTurnout } from '@/lib/aggregation'
 import { getFileUrl } from '@/lib/storage'
 import { authenticateRequest } from '@/lib/authenticate'
+import {
+  getAgentRaceScope,
+  getObserverRaceScope,
+  type RaceScope,
+} from '@/lib/raceScope'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,24 +23,37 @@ export async function GET(req: NextRequest) {
     let userRole = 'public'
     let userId: number | null = null
     let candidateRestrictions = null
+    let raceScope: RaceScope | null = null
 
     const decoded = await authenticateRequest(req)
     if (decoded) {
       userRole = decoded.role
       userId = decoded.userId
 
-      // Force volunteers (observers) to only view presidential results
-      if (userRole === 'observer') {
-        position = 'president'
-      }
-
-      // If user is a candidate, get their location restrictions. A
-      // candidate may only ever see their own race, so the position is
+      // A candidate may only ever see their own race, so the position is
       // taken from the stored profile instead of the query string.
       if (userRole === 'candidate') {
         candidateRestrictions = await getCandidateRestrictions(userId)
         if (candidateRestrictions) {
           position = candidateRestrictions.position
+        }
+      }
+
+      // An agent reports one candidate. The snippet follows that candidate's
+      // race and electoral area, not the national presidential tally.
+      if (userRole === 'agent') {
+        raceScope = await getAgentRaceScope(userId)
+        if (raceScope) {
+          position = raceScope.position
+        }
+      }
+
+      // An observer reports from one polling station. They pick the race, but
+      // the area is always the station's area.
+      if (userRole === 'observer') {
+        raceScope = await getObserverRaceScope(userId, searchParams.get('position'))
+        if (raceScope) {
+          position = raceScope.position
         }
       }
     }
@@ -104,6 +122,33 @@ export async function GET(req: NextRequest) {
 
         case 'president':
           // President can see all - no restrictions
+          break
+      }
+    }
+
+    // Apply the assigned race of an agent or observer. The client may pass
+    // location filters, but they are discarded here so the snippet can never
+    // widen beyond the race the field user is actually reporting.
+    if (raceScope) {
+      actualCountyId = null
+      actualConstituencyId = null
+      actualWardId = null
+      actualPollingStationId = null
+
+      switch (raceScope.level) {
+        case 'ward':
+          actualWardId = raceScope.ward_id ? String(raceScope.ward_id) : null
+          break
+        case 'constituency':
+          actualConstituencyId = raceScope.constituency_id
+            ? String(raceScope.constituency_id)
+            : null
+          break
+        case 'county':
+          actualCountyId = raceScope.county_id ? String(raceScope.county_id) : null
+          break
+        case 'national':
+          // The whole country.
           break
       }
     }
@@ -373,6 +418,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       results,
+      scope: raceScope
+        ? {
+            position: raceScope.position,
+            position_label: raceScope.position_label,
+            level: raceScope.level,
+            area_name: raceScope.area_name,
+            candidate_name: raceScope.candidate_name,
+          }
+        : undefined,
       summary: {
         total_votes_cast: totalVotesCast,
         registered_voters: totalRegisteredVotersInArea, // Total from ALL stations
