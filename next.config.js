@@ -72,11 +72,21 @@ const nextConfig = {
     },
   },
   async headers() {
+    const noindex = [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }]
+
     return [
       {
         source: '/:path*',
         headers: securityHeaders,
       },
+      // Private or session-specific pages must never be indexed, even if a
+      // crawler ignores robots.txt.
+      { source: '/dashboard/:path*', headers: noindex },
+      { source: '/api/:path*', headers: noindex },
+      { source: '/results', headers: noindex },
+      { source: '/login', headers: noindex },
+      { source: '/register', headers: noindex },
+      { source: '/offline', headers: noindex },
     ]
   },
 }
