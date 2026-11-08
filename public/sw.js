@@ -4,7 +4,7 @@
 // navigations therefore go to the network first: a new deployment is picked
 // up on the next load instead of being hidden behind an old cached page.
 // Cached pages are only a fallback for a user who is offline.
-const CACHE_NAME = 'ukwelitally-v2'
+const CACHE_NAME = 'ukwelitally-v3'
 const OFFLINE_URL = '/offline'
 
 // Assets to cache on install. The start page is not precached: it is
@@ -77,14 +77,20 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // The files under /_next/static/ carry a content hash in their name, so a
-  // given URL never changes: serving the cached copy is safe.
+  // Build assets are content-hashed in production, but a tab can outlive a
+  // deployment and still reference the previous build. The network is
+  // therefore asked first; the cache is only an offline fallback. This keeps
+  // the runtime and its chunks from mismatching, which otherwise shows up as
+  // "Cannot read properties of undefined (reading 'call')".
   if (request.url.includes('/_next/static/')) {
     event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) return cached
-        return fetch(request).then((response) => cacheResponse(request, response))
-      })
+      fetch(request)
+        .then((response) => cacheResponse(request, response))
+        .catch(async () => {
+          const cached = await caches.match(request)
+          if (cached) return cached
+          throw new Error('Asset unavailable offline')
+        })
     )
     return
   }

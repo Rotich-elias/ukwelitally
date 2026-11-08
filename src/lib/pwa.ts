@@ -5,13 +5,55 @@ import React from 'react'
 // PWA utilities for service worker registration and offline support
 
 /**
+ * Remove the service worker and its caches during development.
+ *
+ * Dev chunks are rebuilt constantly and their filenames are not
+ * content-hashed (`/_next/static/chunks/app/page.js` today is the same URL
+ * tomorrow). A cache-first service worker can therefore pair a chunk from an
+ * earlier compilation with the current webpack runtime, which crashes the
+ * page with errors like "Cannot read properties of undefined (reading
+ * 'call')". Production assets are content-hashed, but the service worker is
+ * still not worth running against a dev server, so it is removed there.
+ */
+function clearDevelopmentServiceWorker() {
+  navigator.serviceWorker
+    .getRegistrations()
+    .then((registrations) =>
+      Promise.all(registrations.map((registration) => registration.unregister()))
+    )
+    .catch((error) => {
+      console.warn('Could not unregister the development service worker:', error)
+    })
+
+  if ('caches' in window) {
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key.startsWith('ukwelitally'))
+            .map((key) => caches.delete(key))
+        )
+      )
+      .catch((error) => {
+        console.warn('Could not clear the development caches:', error)
+      })
+  }
+}
+
+/**
  * Register the service worker that powers offline support.
  *
- * Registration is skipped during server rendering and when the browser does
- * not support service workers.
+ * Registration is skipped during server rendering, when the browser does not
+ * support service workers, and in development (see above).
  */
 export function registerServiceWorker() {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
+
+  if (process.env.NODE_ENV !== 'production') {
+    clearDevelopmentServiceWorker()
+    return
+  }
 
   window.addEventListener('load', () => {
     navigator.serviceWorker

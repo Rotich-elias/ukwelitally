@@ -24,6 +24,7 @@ const PROTECTED_ROUTES: Array<{ prefix: string; roles: string[] | null }> = [
   { prefix: '/dashboard/admin/review-submissions', roles: ['admin', 'candidate'] },
   { prefix: '/dashboard/admin/volunteer-management', roles: ['admin'] },
   { prefix: '/dashboard/admin', roles: ['admin'] },
+  { prefix: '/dashboard/polls', roles: ['admin', 'candidate'] },
   { prefix: '/dashboard/candidate/manage-agents', roles: ['candidate'] },
   { prefix: '/dashboard/candidate', roles: ['candidate'] },
   { prefix: '/dashboard/agent', roles: ['agent'] },
