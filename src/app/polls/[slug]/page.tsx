@@ -50,20 +50,24 @@ export default function PublicPollPage() {
   const [selected, setSelected] = useState<number | null>(null)
   const [voting, setVoting] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
+  const [votedOptionId, setVotedOptionId] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
 
-  const fetchPoll = useCallback(async () => {
+  const fetchPoll = useCallback(async (silent = false) => {
     if (!slug) return
-    setLoading(true)
+    if (!silent) setLoading(true)
     try {
       const response = await fetch(`/api/polls/public/${slug}`, { cache: 'no-store' })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Poll not found')
       setPoll(data.poll)
+      setError('')
     } catch (err: any) {
-      setError(err.message || 'Poll not found')
+      // A background refresh must not replace a poll that is already on
+      // screen with an error; the next refresh can recover.
+      if (!silent) setError(err.message || 'Poll not found')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [slug])
 
@@ -75,12 +79,36 @@ export default function PublicPollPage() {
     if (!slug) return
     try {
       setHasVoted(localStorage.getItem(`ukwelitally_poll_voted_${slug}`) === '1')
+      const choice = Number(localStorage.getItem(`ukwelitally_poll_choice_${slug}`))
+      setVotedOptionId(Number.isInteger(choice) && choice > 0 ? choice : null)
     } catch {
       setHasVoted(false)
+      setVotedOptionId(null)
     }
   }, [slug])
 
   const showResults = hasVoted || (poll ? !poll.is_open : false)
+
+  // Once the results are on screen they stay current: a voter who has just
+  // voted can watch the poll move, and a shared link shows the same tally to
+  // everyone. Refreshing also runs when the tab becomes visible again.
+  useEffect(() => {
+    if (!showResults || !slug) return
+
+    const refresh = () => {
+      if (document.visibilityState === 'visible') void fetchPoll(true)
+    }
+
+    const interval = window.setInterval(refresh, 20_000)
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refresh)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', refresh)
+    }
+  }, [showResults, slug, fetchPoll])
 
   const winner = useMemo(() => {
     if (!poll || poll.options.length === 0) return null
@@ -107,14 +135,22 @@ export default function PublicPollPage() {
         } catch {}
         setHasVoted(true)
         if (data.poll) setPoll(data.poll)
+        // Another tab may have cast the vote, so pull the current counts
+        // instead of showing the numbers from before this attempt.
+        void fetchPoll(true)
         return
       }
       if (!response.ok) throw new Error(data.error || 'Failed to record your vote')
       if (data.poll) setPoll(data.poll)
       try {
         localStorage.setItem(`ukwelitally_poll_voted_${slug}`, '1')
+        localStorage.setItem(`ukwelitally_poll_choice_${slug}`, String(selected))
       } catch {}
+      setVotedOptionId(selected)
       setHasVoted(true)
+      // Re-read the poll so the results are complete even when the vote
+      // response did not carry the updated counts.
+      void fetchPoll(true)
     } catch (err: any) {
       setError(err.message || 'Failed to record your vote')
     } finally {
@@ -217,20 +253,38 @@ export default function PublicPollPage() {
                 >
                   {voting ? 'Recording your vote…' : 'Vote'}
                 </button>
-                <p className="text-center text-[11px] text-dark-500">One vote per browser. No account needed.</p>
+                <p className="text-center text-[11px] text-dark-500">
+                  One vote per browser. Results appear as soon as you vote.
+                </p>
               </div>
             ) : (
               <div className="mt-6 space-y-4">
-                {hasVoted && <p className="text-sm text-emerald-300">Thanks for voting. Here is how the poll stands.</p>}
+                <div className="border-b border-white/[0.06] pb-3">
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-dark-300">
+                    Live results
+                  </h2>
+                  <p className="mt-1 text-xs text-dark-500">
+                    {hasVoted
+                      ? 'Thanks for voting. Results update automatically.'
+                      : poll.is_open
+                        ? 'Results from everyone who has voted so far.'
+                        : 'This poll is closed. Final results.'}
+                  </p>
+                </div>
                 {poll.options.map((option) => {
                   const percentage = poll.total_votes > 0 ? (option.votes / poll.total_votes) * 100 : 0
                   return (
                     <div key={option.id}>
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between gap-3 text-sm">
                         <span className={`${winner?.id === option.id ? 'font-semibold text-white' : 'text-dark-200'}`}>
                           {option.label}
+                          {votedOptionId === option.id && (
+                            <span className="ml-2 align-middle text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
+                              Your vote
+                            </span>
+                          )}
                         </span>
-                        <span className="font-semibold text-white">
+                        <span className="shrink-0 font-semibold text-white">
                           {option.votes} · {percentage.toFixed(1)}%
                         </span>
                       </div>
