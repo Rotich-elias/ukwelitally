@@ -214,18 +214,14 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Admins can reset an agent's password without knowing the old one. The
-    // plain-text value is never stored or written to the audit log.
+    // Admins can reset the password of any account without knowing the old
+    // one, for example when a user has forgotten it. Passwords are stored as
+    // bcrypt hashes, so the old password can never be shown; the admin sets a
+    // new one and shares it with the user. The plain-text value is never
+    // stored or written to the audit log.
     let passwordChanged = false
     let passwordHash: string | null = null
     if (password !== undefined) {
-      if (currentUser.role !== 'agent') {
-        return NextResponse.json(
-          { error: 'Passwords can only be reset for agent accounts' },
-          { status: 400 }
-        )
-      }
-
       if (typeof password !== 'string') {
         return NextResponse.json({ error: 'Password must be a string' }, { status: 400 })
       }
