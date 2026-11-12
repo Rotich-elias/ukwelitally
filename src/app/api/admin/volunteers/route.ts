@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query, queryOne, queryMany } from '@/lib/db'
+import { queryOne, queryMany, transaction } from '@/lib/db'
 import { withRole } from '@/middleware/auth'
-import { hashPassword } from '@/lib/auth'
+import { generateSecurePassword, hashPassword } from '@/lib/auth'
 
 // GET /api/admin/volunteers - List volunteer registrations with filtering
 async function handleGet(req: NextRequest) {
@@ -142,20 +142,21 @@ async function handlePost(req: NextRequest) {
     // Reuse the password the volunteer chose at registration. Only a
     // registration without one needs a generated password, which is shown to
     // the administrator once.
-    const password = volunteer.password_hash
-      ? null
-      : 'Pass' + Math.floor(Math.random() * 9000 + 1000)
+    // The generated password is random; the old 'Pass' + 4 digits had only
+    // 9,000 possibilities.
+    const password = volunteer.password_hash ? null : generateSecurePassword()
     const hashedPassword = volunteer.password_hash || (await hashPassword(password!))
 
-    // Start transaction
-    const result = await query('BEGIN')
-
-    try {
+    // Every statement runs on the same connection inside one transaction.
+    // query('BEGIN') through the pool could put BEGIN, the inserts and
+    // COMMIT on different connections, leaving a pooled connection inside an
+    // open transaction and the assignment half-applied.
+    const { newUser, agent } = await transaction(async (client) => {
       // Create user account for volunteer
-      const newUser = await queryOne(
+      const newUser = (await client.query<{ id: number }>(
         `INSERT INTO users (email, phone, password_hash, full_name, role, id_number, verified, active)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-         RETURNING *`,
+         RETURNING id`,
         [
           volunteer.email,
           volunteer.phone,
@@ -166,23 +167,23 @@ async function handlePost(req: NextRequest) {
           true,
           true
         ]
-      )
+      )).rows[0]
 
       // Create agent record
-      const agent = await queryOne(
+      const agent = (await client.query<{ id: number }>(
         `INSERT INTO agents (user_id, candidate_id, polling_station_id, is_primary)
          VALUES ($1, $2, $3, $4)
-         RETURNING *`,
+         RETURNING id`,
         [
-          newUser?.id,
+          newUser.id,
           candidate_id,
           polling_station_id || volunteer.polling_station_id,
           true
         ]
-      )
+      )).rows[0]
 
       // Update volunteer registration with assignment info
-      await query(
+      await client.query(
         `UPDATE volunteer_registrations 
          SET status = 'assigned', 
              assigned_candidate_id = $1,
@@ -192,14 +193,14 @@ async function handlePost(req: NextRequest) {
          WHERE id = $4`,
         [
           candidate_id,
-          agent?.id,
+          agent.id,
           `Assigned to ${candidate.full_name} on ${new Date().toLocaleDateString()}. ${notes || ''}`,
           volunteer_id
         ]
       )
 
       // Log the assignment
-      await query(
+      await client.query(
         `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, new_values)
          VALUES ($1, $2, $3, $4, $5)`,
         [
@@ -211,32 +212,28 @@ async function handlePost(req: NextRequest) {
             volunteer_id,
             candidate_id,
             polling_station_id,
-            agent_id: agent?.id,
-            user_id: newUser?.id
+            agent_id: agent.id,
+            user_id: newUser.id
           }),
         ]
       )
 
-      await query('COMMIT')
+      return { newUser, agent }
+    })
 
-      return NextResponse.json({
-        message: 'Volunteer assigned successfully',
-        agent: {
-          id: agent?.id,
-          user_id: newUser?.id,
-          candidate_name: candidate.full_name
-        },
-        credentials: {
-          email: volunteer.email,
-          ...(password ? { password } : {}),
-          password_source: volunteer.password_hash ? 'self_service' : 'generated',
-        }
-      }, { status: 201 })
-
-    } catch (error) {
-      await query('ROLLBACK')
-      throw error
-    }
+    return NextResponse.json({
+      message: 'Volunteer assigned successfully',
+      agent: {
+        id: agent.id,
+        user_id: newUser.id,
+        candidate_name: candidate.full_name
+      },
+      credentials: {
+        email: volunteer.email,
+        ...(password ? { password } : {}),
+        password_source: volunteer.password_hash ? 'self_service' : 'generated',
+      }
+    }, { status: 201 })
 
   } catch (error) {
     console.error('Error assigning volunteer:', error)

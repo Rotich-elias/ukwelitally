@@ -40,8 +40,13 @@ export async function POST(request: NextRequest) {
             continue
           }
 
-          // Get user before deletion for audit log
-          const userResult = await client.query('SELECT * FROM users WHERE id = $1', [userId])
+          // Get user before deletion for audit log. Only the identifying
+          // fields: these rows are returned to the browser, and must never
+          // carry the password hash or the national ID number.
+          const userResult = await client.query(
+            'SELECT id, email, role, full_name FROM users WHERE id = $1',
+            [userId]
+          )
           const userToDelete = userResult.rows[0]
           if (!userToDelete) {
             errors.push(`User not found (ID: ${userId})`)
