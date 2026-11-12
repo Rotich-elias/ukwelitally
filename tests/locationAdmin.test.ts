@@ -86,7 +86,7 @@ vi.mock('@/lib/audit', () => ({
 }))
 
 import { generateToken } from '@/lib/auth'
-import { parseCsv, LocationError } from '@/lib/locationAdmin'
+import { parseCsv, LocationError, geographyNameKey } from '@/lib/locationAdmin'
 import { GET as wardsGet, POST as wardsPost } from '@/app/api/admin/locations/wards/route'
 import { PUT as wardPut, DELETE as wardDelete } from '@/app/api/admin/locations/wards/[id]/route'
 import {
@@ -604,9 +604,11 @@ function importHandler(db: FakeDb): QueryHandler {
       }
 
       if (sql.startsWith('DELETE FROM polling_stations')) {
-        const removed = db.stations.length
-        db.stations = []
-        return { rows: [], rowCount: removed }
+        const before = db.stations.length
+        db.stations = /WHERE county_id = \$1/.test(sql)
+          ? db.stations.filter((station) => station.county_id !== Number(params[0]))
+          : []
+        return { rows: [], rowCount: before - db.stations.length }
       }
 
       // The hierarchy is inserted top down with UNNEST.
@@ -802,18 +804,26 @@ beforeEach(() => {
   executed.length = 0
 })
 
+/** The county of the seeded geography. */
+const NAIROBI_ID = 201
+
 /** A request that imports a file, with or without writing it. */
 function importRequest(
   type: string,
   dryRun: boolean,
   csv?: string,
   user: { id: number; role: string } = ADMIN,
-  mode?: 'update' | 'replace'
+  mode: 'update' | 'replace' = 'replace',
+  countyId: number | null = NAIROBI_ID
 ) {
   const form = new FormData()
   form.append('type', type)
   form.append('dry_run', dryRun ? 'true' : 'false')
-  if (mode) form.append('mode', mode)
+  form.append('mode', mode)
+  // A replacement is limited to one county; the seeded stations are in Nairobi.
+  if (mode === 'replace' && countyId !== null) {
+    form.append('county_id', String(countyId))
+  }
   if (csv !== undefined) {
     form.append('file', new File([csv], 'locations.csv', { type: 'text/csv' }))
   }
@@ -975,12 +985,12 @@ describe('the polling station CSV import', () => {
     ].join('\n')
 
     const response = await importPost(
-      importRequest('polling_stations', true, csv) as any
+      importRequest('polling_stations', true, csv, ADMIN, 'update') as any
     )
     const body = await response.json()
 
-    expect(body.create).toBe(2)
-    expect(body.update).toBe(0)
+    expect(body.create).toBe(1)
+    expect(body.update).toBe(1)
     expect(writes()).toEqual([])
     expect(db.counties).toHaveLength(1)
     expect(db.wards).toHaveLength(1)
@@ -1082,7 +1092,7 @@ describe('the polling station CSV import', () => {
     ].join('\n')
 
     const preview = await (
-      await importPost(importRequest('polling_stations', true, csv) as any)
+      await importPost(importRequest('polling_stations', true, csv, ADMIN, 'update') as any)
     ).json()
 
     expect(preview.create).toBe(1)
@@ -1091,14 +1101,14 @@ describe('the polling station CSV import', () => {
 
     executed.length = 0
     const response = await importPost(
-      importRequest('polling_stations', false, csv) as any
+      importRequest('polling_stations', false, csv, ADMIN, 'update') as any
     )
     const body = await response.json()
 
     expect(response.status).toBe(200)
     expect(body.created).toBe(1)
     expect(body.updated).toBe(0)
-    expect(body.deleted).toBe(1)
+    expect(body.deleted).toBe(0)
     expect(body.skipped).toBe(0)
 
     const county = db.counties.find((entry) => entry.name === 'Mombasa')
@@ -1136,7 +1146,7 @@ describe('the polling station CSV import', () => {
       'Mombasa\tNyali\tFrere Town\tSTN001\tFrere Hall\t1\tFrere Primary\t500',
     ].join('\n')
 
-    await importPost(importRequest('polling_stations', false, csv) as any)
+    await importPost(importRequest('polling_stations', false, csv, ADMIN, 'update') as any)
     const counties = db.counties.length
     const constituencies = db.constituencies.length
     const wards = db.wards.length
@@ -1144,13 +1154,13 @@ describe('the polling station CSV import', () => {
 
     executed.length = 0
     const response = await importPost(
-      importRequest('polling_stations', false, csv) as any
+      importRequest('polling_stations', false, csv, ADMIN, 'update') as any
     )
     const body = await response.json()
 
-    expect(body.created).toBe(1)
-    expect(body.updated).toBe(0)
-    expect(body.deleted).toBe(1)
+    expect(body.created).toBe(0)
+    expect(body.updated).toBe(1)
+    expect(body.deleted).toBe(0)
     expect(body.skipped).toBe(0)
     expect(db.counties).toHaveLength(counties)
     expect(db.constituencies).toHaveLength(constituencies)
@@ -1190,12 +1200,12 @@ describe('the polling station CSV import', () => {
     ].join('\n')
 
     const response = await importPost(
-      importRequest('polling_stations', false, csv) as any
+      importRequest('polling_stations', false, csv, ADMIN, 'update') as any
     )
     const body = await response.json()
 
     expect(body.created).toBe(1)
-    expect(body.deleted).toBe(1)
+    expect(body.deleted).toBe(0)
     expect(body.skipped).toBe(2)
     expect(body.errors).toHaveLength(2)
     expect(body.errors[0].row).toBe(3)
@@ -1290,5 +1300,172 @@ describe('the polling station CSV import', () => {
     expect(executed.some((entry) => /DELETE FROM polling_stations/i.test(entry.text))).toBe(
       false
     )
+  })
+})
+
+describe('a county-scoped replacement', () => {
+  /** A second county with one station, which a Nairobi replacement must keep. */
+  function seedMombasa() {
+    db.counties.push({ id: 202, name: 'Mombasa', code: 'MSA' })
+    db.constituencies.push({ id: 629, county_id: 202, name: 'Nyali', code: 'NY' })
+    db.wards.push({
+      id: 2661,
+      constituency_id: 629,
+      county_id: 202,
+      name: 'Frere Town',
+      code: 'W0002',
+    })
+    db.stations.push({
+      id: 4448,
+      code: 'STN001',
+      name: 'Frere Hall',
+      ward_id: 2661,
+      constituency_id: 629,
+      county_id: 202,
+      latitude: null,
+      longitude: null,
+      registered_voters: 500,
+      location_radius: 500,
+      stream: '1',
+      registration_centre: 'Frere Primary',
+    })
+  }
+
+  it('refuses a replacement without a county', async () => {
+    const response = await importPost(
+      importRequest('polling_stations', true, STATIONS_CSV, ADMIN, 'replace', null) as any
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(body.error).toContain('county')
+  })
+
+  it('only deletes and rewrites the stations of the chosen county', async () => {
+    seedMombasa()
+    const csv = [
+      HEADER,
+      'Nairobi\tTest Constituency\tTest Ward\tPS000001\tKayole Hall\t1\tKayole Primary\t450',
+      'Mombasa\tNyali\tFrere Town\tSTN001\tFrere Hall\t1\tFrere Primary\t999',
+    ].join('\n')
+
+    const preview = await (
+      await importPost(importRequest('polling_stations', true, csv) as any)
+    ).json()
+    expect(preview.county_name).toBe('Nairobi')
+    expect(preview.deleted).toBe(1)
+    expect(preview.create).toBe(1)
+    expect(preview.outside_county).toBe(1)
+
+    const response = await importPost(
+      importRequest('polling_stations', false, csv) as any
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.deleted).toBe(1)
+    expect(body.created).toBe(1)
+    expect(body.outside_county).toBe(1)
+
+    // The Mombasa station is untouched, the Nairobi one was rewritten.
+    const mombasa = db.stations.find((station) => station.id === 4448)
+    expect(mombasa?.registered_voters).toBe(500)
+    const nairobi = db.stations.find((station) => station.code === 'PS000001')
+    expect(nairobi?.id).not.toBe(4447)
+    expect(nairobi?.registered_voters).toBe(450)
+  })
+})
+
+describe('geographyNameKey', () => {
+  it('ignores word order, case and punctuation', () => {
+    expect(geographyNameKey("Sang'alo West")).toBe(geographyNameKey("WEST SANG'ALO"))
+    expect(geographyNameKey('EMBOBUT / EMBULOT')).toBe(geographyNameKey('Embobut/Embulot'))
+  })
+
+  it('still tells different names apart', () => {
+    expect(geographyNameKey('Township')).toBe('township')
+    expect(geographyNameKey('Sangalo West')).not.toBe(geographyNameKey('Sangalo East'))
+  })
+})
+
+describe('merging duplicate wards', () => {
+  function seedDuplicate() {
+    // The official ward, with no stations, and the copy the import created.
+    db.wards.push(
+      { id: 2670, constituency_id: 628, county_id: 201, name: "Sang'alo West", code: '1103' },
+      { id: 2671, constituency_id: 628, county_id: 201, name: "WEST SANG'ALO", code: 'WESTSANGALO' }
+    )
+  }
+
+  function mergeHandler(stationCounts: Record<number, number>, clash = false): QueryHandler {
+    return {
+      match: /FROM wards w|GROUP BY name|UPDATE (polling_stations|candidates|volunteer_registrations) SET ward_id|DELETE FROM wards|set_config|sync_registered_voters/,
+      handler: (text, params = []) => {
+        const sql = text.replace(/\s+/g, ' ').trim()
+        if (sql.includes('FROM wards w')) {
+          return db.wards.map((ward) => ({
+            ...ward,
+            constituency_name: 'Kanduyi',
+            county_name: 'Bungoma',
+            station_count: stationCounts[ward.id] ?? 0,
+          }))
+        }
+        if (sql.includes('GROUP BY name')) {
+          return clash ? [{ name: 'Kayole Hall', stream: '1' }] : []
+        }
+        if (sql.startsWith('DELETE FROM wards')) {
+          const ids: number[] = params[0]
+          db.wards = db.wards.filter((ward) => !ids.includes(ward.id))
+        }
+        return []
+      },
+    }
+  }
+
+  it('previews the merge without writing', async () => {
+    seedDuplicate()
+    handlers.unshift(mergeHandler({ 2671: 22 }))
+
+    const response = await importPost(importRequest('merge_duplicate_wards', true) as any)
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.groups).toHaveLength(1)
+    expect(body.groups[0].keeper.code).toBe('1103')
+    expect(body.groups[0].removed[0].code).toBe('WESTSANGALO')
+    expect(body.groups[0].stations_moved).toBe(22)
+    expect(writes()).toEqual([])
+  })
+
+  it('moves the stations to the official ward and deletes the copy', async () => {
+    seedDuplicate()
+    handlers.unshift(mergeHandler({ 2671: 22 }))
+
+    const response = await importPost(importRequest('merge_duplicate_wards', false) as any)
+    const body = await response.json()
+
+    expect(body.merged).toBe(1)
+    const moved = executed.find((entry) =>
+      /UPDATE polling_stations SET ward_id/.test(entry.text)
+    )
+    expect(moved?.params).toEqual([2670, [2671]])
+    expect(db.wards.some((ward) => ward.id === 2671)).toBe(false)
+    expect(db.wards.some((ward) => ward.id === 2670)).toBe(true)
+    expect(
+      executed.some((entry) => /sync_registered_voters_from_stations/.test(entry.text))
+    ).toBe(true)
+  })
+
+  it('leaves a group alone when its stations would collide', async () => {
+    seedDuplicate()
+    handlers.unshift(mergeHandler({ 2670: 1, 2671: 1 }, true))
+
+    const response = await importPost(importRequest('merge_duplicate_wards', false) as any)
+    const body = await response.json()
+
+    expect(body.merged).toBe(0)
+    expect(body.kept).toHaveLength(1)
+    expect(body.kept[0].reason).toContain('Kayole Hall')
+    expect(db.wards.some((ward) => ward.id === 2671)).toBe(true)
   })
 })

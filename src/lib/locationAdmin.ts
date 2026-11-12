@@ -929,15 +929,23 @@ interface LocationCache {
  * "Embobut/Embulot" are the same ward. Punctuation and the spacing around it
  * are therefore ignored when a level of the geography is matched.
  *
+ * The word order is ignored too: the official ward list names a ward
+ * "Sang'alo West" where the polling-station file says "WEST SANG'ALO". Without
+ * this the import created the ward a second time.
+ *
  * Polling-station names keep the stricter normaliseName, so two stations whose
  * names differ only in punctuation are still treated as two stations.
  */
-function geographyNameKey(value: string): string {
+export function geographyNameKey(value: string): string {
   return normaliseName(value)
     .toLowerCase()
     .replace(/['\u2019`]/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
+    .split(' ')
+    .filter(Boolean)
+    .sort()
+    .join(' ')
 }
 
 function constituencyKey(countyId: number, name: string): string {
@@ -2618,4 +2626,166 @@ export async function prunePlaceholderWards(
   }
 
   return { removed, kept }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                           Duplicate ward repair                            */
+/* -------------------------------------------------------------------------- */
+
+interface DuplicateWard {
+  id: number
+  code: string
+  name: string
+  constituency_id: number
+  station_count: number
+}
+
+export interface DuplicateWardGroup {
+  constituency_id: number
+  constituency_name: string | null
+  county_name: string | null
+  keeper: { id: number; code: string; name: string }
+  removed: Array<{ id: number; code: string; name: string }>
+  stations_moved: number
+}
+
+/**
+ * The ward of a duplicate group that is kept: the one from the official ward
+ * list, recognised by its numeric IEBC code, else the oldest one.
+ */
+function pickKeeperWard(wards: DuplicateWard[]): DuplicateWard {
+  return [...wards].sort((a, b) => {
+    const aOfficial = /^[0-9]+$/.test(a.code) ? 0 : 1
+    const bOfficial = /^[0-9]+$/.test(b.code) ? 0 : 1
+    if (aOfficial !== bOfficial) return aOfficial - bOfficial
+    return a.id - b.id
+  })[0]
+}
+
+/**
+ * Wards of the same constituency whose names are the same once case,
+ * punctuation and word order are ignored ("Sang'alo West" and
+ * "WEST SANG'ALO").
+ */
+export async function findDuplicateWards(): Promise<DuplicateWardGroup[]> {
+  const wards = await queryMany<
+    DuplicateWard & { constituency_name: string | null; county_name: string | null }
+  >(
+    `SELECT w.id, w.code, w.name, w.constituency_id,
+            c.name AS constituency_name, co.name AS county_name,
+            (SELECT COUNT(*) FROM polling_stations ps WHERE ps.ward_id = w.id)::int
+              AS station_count
+       FROM wards w
+       LEFT JOIN constituencies c ON c.id = w.constituency_id
+       LEFT JOIN counties co ON co.id = w.county_id
+      ORDER BY w.id`
+  )
+
+  const groups = new Map<string, typeof wards>()
+  for (const ward of wards) {
+    const key = wardKey(ward.constituency_id, ward.name)
+    const list = groups.get(key) ?? []
+    list.push({ ...ward, station_count: Number(ward.station_count) })
+    groups.set(key, list)
+  }
+
+  const duplicates: DuplicateWardGroup[] = []
+  for (const list of groups.values()) {
+    if (list.length < 2) continue
+    const keeper = pickKeeperWard(list)
+    const removed = list.filter((ward) => ward.id !== keeper.id)
+    duplicates.push({
+      constituency_id: keeper.constituency_id,
+      constituency_name: list[0].constituency_name,
+      county_name: list[0].county_name,
+      keeper: { id: keeper.id, code: keeper.code, name: keeper.name },
+      removed: removed.map(({ id, code, name }) => ({ id, code, name })),
+      stations_moved: removed.reduce((total, ward) => total + ward.station_count, 0),
+    })
+  }
+
+  return duplicates
+}
+
+/**
+ * Merge duplicate wards into the official one.
+ *
+ * The polling stations, candidates and volunteer registrations of the
+ * duplicates are moved to the kept ward, the duplicates are deleted and the
+ * voter totals are rolled up again. A group where two of the wards hold a
+ * station with the same name and stream is left alone, because the stations
+ * would collide in the kept ward; it is reported so it can be fixed by hand.
+ */
+export async function mergeDuplicateWards(
+  actor: { userId: number; ipAddress?: string | null },
+  dryRun = true
+): Promise<{
+  merged: number
+  groups: DuplicateWardGroup[]
+  kept: Array<{ name: string; reason: string }>
+}> {
+  const found = await findDuplicateWards()
+  const groups: DuplicateWardGroup[] = []
+  const kept: Array<{ name: string; reason: string }> = []
+  let merged = 0
+
+  for (const group of found) {
+    const wardIds = [group.keeper.id, ...group.removed.map((ward) => ward.id)]
+    const clash = await queryOne<{ name: string; stream: string }>(
+      `SELECT name, COALESCE(stream, '') AS stream
+         FROM polling_stations
+        WHERE ward_id = ANY($1::int[])
+        GROUP BY name, COALESCE(stream, '')
+       HAVING COUNT(*) > 1
+        LIMIT 1`,
+      [wardIds]
+    )
+
+    if (clash) {
+      kept.push({
+        name: `${group.keeper.name} (${group.constituency_name ?? 'unknown constituency'})`,
+        reason: `The station "${clash.name}"${
+          clash.stream ? ` stream ${clash.stream}` : ''
+        } exists in more than one of the duplicate wards`,
+      })
+      continue
+    }
+
+    groups.push(group)
+    if (dryRun) continue
+
+    const removedIds = group.removed.map((ward) => ward.id)
+    await transaction(async (client) => {
+      await client.query(
+        `SELECT set_config('ukwelitally.bulk_import', 'on', true)`
+      )
+      await client.query(
+        'UPDATE polling_stations SET ward_id = $1 WHERE ward_id = ANY($2::int[])',
+        [group.keeper.id, removedIds]
+      )
+      await client.query(
+        'UPDATE candidates SET ward_id = $1 WHERE ward_id = ANY($2::int[])',
+        [group.keeper.id, removedIds]
+      )
+      await client.query(
+        'UPDATE volunteer_registrations SET ward_id = $1 WHERE ward_id = ANY($2::int[])',
+        [group.keeper.id, removedIds]
+      )
+      await client.query('DELETE FROM wards WHERE id = ANY($1::int[])', [removedIds])
+      await client.query('SELECT * FROM sync_registered_voters_from_stations()')
+    })
+
+    await recordAudit({
+      userId: actor.userId,
+      action: 'duplicate_wards_merged',
+      entityType: 'ward',
+      entityId: group.keeper.id,
+      oldValues: { removed: group.removed },
+      newValues: { keeper: group.keeper, stations_moved: group.stations_moved },
+      ipAddress: actor.ipAddress,
+    })
+    merged += group.removed.length
+  }
+
+  return { merged, groups, kept }
 }

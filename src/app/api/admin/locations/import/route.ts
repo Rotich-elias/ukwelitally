@@ -5,6 +5,7 @@ import {
   importPollingStationsFromCsv,
   previewPollingStationsImport,
   prunePlaceholderWards,
+  mergeDuplicateWards,
   findPlaceholderWards,
   missingStationHeaders,
   LocationError,
@@ -26,7 +27,7 @@ const REQUIRED_HEADER =
  * Bulk maintenance of the electoral geography.
  *
  * Form fields:
- *   type        polling_stations | prune_placeholders
+ *   type        polling_stations | prune_placeholders | merge_duplicate_wards
  *   file        the CSV file (polling_stations)
  *   mode        update | replace (polling_stations, defaults to update)
  *   county_id   the county a replacement is limited to (required for replace)
@@ -76,12 +77,6 @@ async function handlePost(req: NextRequest) {
     const mode = requestedMode as 'update' | 'replace'
     const countyRaw = String(form.get('county_id') || '').trim()
     const countyId = countyRaw ? Number(countyRaw) : undefined
-    if (mode === 'replace' && (countyId === undefined || !Number.isInteger(countyId))) {
-      return NextResponse.json(
-        { error: 'Choose the county to replace. A replacement is limited to one county.' },
-        { status: 400 }
-      )
-    }
     const { ipAddress } = auditRequestContext(req)
     const actor = { userId: user.userId, ipAddress }
 
@@ -105,9 +100,35 @@ async function handlePost(req: NextRequest) {
       })
     }
 
+    if (type === 'merge_duplicate_wards') {
+      const result = await mergeDuplicateWards(actor, dryRun)
+      const stations = result.groups.reduce(
+        (total, group) => total + group.stations_moved,
+        0
+      )
+      return NextResponse.json({
+        success: true,
+        dry_run: dryRun,
+        message: dryRun
+          ? `${result.groups.length} duplicate ward group(s) found; ${stations} station(s) would move. Nothing was written.`
+          : `${result.merged} duplicate ward(s) merged; ${stations} station(s) moved`,
+        ...result,
+      })
+    }
+
     if (type !== 'polling_stations') {
       return NextResponse.json(
-        { error: 'type must be polling_stations or prune_placeholders' },
+        {
+          error:
+            'type must be polling_stations, prune_placeholders or merge_duplicate_wards',
+        },
+        { status: 400 }
+      )
+    }
+
+    if (mode === 'replace' && (countyId === undefined || !Number.isInteger(countyId))) {
+      return NextResponse.json(
+        { error: 'Choose the county to replace. A replacement is limited to one county.' },
         { status: 400 }
       )
     }

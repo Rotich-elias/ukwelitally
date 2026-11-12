@@ -148,6 +148,8 @@ export default function LocationManager() {
   } | null>(null)
 
   const importing = importPhase !== 'idle'
+  /** The station import reads a file; the ward repairs work on the database. */
+  const needsFile = importType === 'polling_stations'
   const uploadPercent =
     uploadProgress && uploadProgress.total > 0
       ? Math.min(100, Math.round((uploadProgress.loaded / uploadProgress.total) * 100))
@@ -237,7 +239,7 @@ export default function LocationManager() {
   }, [loadLocations])
 
   const runImport = async (dryRun: boolean) => {
-    if (importType !== 'prune_placeholders' && !importFile) {
+    if (needsFile && !importFile) {
       setError('Choose a CSV file first')
       return
     }
@@ -260,7 +262,7 @@ export default function LocationManager() {
       return
     }
 
-    const uploadsFile = importType !== 'prune_placeholders' && importFile !== null
+    const uploadsFile = needsFile && importFile !== null
     setImportPhase(uploadsFile ? 'uploading' : 'processing')
     setUploadProgress(
       uploadsFile && importFile ? { loaded: 0, total: importFile.size } : null
@@ -388,10 +390,11 @@ export default function LocationManager() {
               >
                 <option value="polling_stations">Polling stations (POLLING_STATIONS.csv)</option>
                 <option value="prune_placeholders">Remove the placeholder wards</option>
+                <option value="merge_duplicate_wards">Merge duplicate wards</option>
               </select>
             </div>
 
-            {importType !== 'prune_placeholders' && (
+            {needsFile && (
               <div>
                 <label className="block text-sm font-medium text-dark-200 mb-2">CSV file</label>
                 <input
@@ -407,7 +410,7 @@ export default function LocationManager() {
             )}
           </div>
 
-          {importType !== 'prune_placeholders' && (
+          {needsFile && (
             <fieldset>
               <legend className="block text-sm font-medium text-dark-200 mb-2">
                 How should existing data be handled?
@@ -485,6 +488,19 @@ export default function LocationManager() {
                   </option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {importType === 'merge_duplicate_wards' && (
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+              <p className="text-sm text-yellow-300">
+                Finds wards of the same constituency whose names only differ in
+                case, punctuation or word order (for example &quot;Sang&apos;alo
+                West&quot; and &quot;WEST SANG&apos;ALO&quot;). The official ward,
+                the one with the numeric IEBC code, is kept: the polling stations,
+                candidates and volunteers of the copies are moved to it and the
+                copies are deleted. Preview first to see the pairs.
+              </p>
             </div>
           )}
 
@@ -599,6 +615,30 @@ export default function LocationManager() {
                   Placeholder wards removed: {importResult.removed}
                   {importResult.kept?.length ? ` · kept ${importResult.kept.length}` : ''}
                 </p>
+              )}
+              {importResult.groups?.length > 0 && (
+                <div className="mt-2 max-h-64 overflow-y-auto space-y-1">
+                  {importResult.groups.map((group: any) => (
+                    <p key={group.keeper.id} className="text-xs text-dark-300">
+                      {group.removed
+                        .map((ward: any) => `${ward.name} (${ward.code})`)
+                        .join(', ')}{' '}
+                      → {group.keeper.name} ({group.keeper.code})
+                      {group.constituency_name ? ` · ${group.constituency_name}` : ''}
+                      {group.county_name ? `, ${group.county_name}` : ''} ·{' '}
+                      {group.stations_moved} station(s)
+                    </p>
+                  ))}
+                </div>
+              )}
+              {importResult.groups && importResult.kept?.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {importResult.kept.map((entry: any, i: number) => (
+                    <p key={i} className="text-xs text-yellow-300">
+                      Not merged: {entry.name}: {entry.reason}
+                    </p>
+                  ))}
+                </div>
               )}
               {importResult.rows?.length > 0 && (
                 <div className="mt-3 max-h-64 overflow-y-auto space-y-2">
