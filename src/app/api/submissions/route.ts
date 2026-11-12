@@ -559,14 +559,12 @@ async function handlePost(req: NextRequest) {
       })
       const confidenceScore = confidence.score
 
-      // Auto-verify primary agents with good confidence scores
-      let status = 'pending'
-      let verifiedAt: Date | null = null
-
-      if (isPrimaryAgent && submissionType === 'primary' && confidenceScore >= 60) {
-        status = 'verified'
-        verifiedAt = new Date()
-      }
+      // A submission is never verified at upload: no vote figures exist yet,
+      // and verifying here let the figures entered later skip validation.
+      // A primary agent's submission is auto-verified in POST /api/results,
+      // once the figures have passed validation and the anomaly checks.
+      const status = 'pending'
+      const verifiedAt: Date | null = null
 
       // Update submission with confidence score and auto-verification
       await client.query(

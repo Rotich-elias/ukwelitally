@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne, queryMany, transaction } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
-import { validateVoteCounts, detectAnomalies } from '@/lib/validation'
+import { validateVoteCounts, detectAnomalies, createResultSchema } from '@/lib/validation'
 import { recalculateSubmissionConfidence } from '@/lib/confidence'
 import {
   evaluateSubmissionAuthorization,
@@ -21,30 +21,31 @@ async function handlePost(req: NextRequest) {
     const user = (req as any).user
     const body = await req.json()
 
+    // Every figure must be a whole, non-negative number. Anything else is
+    // refused outright rather than stored as an invalid result.
+    const parsed = createResultSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: 'Invalid result data',
+          details: parsed.error.issues.map(
+            (issue) => `${issue.path.join('.') || 'body'}: ${issue.message}`
+          ),
+        },
+        { status: 400 }
+      )
+    }
+
     const {
       submission_id,
       position,
-      registered_voters,
       total_votes_cast,
       valid_votes,
       rejected_votes,
       candidate_votes,
-      manually_verified = false,
-    } = body
-
-    // Validate required fields
-    if (
-      !submission_id ||
-      !position ||
-      registered_voters === undefined ||
-      total_votes_cast === undefined ||
-      valid_votes === undefined ||
-      rejected_votes === undefined ||
-      !candidate_votes ||
-      !Array.isArray(candidate_votes)
-    ) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
-    }
+    } = parsed.data
+    // Only an administrator's own manual check counts as manual verification.
+    const manually_verified = user.role === 'admin' ? parsed.data.manually_verified : false
 
     // Verify submission exists and user has access
     const submission = await queryOne<Submission>(
@@ -60,6 +61,17 @@ async function handlePost(req: NextRequest) {
     if (user.role !== 'admin' && submission.user_id !== user.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
+
+    // The turnout check compares against the station's own register, never a
+    // figure from the request: a raised register would hide an impossible
+    // turnout. A station without a register uses the submitted figure.
+    const station = await queryOne<{ registered_voters: number | null }>(
+      'SELECT registered_voters FROM polling_stations WHERE id = $1',
+      [submission.polling_station_id]
+    )
+    const stationRegister = Number(station?.registered_voters ?? 0)
+    const registered_voters =
+      stationRegister > 0 ? stationRegister : parsed.data.registered_voters ?? 0
 
     // The result carries the vote figures, so the reporting window is
     // enforced here as well: closing the window stops the data entry, not
@@ -151,7 +163,7 @@ async function handlePost(req: NextRequest) {
       } else {
         mergedVotes.set(key, {
           candidate_name: key,
-          party_name: cv.party_name,
+          party_name: cv.party_name ?? undefined,
           votes: cv.votes,
         })
       }
@@ -315,9 +327,22 @@ async function handlePost(req: NextRequest) {
       // station and position. When a candidate already approved an observer
       // fallback for the same station, the approved fallback is NOT replaced:
       // the conflict is recorded and the candidate resolves it explicitly.
+      //
+      // Figures that failed validation or show anomalies are never selected
+      // here, even when the submission was already approved: the approval was
+      // given before these figures existed. They wait for a review instead.
+      const figuresAcceptable = validation.valid && !anomalyCheck.hasAnomalies
       const isVerified =
-        submission.status === 'verified' ||
-        (autoVerifies && submission.status === 'pending')
+        figuresAcceptable &&
+        (submission.status === 'verified' ||
+          (autoVerifies && submission.status === 'pending'))
+
+      if (!figuresAcceptable && submission.status === 'verified') {
+        await client.query(
+          `UPDATE submissions SET status = 'flagged', verified_at = NULL WHERE id = $1`,
+          [submission_id]
+        )
+      }
 
       if (
         isVerified &&

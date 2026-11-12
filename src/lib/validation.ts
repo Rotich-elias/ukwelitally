@@ -35,21 +35,32 @@ export const createSubmissionSchema = z.object({
 })
 
 // Create result schema
+//
+// Every figure must be a whole, non-negative number. Without this, strings
+// slipped through: "7" + "000" concatenated to "7000" and comparisons were
+// done on text, so impossible figures passed validation.
+// registered_voters is optional because the server uses the polling station's
+// own register; manually_verified is only honoured for administrators.
+const voteCount = z.number().int().min(0).max(10_000_000)
+
 export const createResultSchema = z.object({
   submission_id: z.number().int().positive(),
-  position: z.enum(['president', 'governor', 'senator', 'mp', 'mca']),
-  registered_voters: z.number().int().min(0),
-  total_votes_cast: z.number().int().min(0),
-  valid_votes: z.number().int().min(0),
-  rejected_votes: z.number().int().min(0),
-  candidate_votes: z.array(
-    z.object({
-      candidate_name: z.string().min(1),
-      party_name: z.string().optional(),
-      votes: z.number().int().min(0),
-    })
-  ),
-  manually_verified: z.boolean(),
+  position: z.enum(['president', 'governor', 'senator', 'women_rep', 'mp', 'mca']),
+  registered_voters: voteCount.optional(),
+  total_votes_cast: voteCount,
+  valid_votes: voteCount,
+  rejected_votes: voteCount,
+  candidate_votes: z
+    .array(
+      z.object({
+        candidate_name: z.string().trim().min(1).max(255),
+        party_name: z.string().trim().max(255).optional().nullable(),
+        votes: voteCount,
+      })
+    )
+    .min(1)
+    .max(100),
+  manually_verified: z.boolean().optional().default(false),
 })
 
 // GPS coordinates schema
