@@ -33,8 +33,8 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
     title: 'Administrator training guide',
     audience: 'Platform administrators',
     summary:
-      'Everything needed to run UkweliTally: accounts, ballot data, reporting windows, result review, opinion polls, archives and security.',
-    estimatedMinutes: 25,
+      'Everything needed to run UkweliTally: accounts and password resets, volunteer approval, ballot data, reporting windows, result review and conflicts, opinion polls, archives and security.',
+    estimatedMinutes: 35,
     sections: [
       {
         heading: '1. Sign in and understand the dashboard',
@@ -56,21 +56,52 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
           'System users are the accounts that sign in: candidates, agents, observers and other administrators. Ballot candidates imported from IEBC are data records, not accounts.',
         steps: [
           'Open System Users and select + Create User.',
-          'Enter the full name, email, phone number, national ID, role and a strong password.',
-          'For a candidate, add the party and position and select the electoral area.',
-          'Share the credentials through a secure channel and ask the user to change the password after signing in.',
-          'Use the status controls to suspend, reactivate or delete an account when necessary.',
+          'Enter the full name, email, phone number, national ID, role and a password, or select Generate for a secure one.',
+          'The password must have at least 8 characters with an uppercase letter, a lowercase letter and a number. Published example passwords such as Agent123! are refused.',
+          'For a candidate, add the party and position and select the electoral area. The account is only created if the area is valid.',
+          'Share the credentials privately, for example by phone or in person. Never post them in a group chat.',
+          'Use the status controls to suspend, reactivate or delete an account when necessary. You cannot deactivate your own account.',
         ],
         tips: [
           'A user can only report for the area and role they are assigned to. Check the assignment before troubleshooting a permission error.',
         ],
       },
       {
-        heading: '3. Maintain ballot candidates and electoral geography',
+        heading: '3. Reset a forgotten password',
+        body:
+          'Passwords are stored encrypted, so nobody, including administrators, can look up a user’s existing password. When a user forgets it, you set a new one. Users cannot change their own password, so this is also how a password is changed.',
+        steps: [
+          'In System Users, select the key icon (Reset Password) on the user’s row. A secure password is filled in for you.',
+          'Keep it, or type your own, and select Save Changes.',
+          'Copy the sign-in details from the window that appears. The password is shown only once.',
+          'Confirm the person’s identity, then share the new password with them privately.',
+          'Saving signs the user out on all of their devices; they sign in again with the new password.',
+        ],
+        tips: [
+          'Reset a password straight away if you think it has been seen by someone else.',
+        ],
+      },
+      {
+        heading: '4. Approve volunteers',
+        body:
+          'Volunteers register on the public form and become observers when you approve them. The form does not verify the name, email, phone or ID number, and the volunteer may choose their own password, so anyone could register in someone else’s name.',
+        steps: [
+          'Open Volunteers from the dashboard and review the pending registrations.',
+          'Confirm each volunteer’s identity before approving, for example by calling the phone number they gave.',
+          'Approve the volunteer. The app asks you to confirm, as an approved volunteer can sign in and submit results.',
+          'If the volunteer did not choose a password, a secure one is generated and shown to you once. Share it privately.',
+          'Reject registrations you cannot verify.',
+        ],
+      },
+      {
+        heading: '5. Maintain ballot candidates and electoral geography',
         body:
           'Ballot candidates are the names and parties that appear in the tally. The location tree (county, constituency, ward, polling station) is reference data used by every result.',
         steps: [
-          'Open Ballot Candidates to add a single candidate or import an IEBC CSV.',
+          'Open Ballot Candidates to add a single candidate or import a CSV. Download the template from the import window.',
+          'In the CSV, give the county, constituency and ward by name, for example Nairobi, Westlands, Parklands/Highridge. Capitalisation and punctuation do not matter.',
+          'Governors, senators and women representatives need a county, MPs a constituency, and MCAs a ward. Fill in the constituency for MCAs too, because ward names repeat across the country.',
+          'If rows fail, the import window lists each row and the reason. Fix the file and import again.',
           'Confirm the candidate number, party, position and electoral area before saving.',
           'Open Locations to add or edit counties, constituencies, wards and polling stations.',
           'Set the polling station coordinates and allowed radius so GPS verification works.',
@@ -81,13 +112,14 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         ],
       },
       {
-        heading: '4. Reporting windows and the result chain',
+        heading: '6. Reporting windows and the result chain',
         body:
           'A candidate opens a reporting window for their race. Agents and observers can only submit while that window is open. Results flow through three stages: submission, result figures and the selected station result.',
         steps: [
           'A candidate opens the window from their dashboard when polling closes.',
-          'Agents upload Form 34A photos, GPS and the vote figures.',
-          'The primary agent result can become the selected result automatically when it is valid and the confidence score is high enough.',
+          'Agents upload Form 34A photos and GPS, then enter the vote figures. A submission stays pending until its figures are entered.',
+          'A primary agent’s result is approved and counted automatically only when its figures pass every check: whole, non-negative numbers that add up, and turnout no higher than the station’s official register.',
+          'Figures that fail a check are never counted. The submission is flagged for review instead.',
           'Observers submit alternative results; a candidate approves one as the fallback only when no agent result exists.',
           'Close the window when reporting is complete so no late figures are accepted.',
         ],
@@ -96,15 +128,17 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         ],
       },
       {
-        heading: '5. Review submissions and confidence scores',
+        heading: '7. Review submissions and confidence scores',
         body:
           'The confidence score explains how complete the evidence is. It is calculated from GPS distance, photo evidence, OCR readability, arithmetic validation, timeliness and anomaly flags.',
         steps: [
           'Open Review Submissions and filter by status or polling station.',
           'Open a submission to see its photos, GPS verification, figures and confidence breakdown.',
           'Approve a correct submission, reject an invalid one, or request a revision with clear notes.',
+          'A submission without figures cannot be approved, and a version replaced by a correction cannot be reviewed.',
+          'Candidates cannot approve figures that failed validation; they are sent to you. Approve them only after checking the form photo, as a deliberate override.',
           'A rejected or flagged submission stops being the selected result immediately.',
-          'If many old submissions show the same score, run Reset & Archive → Recalculate all once after deployment.',
+          'If many old submissions show the same score, open Reset & Archive and run Recalculate all once after deployment.',
         ],
         tips: [
           'A provisional score is calculated before vote figures are entered. It is recalculated automatically when the result is saved.',
@@ -112,9 +146,20 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         ],
       },
       {
-        heading: '6. Opinion polls',
+        heading: '8. Resolve result conflicts',
         body:
-          'Opinion polls are separate from the official tally. A candidate or administrator can ask a public question, add options and share a link.',
+          'A conflict appears when an agent result arrives for a station where an observer fallback was already approved. The station has one result for the whole race, shared by every candidate in it. A candidate can resolve a conflict only if they approved the fallback themselves. Conflicts over a fallback approved by another candidate come to you.',
+        steps: [
+          'Open Review Submissions. Open conflicts appear in the Result conflicts section at the top.',
+          'Check who approved the fallback, and compare the agent and observer figures with their form photos.',
+          'Select Use agent result or Keep fallback. Only an approved, current agent result can be used.',
+          'A resolved conflict is final and cannot be resolved again.',
+        ],
+      },
+      {
+        heading: '9. Opinion polls',
+        body:
+          'Opinion polls are separate from the official tally. A candidate or administrator can ask a public question, add options and share a link. Visitors can also create polls without an account.',
         steps: [
           'Open Opinion Polls from the dashboard navigation.',
           'Enter the question, optional description and at least two options.',
@@ -123,11 +168,13 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
           'Close a poll when it is no longer collecting votes, or archive it to remove it from the active list.',
         ],
         tips: [
-          'One browser can vote once per poll. Archived polls keep their votes in the database.',
+          'One browser can vote once per poll, and each internet connection can cast at most 25 votes in a poll. If many people share one network, the limit can be raised with the POLL_MAX_VOTES_PER_IP setting.',
+          'Polls created by visitors without an account are community polls. They get a random link, are hidden from search engines and are labelled as not an election result.',
+          'Archived polls keep their votes in the database.',
         ],
       },
       {
-        heading: '7. Reset and archive data safely',
+        heading: '10. Reset and archive data safely',
         body:
           'A reset removes test or dry-run data from the live tables, but first writes exactly what it removes into data_archives as JSON. Users, candidates, agents, observers and polling stations are never deleted.',
         steps: [
@@ -142,23 +189,27 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         ],
       },
       {
-        heading: '8. Security, audit and day-to-day checks',
+        heading: '11. Security, audit and day-to-day checks',
         steps: [
           'Review the notification bell and audit history for unusual actions.',
-          'Suspend an account immediately if credentials may have leaked.',
+          'Suspend an account, or reset its password, immediately if credentials may have leaked.',
+          'Make sure no account uses a default or published password such as Admin123 or Agent123!.',
           'Confirm that production uses a durable file storage backend so evidence is not lost.',
           'Check /api/health after a deployment.',
-          'Keep the database migration status at the latest version.',
+          'Keep the database migration status at the latest version: run npm run db:migrate after each deployment that adds a migration.',
         ],
         tips: [
           'Never paste passwords, tokens or database URLs into chats, screenshots or tickets.',
+          'Signing out ends the session on all of a user’s devices.',
         ],
       },
     ],
     checklist: [
       'My administrator password is unique and stored in a password manager.',
       'The ballot candidate list and polling station coordinates are complete.',
-      'I know how to open Review Submissions and read a confidence breakdown.',
+      'I know how to reset a forgotten password and share it privately.',
+      'I confirm a volunteer’s identity before approving them.',
+      'I know how to open Review Submissions, read a confidence breakdown and resolve a result conflict.',
       'I have tested an opinion poll and copied its public link.',
       'I understand that a reset archives before it deletes.',
       'I know where the archive history is and how to contact support.',
@@ -171,7 +222,7 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
     audience: 'Candidate accounts',
     summary:
       'Set up your team, control the reporting window, review your agents and observers, and use results, reports and opinion polls.',
-    estimatedMinutes: 20,
+    estimatedMinutes: 25,
     sections: [
       {
         heading: '1. Sign in and complete your profile',
@@ -193,10 +244,27 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         ],
         tips: [
           'Only agents and observers you assign can submit for your team.',
+          'You see your own team’s submissions and the shared observer submissions for your race. Other teams’ submissions and contact details stay private to them.',
         ],
       },
       {
-        heading: '3. Open and close the reporting window',
+        heading: '3. Import agents from a CSV file',
+        steps: [
+          'Open Manage Agents, select Import from CSV and download the template.',
+          'Fill in one agent per row: name, email, phone and ID number.',
+          'Give the polling station by name: county, constituency, ward, polling station and stream, spelled as in the official IEBC list. Leave the stream empty if the station has only one. Alternatively, fill in the station’s IEBC code and stream.',
+          'Leave the candidate column empty: agents are added to your own team.',
+          'Leave the password column empty to have a secure password generated for each new agent. A password you enter must have at least 8 characters with an uppercase letter, a lowercase letter and a number.',
+          'After the import, download the sign-in details straight away. Generated passwords are shown only once.',
+          'Share each agent’s password with that agent privately, never in a group chat.',
+        ],
+        tips: [
+          'If rows fail, the import window lists each row and the reason, such as a misspelled ward or a missing stream. Fix the file and import again.',
+          'If an agent forgets their password, ask an administrator to reset it.',
+        ],
+      },
+      {
+        heading: '4. Open and close the reporting window',
         steps: [
           'Open your dashboard and select the reporting window control.',
           'Open the window when polling has closed and counting begins.',
@@ -209,7 +277,9 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         ],
       },
       {
-        heading: '4. Review agent submissions',
+        heading: '5. Review agent submissions',
+        body:
+          'You review your own team’s submissions. A primary agent’s result is approved automatically only when its figures pass every check. The rest wait for you in the review queue.',
         steps: [
           'Open the review queue and select a submission.',
           'Compare the vote figures with the uploaded Form 34A photos.',
@@ -219,22 +289,24 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         ],
         tips: [
           'A rejected submission is removed from the selected result immediately. Do not reject a submission before checking whether it is the only result for the station.',
+          'You can only approve a submission once its figures are entered. Figures that failed validation, for example turnout above the station’s register, can only be approved by an administrator. Request a revision instead, or ask an administrator.',
         ],
       },
       {
-        heading: '5. Approve an observer fallback',
+        heading: '6. Approve an observer fallback and resolve conflicts',
         body:
-          'A fallback is an observer submission used as the station result when no agent reported. It is never approved automatically.',
+          'A fallback is an observer submission used as the station result when no agent reported. It is never approved automatically. A station has one result for the whole race, shared by every candidate in it.',
         steps: [
           'Open the observer submission that is waiting for review.',
           'Confirm the observer is assigned to that station and the figures match the form photo.',
           'Approve it only when there is no agent primary submission for the same station and race.',
-          'If an agent submission exists, resolve the conflict by reviewing the agent result instead.',
           'Add a reason so the decision is recorded in the audit trail.',
+          'If an agent result arrives after a fallback was approved, a conflict appears at the top of the review page. If you approved that fallback, choose Use agent result or Keep fallback. A resolved conflict is final.',
+          'If another candidate approved the fallback, the conflict shows who did. Only an administrator can change that result.',
         ],
       },
       {
-        heading: '6. Use results and reports',
+        heading: '7. Use results and reports',
         steps: [
           'Open Results to see the live tally for your race and area.',
           'Check the reporting percentage and turnout before drawing conclusions.',
@@ -243,7 +315,7 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         ],
       },
       {
-        heading: '7. Create and share an opinion poll',
+        heading: '8. Create and share an opinion poll',
         steps: [
           'Open Opinion Polls from the dashboard navigation.',
           'Write a clear question and two or more options.',
@@ -256,20 +328,22 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         ],
       },
       {
-        heading: '8. Account security',
+        heading: '9. Account security',
         steps: [
-          'Keep your password private and sign out on shared devices.',
+          'Keep your password private and sign out on shared devices. Signing out ends your session on all of your devices.',
           'Do not forward screenshots that contain tokens or personal data.',
-          'Contact the administrator immediately if you suspect your account was accessed by someone else.',
+          'Contact the administrator immediately if you suspect your account was accessed by someone else. They can reset your password.',
+          'If you forget your password, ask an administrator to reset it. Nobody can look up your old password.',
         ],
       },
     ],
     checklist: [
       'My profile details are correct.',
       'My agents and observers are assigned to the right stations.',
+      'I can import agents from a CSV file and share their passwords privately.',
       'I know how to open and close the reporting window.',
       'I can review a submission and reject it with a reason.',
-      'I understand when an observer fallback can be approved.',
+      'I understand when an observer fallback can be approved and who resolves a conflict.',
       'I know how to create and share an opinion poll.',
     ],
   },
@@ -280,7 +354,7 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
     audience: 'Polling station agents',
     summary:
       'A step-by-step guide to signing in, capturing Form 34A, submitting accurate figures and correcting a submission safely.',
-    estimatedMinutes: 18,
+    estimatedMinutes: 20,
     sections: [
       {
         heading: '1. Before polling day',
@@ -297,13 +371,14 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
       {
         heading: '2. Sign in and check your reporting window',
         steps: [
-          'Sign in with the email and password provided by your candidate.',
+          'Sign in with the email and password provided by your candidate. Your password is personal: nobody else has the same one.',
           'Read the reporting window banner at the top of the dashboard.',
           'If the window is closed, wait for your candidate to open it. Do not create a second account.',
           'Check that your account is active. A suspended account cannot submit.',
         ],
         tips: [
           'A closed window is not an error. The candidate controls when submissions are accepted.',
+          'If you forget your password, ask your candidate or an administrator to reset it. Nobody can look up your old password.',
         ],
       },
       {
@@ -323,7 +398,8 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         heading: '4. Submit the result step by step',
         steps: [
           'Open the submission form and confirm the polling station shown is yours.',
-          'Enter the registered voters, total votes cast, valid votes and rejected votes exactly as on the form.',
+          'Registered voters is filled in from the official station register and cannot be changed.',
+          'Enter the total votes cast, valid votes and rejected votes exactly as on the form.',
           'Enter every candidate’s votes. Check the figures twice before continuing.',
           'Allow the browser to read your GPS location while you are at the station.',
           'Upload the Form 34A photos.',
@@ -331,6 +407,7 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         ],
         tips: [
           'Do not type figures from memory. Read them directly from the form, candidate by candidate.',
+          'Figures must be whole numbers and cannot be negative. Valid plus rejected votes must equal the total cast, the candidates’ votes must add up to the valid votes, and the total cannot be higher than the registered voters.',
         ],
       },
       {
@@ -340,6 +417,9 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         steps: [
           'Read the confirmation message and note the submission status.',
           'Check that the photo count is what you uploaded.',
+          'Your submission shows as pending until the vote figures are entered and checked.',
+          'If you are the primary agent and every figure passes the checks, the result is approved and counted automatically. Otherwise your candidate reviews it.',
+          'Figures that fail a check are never counted. The submission is flagged so it can be corrected.',
           'A provisional score may update after the result figures are validated.',
           'If the submission is flagged, read the reason and wait for your candidate’s review.',
         ],
@@ -368,6 +448,9 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
           '“Photos could not be stored”: check your connection and try smaller photos.',
           'Location not verified: enable GPS and stand at the station; do not spoof the location.',
           'Duplicate submission: open the existing submission instead of submitting again.',
+          '“Invalid result data”: a figure is missing, negative or not a whole number. Check every box.',
+          'Forgotten password: ask your candidate or an administrator to reset it.',
+          'Signed out on your phone after signing out on another device: signing out ends your session everywhere. Sign in again.',
         ],
         tips: [
           'If the problem continues, send the exact error message and your station code to support.',
@@ -388,8 +471,9 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
     checklist: [
       'I am assigned to the correct polling station.',
       'I know how to take a readable full-form photo.',
-      'I can enter all vote figures without mistakes.',
+      'I can enter all vote figures without mistakes, and I know they must add up.',
       'I know that GPS and clear photos raise the confidence score.',
+      'I know who to ask if I forget my password.',
       'I know how to correct a flagged submission with a reason.',
       'I have the support contact saved on my phone.',
     ],
@@ -410,10 +494,12 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
           'Choose your own password and confirm it. Use at least 8 characters with an uppercase letter, a lowercase letter and a number.',
           'Select the polling station you are observing.',
           'Submit the registration and wait for an administrator to approve it.',
+          'Before approving, the administrator confirms your identity, for example by calling the phone number you gave. Answer that call.',
           'After approval you can sign in immediately with the password you chose.',
         ],
         tips: [
           'Keep your registration email and phone number current. Approval is tied to the station you selected.',
+          'Register only in your own name, with your own email, phone and ID number.',
         ],
       },
       {
@@ -423,6 +509,9 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
           'Check that your dashboard shows the correct polling station and assignment type.',
           'Read the reporting window banner before trying to submit.',
           'If your assignment is wrong, contact an administrator before polling day.',
+        ],
+        tips: [
+          'You can view detailed results only for the polling station you are assigned to. Other submitters’ contact details are not shown to observers.',
         ],
       },
       {
@@ -452,7 +541,8 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
         steps: [
           'Open the observer submission form when the reporting window is open.',
           'Confirm the station shown is the station you are assigned to.',
-          'Enter the registered voters, total votes cast, valid votes and rejected votes from the form.',
+          'Registered voters is filled in from the official station register and cannot be changed.',
+          'Enter the total votes cast, valid votes and rejected votes from the form. Figures must be whole numbers and cannot be negative, and they must add up.',
           'Enter the presidential candidate votes exactly as recorded.',
           'Allow GPS access while you are at the station and upload the form photos.',
           'Submit. An observer submission is stored as an alternative result and does not replace an agent result on its own.',
@@ -470,6 +560,7 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
           'The candidate compares your figures with the form photo and the assignment.',
           'If approved, your submission becomes the station’s selected result.',
           'If rejected, the reason is recorded and the submission is kept for audit.',
+          'If an agent result arrives later, the candidate who approved your fallback, or an administrator, decides which result stands. Both submissions are kept.',
           'You do not approve your own submission.',
         ],
         tips: [
@@ -490,7 +581,8 @@ export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
       {
         heading: '8. Troubleshooting',
         steps: [
-          'Cannot sign in: use the password you chose at registration. Ask an administrator to reset it if you have forgotten it.',
+          'Cannot sign in: use the password you chose at registration. Ask an administrator to reset it if you have forgotten it; nobody can look up your old password.',
+          'Signed out on your phone after signing out on another device: signing out ends your session everywhere. Sign in again.',
           '“No active observer assignment”: your registration is not approved or your station is not set.',
           '“Reporting window closed”: wait for the candidate to open it.',
           'Location not verified: enable GPS and stay at the station; do not fake the location.',
