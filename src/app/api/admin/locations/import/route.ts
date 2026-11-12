@@ -29,6 +29,7 @@ const REQUIRED_HEADER =
  *   type        polling_stations | prune_placeholders
  *   file        the CSV file (polling_stations)
  *   mode        update | replace (polling_stations, defaults to update)
+ *   county_id   the county a replacement is limited to (required for replace)
  *   dry_run     true to report what would change without writing anything
  *
  * The polling-station file must carry the eight official IEBC columns:
@@ -40,9 +41,11 @@ const REQUIRED_HEADER =
  * inside its ward, so the values a row leaves out can be taken from the record
  * that already exists. In `update` mode the matched station is updated in
  * place, so its agents, volunteers, submissions and results are kept; rows
- * that do not match create new stations. In `replace` mode every existing
- * polling station, together with the agents, volunteers and submissions
- * attached to it, is deleted before the rows of the file are written. A
+ * that do not match create new stations. In `replace` mode the polling
+ * stations of the chosen county, together with the agents, volunteers and
+ * submissions attached to them, are deleted before the rows of that county are
+ * written. Rows of other counties are ignored, and the stations of other
+ * counties are left untouched. A
  * station the platform does not have is created, and so is a missing ward,
  * constituency or county: the import creates the hierarchy from the county down
  * before it writes the station. A level that already exists is matched by name
@@ -63,7 +66,7 @@ async function handlePost(req: NextRequest) {
     const form = await req.formData()
     const type = String(form.get('type') || '')
     const dryRun = String(form.get('dry_run') || 'false') === 'true'
-    const requestedMode = String(form.get('mode') || 'replace').toLowerCase()
+    const requestedMode = String(form.get('mode') || 'update').toLowerCase()
     if (requestedMode !== 'update' && requestedMode !== 'replace') {
       return NextResponse.json(
         { error: 'mode must be update or replace' },
@@ -71,6 +74,14 @@ async function handlePost(req: NextRequest) {
       )
     }
     const mode = requestedMode as 'update' | 'replace'
+    const countyRaw = String(form.get('county_id') || '').trim()
+    const countyId = countyRaw ? Number(countyRaw) : undefined
+    if (mode === 'replace' && (countyId === undefined || !Number.isInteger(countyId))) {
+      return NextResponse.json(
+        { error: 'Choose the county to replace. A replacement is limited to one county.' },
+        { status: 400 }
+      )
+    }
     const { ipAddress } = auditRequestContext(req)
     const actor = { userId: user.userId, ipAddress }
 
@@ -125,7 +136,7 @@ async function handlePost(req: NextRequest) {
     if (dryRun) {
       // The preview reads the file with the planner the import writes with.
       // It only reads from the database, nothing is written.
-      const preview = await previewPollingStationsImport(text, mode)
+      const preview = await previewPollingStationsImport(text, mode, countyId)
 
       return NextResponse.json({
         success: true,
@@ -135,21 +146,35 @@ async function handlePost(req: NextRequest) {
           preview.update ?? 0
         } to update, ${preview.skip} to skip${
           preview.error_rows ? ` (${preview.error_rows} with errors)` : ''
-        }; ${preview.deleted ?? 0} existing station(s) will be deleted. Nothing was written.`,
+        }${
+          preview.county_name
+            ? `; ${preview.deleted ?? 0} existing station(s) in ${preview.county_name} will be deleted${
+                preview.outside_county
+                  ? ` and ${preview.outside_county} row(s) of other counties will be ignored`
+                  : ''
+              }`
+            : ''
+        }. Nothing was written.`,
         ...preview,
       })
     }
 
     // The import writes the polling stations in one transaction and rolls the
     // parent voter totals up once, just before it commits.
-    const summary = await importPollingStationsFromCsv(text, actor, mode)
+    const summary = await importPollingStationsFromCsv(text, actor, mode, countyId)
 
     return NextResponse.json({
       success: true,
       mode,
-      message: `Import finished: ${summary.deleted ?? 0} station(s) deleted, ${
+      message: `Import finished${
+        summary.county_name ? ` for ${summary.county_name}` : ''
+      }: ${summary.deleted ?? 0} station(s) deleted, ${
         summary.created
-      } created, ${summary.updated} updated, ${summary.skipped} skipped`,
+      } created, ${summary.updated} updated, ${summary.skipped} skipped${
+        summary.outside_county
+          ? `, ${summary.outside_county} row(s) of other counties ignored`
+          : ''
+      }`,
       total_rows: summary.created + summary.updated + summary.skipped,
       ...summary,
     })

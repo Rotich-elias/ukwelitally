@@ -1,20 +1,41 @@
-- [x] Allow a candidate or system user to create an opinion poll and share it as a link
-      Candidate/admin poll manager at /dashboard/polls, public poll page at /polls/[slug], one vote per browser, archive instead of hard delete.
+You are auditing my website for production-readiness. Check the site at [URL / repo path] against the 20-item checklist below. Inspect the actual code and live pages; don't assume anything exists.
 
-- [x] Review the OCR implementation
-      Optional Google Vision OCR (GOOGLE_VISION_API_KEY) reads full-form/close-up photos, stores text + confidence per photo and feeds the confidence score. Degrades gracefully when the key is absent.
+For each item, report:
+- Status: PASS / FAIL / PARTIAL
+- Evidence: file path, URL, or snippet showing what you found
+- Fix: if not PASS, apply the fix (or list exact changes if you can't)
 
-- [x] Add reset buttons for election data and opinion polls
-      Admin Reset & Archive tab archives rows into data_archives as JSON before deleting only result-chain and poll rows. Users, candidates, agents, observers and polling stations are never deleted.
+CHECKLIST
+1. Custom 404 page: a branded 404 with navigation back home, returning a real 404 status code.
+2. Meta title on every page: unique, under ~60 characters.
+3. Meta description on every page: unique, ~150-160 characters.
+4. CTA above the fold: a clear primary call to action visible without scrolling on desktop and mobile.
+5. Complete favicon set: .ico, 16x16, 32x32, apple-touch-icon (180x180), Android icons (192/512), and site.webmanifest.
+6. robots.txt: exists at the root, doesn't accidentally block important pages, and references the sitemap.
+7. sitemap.xml: exists, lists all public pages with valid URLs, and is submitted or referenced in robots.txt.
+8. Open Graph image: og:title, og:description, og:image (1200x630), og:url, plus Twitter card tags on every page.
+9. Alt text on every image: descriptive; empty alt only for decorative images.
+10. Mobile breakpoints: layout works at 320, 375, 768, 1024, and 1440px with no horizontal scroll or overlapping elements; viewport meta tag is present.
+11. Sticky mobile CTA: a persistent call/WhatsApp/contact button on mobile that doesn't cover content.
+12. Loading states: spinners or skeletons for async content and form submissions; buttons are disabled while submitting.
+13. Form error states: inline validation, clear error messages, a success state, and server-side validation.
+14. Thank-you page: shown after form submission, ideally with its own URL for conversion tracking.
+15. Privacy policy page: exists, is linked in the footer, and matches the data actually collected.
+16. Terms & Conditions page: exists and is linked in the footer.
+17. Cookie banner: shown if cookies or tracking are used; lets users accept or reject, and doesn't load non-essential trackers before consent.
+18. Analytics setup: GA4/Plausible/etc. installed, firing correctly, with conversion events (form submit, CTA click, calls).
+19. Real contact information: no placeholder text, fake phone numbers, example.com emails, or "Lorem ipsum"; links like tel: and mailto: work.
+20. Compressed images: modern formats (WebP/AVIF), sensible dimensions, lazy loading below the fold, and no image over ~200KB without reason.
 
-- [x] Let observers choose their own password at registration
-      Password hash stored on volunteer_registrations, reused when the account is approved. Legacy rows still fall back to a generated password.
+ALSO CHECK (bonus)
+- HTTPS and redirects (http→https, www→non-www or the reverse)
+- Canonical tags
+- Lighthouse scores (Performance, Accessibility, SEO, Best Practices)
+- Console errors, broken links, and leftover TODO/placeholder content
 
-- [x] Add a training PDF for each user role after login
-      Role guides for admin, candidate, agent and observer. Download from the account menu or the dashboard header; PDF is built on demand.
+OUTPUT FORMAT
+1. A summary table: # | Item | Status | Notes
+2. A prioritized list of fixes (critical → nice-to-have)
+3. Apply all fixes you can safely make, then re-verify and show a final table.
 
-- [x] Make confidence scores reflect actual evidence
-      New explainable score from GPS distance, photo evidence, OCR readability, arithmetic validation, timeliness and anomaly flags. Stored breakdown + admin bulk recalculation.
-
-- [x] Add an election statistics snippet for agents and observers
-      Live ElectionStatsCard on both dashboards, sourced from /api/results/aggregate.
+Don't skip items. If you can't verify something, mark it UNVERIFIED and say why.

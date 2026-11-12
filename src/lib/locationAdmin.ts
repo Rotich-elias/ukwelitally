@@ -768,6 +768,11 @@ export interface ImportSummary {
   updated: number
   /** The existing polling stations the import removed before writing the file. */
   deleted?: number
+  /** The county a replacement was limited to. */
+  county_id?: number
+  county_name?: string
+  /** The rows of the file that belong to another county and were ignored. */
+  outside_county?: number
   skipped: number
   errors: Array<{ row: number; message: string }>
 }
@@ -795,6 +800,7 @@ export type ImportIssueCode =
   | 'invalid_number'
   | 'invalid_parent'
   | 'parent_mismatch'
+  | 'outside_county'
 
 export interface ImportIssue {
   /** The line of the file. The header is line 1, so the first row is line 2. */
@@ -834,6 +840,11 @@ export interface ImportPreview {
   update: number
   /** The existing polling stations the import would remove. */
   deleted?: number
+  /** The county a replacement is limited to. */
+  county_id?: number
+  county_name?: string
+  /** The rows of the file that belong to another county and are ignored. */
+  outside_county?: number
   skip: number
   error_rows: number
   warning_rows: number
@@ -2184,6 +2195,103 @@ async function assertBulkImportReady(): Promise<void> {
 }
 
 /**
+ * The county a planned row writes its station into, when it is known.
+ *
+ * A row that creates its county as well has no id yet, so it is not in any
+ * existing county.
+ */
+function plannedRowCountyId(
+  entry: StationPlanEntry,
+  cache: LocationCache
+): number | undefined {
+  const write = buildStationWrite(entry, cache)
+  if (!write) return undefined
+  if (write.ward_id !== undefined) {
+    return cache.wardsById.get(write.ward_id)?.county_id
+  }
+  return write.county_id
+}
+
+/**
+ * Find the county a county-scoped replacement is limited to.
+ */
+function resolveReplaceCounty(
+  cache: LocationCache,
+  countyId: number | undefined
+): CachedCounty {
+  if (countyId === undefined || !Number.isInteger(countyId)) {
+    throw new LocationError(
+      'invalid_input',
+      'Choose the county to replace. A replacement only deletes and rewrites the polling stations of one county.'
+    )
+  }
+  const county = cache.counties.find((c) => c.id === countyId)
+  if (!county) {
+    throw new LocationError('not_found', `County ${countyId} was not found`)
+  }
+  return county
+}
+
+/**
+ * Limit a replacement plan to one county.
+ *
+ * The rows of the file that belong to another county are dropped from the
+ * plan: a national file can be used to replace a single county. A row of the
+ * county that matches a station of another county cannot be written, because
+ * that station is not deleted and keeps its code, so it is skipped.
+ */
+function scopePlanToCounty(
+  plan: StationPlan,
+  cache: LocationCache,
+  county: CachedCounty
+): { plan: StationPlan; outside: number } {
+  const rows: ImportRowPlan[] = []
+  const entries = new Map<number, StationPlanEntry>()
+  let outside = 0
+
+  for (const row of plan.rows) {
+    const entry = plan.entries.get(row.row)
+
+    if (row.action === 'skip' || !entry) {
+      rows.push(row)
+      continue
+    }
+
+    if (plannedRowCountyId(entry, cache) !== county.id) {
+      outside += 1
+      continue
+    }
+
+    if (entry.action === 'update' && entry.existing_id !== undefined) {
+      const current = cache.stationsById.get(entry.existing_id)
+      if (current && current.county_id !== county.id) {
+        rows.push({
+          ...row,
+          action: 'skip',
+          target_id: null,
+          issues: [
+            ...row.issues,
+            {
+              row: row.row,
+              code: 'outside_county',
+              severity: 'error',
+              message: `The station "${current.name}" (${current.code}) already exists in another county, so it cannot be replaced in ${county.name}`,
+              field: 'iebc_code',
+            },
+          ],
+        })
+        continue
+      }
+    }
+
+    rows.push(row)
+    entries.set(row.row, entry)
+  }
+
+  return { plan: { rows, entries }, outside }
+}
+
+/**
  * Import polling stations from a CSV.
  *
  * In `update` mode each row is matched to an existing station and that station
@@ -2191,8 +2299,10 @@ async function assertBulkImportReady(): Promise<void> {
  * attached to it stay where they are. Rows that do not match are inserted, and
  * stations the file does not mention are left untouched.
  *
- * In `replace` mode the existing stations, and the agents, volunteers and
- * submissions attached to them, are deleted before the file is written.
+ * In `replace` mode the existing stations of the chosen county, and the
+ * agents, volunteers and submissions attached to them, are deleted before the
+ * rows of that county are written. The rows of other counties are ignored and
+ * the stations of other counties are left untouched.
  *
  * In both modes the file is planned first, exactly as the preview plans it, so
  * a row that cannot be resolved is still skipped and reported, then the valid
@@ -2203,11 +2313,18 @@ async function assertBulkImportReady(): Promise<void> {
 export async function importPollingStationsFromCsv(
   text: string,
   actor: { userId: number; ipAddress?: string | null },
-  mode: ImportMode = 'replace'
+  mode: ImportMode = 'update',
+  countyId?: number
 ): Promise<ImportSummary> {
   await assertBulkImportReady()
   const cache = await loadLocationCache()
-  const plan = planStationImport(text, cache)
+  const replaces = mode === 'replace'
+  const county = replaces ? resolveReplaceCounty(cache, countyId) : null
+  let plan = planStationImport(text, cache)
+  let outside = 0
+  if (county) {
+    ;({ plan, outside } = scopePlanToCounty(plan, cache, county))
+  }
   const summary: ImportSummary = {
     created: 0,
     updated: 0,
@@ -2215,8 +2332,12 @@ export async function importPollingStationsFromCsv(
     skipped: 0,
     errors: [],
   }
+  if (county) {
+    summary.county_id = county.id
+    summary.county_name = county.name
+    summary.outside_county = outside
+  }
   const writes: StationWrite[] = []
-  const replaces = mode === 'replace'
 
   for (const row of plan.rows) {
     if (row.action === 'skip') {
@@ -2260,18 +2381,30 @@ export async function importPollingStationsFromCsv(
         `SELECT set_config('ukwelitally.bulk_import', 'on', true)`
       )
 
-      if (replaces) {
-        // Remove the old geography before the file is written. Agents and
-        // volunteer registrations reference a station without ON DELETE CASCADE,
-        // so they are cleared first; the stations then cascade to submissions,
-        // results, discrepancies and observer assignments.
+      if (county) {
+        // Remove the stations of the county before its rows are written.
+        // Agents and volunteer registrations reference a station without ON
+        // DELETE CASCADE, so they are cleared first; the stations then cascade
+        // to submissions, results, discrepancies and observer assignments.
+        // Nothing outside the county is touched.
         await client.query(
-          `DELETE FROM agents WHERE polling_station_id IS NOT NULL`
+          `DELETE FROM agents
+            WHERE polling_station_id IN (
+              SELECT id FROM polling_stations WHERE county_id = $1
+            )`,
+          [county.id]
         )
         await client.query(
-          `DELETE FROM volunteer_registrations WHERE polling_station_id IS NOT NULL`
+          `DELETE FROM volunteer_registrations
+            WHERE polling_station_id IN (
+              SELECT id FROM polling_stations WHERE county_id = $1
+            )`,
+          [county.id]
         )
-        const removed = await client.query(`DELETE FROM polling_stations`)
+        const removed = await client.query(
+          `DELETE FROM polling_stations WHERE county_id = $1`,
+          [county.id]
+        )
         deleted = removed.rowCount ?? 0
       }
 
@@ -2316,6 +2449,8 @@ export async function importPollingStationsFromCsv(
       entityType: 'polling_station',
       newValues: {
         mode,
+        county_id: county?.id ?? null,
+        county_name: county?.name ?? null,
         created,
         updated,
         deleted,
@@ -2335,14 +2470,20 @@ export async function importPollingStationsFromCsv(
  */
 export async function previewPollingStationsImport(
   text: string,
-  mode: ImportMode = 'replace'
+  mode: ImportMode = 'update',
+  countyId?: number
 ): Promise<ImportPreview> {
   const cache = await loadLocationCache()
-  const plan = planStationImport(text, cache)
   const replaces = mode === 'replace'
+  const county = replaces ? resolveReplaceCounty(cache, countyId) : null
+  let plan = planStationImport(text, cache)
+  let outside = 0
+  if (county) {
+    ;({ plan, outside } = scopePlanToCounty(plan, cache, county))
+  }
 
-  // A replacement import deletes every station, so a row that matches an
-  // existing station is still a create when the file is written. An update
+  // A replacement import deletes the stations of the county, so a row that
+  // matches one of them is still a create when the file is written. An update
   // import keeps the match and reports it as an update.
   const rows = replaces
     ? plan.rows.map((row) =>
@@ -2355,9 +2496,20 @@ export async function previewPollingStationsImport(
   // A file with no valid row writes nothing, so it deletes nothing either.
   const hasWrites = rows.some((row) => row.action !== 'skip')
 
+  const countyStations = county
+    ? cache.stations.filter((station) => station.county_id === county.id).length
+    : 0
+
   return {
     ...summarisePreview('polling_stations', rows),
-    deleted: replaces && hasWrites ? cache.stations.length : 0,
+    deleted: county && hasWrites ? countyStations : 0,
+    ...(county
+      ? {
+          county_id: county.id,
+          county_name: county.name,
+          outside_county: outside,
+        }
+      : {}),
   }
 }
 

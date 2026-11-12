@@ -138,6 +138,7 @@ export default function LocationManager() {
 
   const [importType, setImportType] = useState('polling_stations')
   const [importMode, setImportMode] = useState<'update' | 'replace'>('update')
+  const [importCountyId, setImportCountyId] = useState('')
   const [importFile, setImportFile] = useState<File | null>(null)
   const [importResult, setImportResult] = useState<any>(null)
   const [importPhase, setImportPhase] = useState<ImportPhase>('idle')
@@ -241,12 +242,19 @@ export default function LocationManager() {
       return
     }
 
+    const replacing = importType === 'polling_stations' && importMode === 'replace'
+    const importCounty = counties.find((c) => String(c.id) === importCountyId)
+
+    if (replacing && !importCounty) {
+      setError('Choose the county to replace')
+      return
+    }
+
     if (
       !dryRun &&
-      importType === 'polling_stations' &&
-      importMode === 'replace' &&
+      replacing &&
       !window.confirm(
-        'Replace all polling stations? Every existing station, and the agents, volunteers, submissions and results attached to it, will be deleted before the file is written.'
+        `Replace the polling stations of ${importCounty?.name} County? Every existing station in ${importCounty?.name}, and the agents, volunteers, submissions and results attached to it, will be deleted before the file is written. Other counties are not touched, and rows of other counties in the file are ignored.`
       )
     ) {
       return
@@ -264,6 +272,7 @@ export default function LocationManager() {
       form.append('type', importType)
       form.append('dry_run', dryRun ? 'true' : 'false')
       form.append('mode', importMode)
+      if (replacing && importCounty) form.append('county_id', String(importCounty.id))
       if (uploadsFile && importFile) form.append('file', importFile)
 
       const body = await uploadImport(form, token(), (loaded, total) => {
@@ -359,7 +368,7 @@ export default function LocationManager() {
               }
             >
               {importMode === 'replace'
-                ? 'Replace mode: every polling station that is not in the new file is removed, together with its agents, volunteers, submissions and results. Preview the file first to see how many stations would be deleted.'
+                ? 'Replace mode: only the selected county is replaced. Its existing polling stations are removed, together with their agents, volunteers, submissions and results, and the rows of that county in the file are written. Rows and stations of other counties are left alone. Preview the file first to see how many stations would be deleted.'
                 : 'Update mode: matching stations are updated in place, new rows are added, and stations not mentioned in the file are left alone. Agents, volunteers, submissions and results are kept.'}
             </p>
           </div>
@@ -446,14 +455,37 @@ export default function LocationManager() {
                     }}
                     className="mr-2"
                   />
-                  <span className="text-white font-medium">Replace all</span>
+                  <span className="text-white font-medium">Replace county</span>
                   <span className="block mt-1 text-xs text-dark-300">
-                    Delete every existing station and its attached data before
-                    writing the file.
+                    Delete the existing stations of the selected county and their
+                    attached data, then write that county&apos;s rows from the file.
                   </span>
                 </label>
               </div>
             </fieldset>
+          )}
+
+          {importType === 'polling_stations' && importMode === 'replace' && (
+            <div>
+              <label className="block text-sm font-medium text-dark-200 mb-2">
+                County to replace
+              </label>
+              <select
+                value={importCountyId}
+                onChange={(e) => {
+                  setImportCountyId(e.target.value)
+                  setImportResult(null)
+                }}
+                className="w-full sm:w-1/2 px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white"
+              >
+                <option value="">Select a county…</option>
+                {counties.map((county) => (
+                  <option key={county.id} value={county.id}>
+                    {county.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
 
           {importType === 'prune_placeholders' && (
@@ -542,6 +574,9 @@ export default function LocationManager() {
                       ['To update', importResult.update ?? importResult.updated ?? 0],
                       ['To delete', importResult.deleted ?? 0],
                       ['To skip', importResult.skip ?? importResult.skipped ?? 0],
+                      ...(importResult.outside_county !== undefined
+                        ? [['Other counties (ignored)', importResult.outside_county]]
+                        : []),
                       ['With errors', importResult.error_rows ?? importResult.errors?.length ?? 0],
                     ] as Array<[string, number]>
                   ).map(([label, value]) => (
