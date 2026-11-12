@@ -46,6 +46,50 @@ export interface OpinionPollWithOptions extends OpinionPoll {
 
 export const MAX_POLL_OPTIONS = 12
 
+/**
+ * A community poll was created by an anonymous visitor: no account and no
+ * candidate. It is not vouched for by the site, so it gets a random web
+ * address, is kept out of search engines and the sitemap, and is labelled as
+ * user-generated. Otherwise anyone could publish e.g.
+ * /polls/iebc-official-presidential-results on the tallying domain.
+ */
+export function isCommunityPoll(poll: Pick<OpinionPoll, 'created_by' | 'candidate_id'>): boolean {
+  return poll.created_by === null && poll.candidate_id === null
+}
+
+/**
+ * The fields of a poll that are safe to show anonymous visitors. The full
+ * row also carries the creator's user id and name.
+ */
+export function toPublicPoll(poll: OpinionPollWithOptions) {
+  return {
+    slug: poll.slug,
+    title: poll.title,
+    description: poll.description,
+    status: poll.status,
+    is_public: poll.is_public,
+    starts_at: poll.starts_at,
+    ends_at: poll.ends_at,
+    closed_at: poll.closed_at,
+    candidate_name: poll.candidate_name ?? null,
+    is_community: isCommunityPoll(poll),
+    total_votes: poll.total_votes,
+    options: poll.options.map((option) => ({
+      id: option.id,
+      label: option.label,
+      description: option.description,
+      sort_order: option.sort_order,
+      votes: option.votes,
+    })),
+  }
+}
+
+/** Votes one address may cast in one poll, shared across server instances. */
+export function maxVotesPerAddress(): number {
+  const configured = Number(process.env.POLL_MAX_VOTES_PER_IP)
+  return Number.isInteger(configured) && configured > 0 ? configured : 25
+}
+
 export function isPollManager(role: string): boolean {
   return role === 'admin' || role === 'candidate'
 }
@@ -161,6 +205,8 @@ export interface CreatePollInput {
   candidateId?: number | null
   endsAt?: string | null
   isPublic?: boolean
+  /** Give the poll a random web address instead of one from its title. */
+  randomSlug?: boolean
 }
 
 export interface ParsedPollInput {
@@ -242,7 +288,11 @@ export function parsePollInput(body: any): PollInputResult {
 }
 
 export async function createOpinionPoll(input: CreatePollInput): Promise<OpinionPollWithOptions> {
-  const slug = await uniquePollSlug(input.title)
+  // A random suffix stops a community poll from claiming an address that
+  // looks official; the readable part still helps people recognise it.
+  const slug = input.randomSlug
+    ? `${slugify(input.title).slice(0, 60)}-${crypto.randomBytes(4).toString('hex')}`
+    : await uniquePollSlug(input.title)
 
   const poll = await transaction(async (client) => {
     const inserted = await client.query<OpinionPoll>(

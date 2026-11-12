@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
-import { createOpinionPoll, parsePollInput } from '@/lib/polls'
+import { createOpinionPoll, parsePollInput, toPublicPoll } from '@/lib/polls'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,12 +45,13 @@ export async function POST(req: NextRequest) {
       createdBy: null,
       candidateId: null,
       isPublic: true,
+      randomSlug: true,
     })
 
     return NextResponse.json(
       {
         message: 'Opinion poll created',
-        poll,
+        poll: toPublicPoll(poll),
         share_path: `/polls/${poll.slug}`,
       },
       { status: 201 }

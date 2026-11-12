@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPollBySlug, isPollOpen } from '@/lib/polls'
+import { getPollBySlug, isPollOpen, toPublicPoll } from '@/lib/polls'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest, context: any) {
 
     return NextResponse.json({
       poll: {
-        ...poll,
+        ...toPublicPoll(poll),
         is_open: isPollOpen(poll),
       },
     })

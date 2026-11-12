@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import PublicNav from '@/components/PublicNav'
+import { SITE_NAME } from '@/lib/site'
 
 interface PollOption {
   id: number
@@ -22,6 +23,7 @@ interface Poll {
   options: PollOption[]
   creator_name?: string | null
   candidate_name?: string | null
+  is_community?: boolean
   ends_at: string | null
 }
 
@@ -208,6 +210,12 @@ export default function PublicPollPage() {
             </div>
 
             <h1 className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl">{poll.title}</h1>
+            {poll.is_community && (
+              <p className="mt-3 rounded-lg border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                Community poll: created by a visitor, not by {SITE_NAME}, a candidate or the IEBC. It is
+                an informal opinion poll, not an election result.
+              </p>
+            )}
             {poll.description && <p className="mt-3 text-sm leading-relaxed text-dark-300">{poll.description}</p>}
             <p className="mt-3 text-xs text-dark-500">
               {poll.total_votes} vote{poll.total_votes === 1 ? '' : 's'}

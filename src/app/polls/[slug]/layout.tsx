@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getPollBySlug } from '@/lib/polls'
+import { getPollBySlug, isCommunityPoll } from '@/lib/polls'
 import { SITE_NAME, SOCIAL_IMAGE } from '@/lib/site'
 
 interface PollLayoutProps {
@@ -47,22 +47,28 @@ export async function generateMetadata({
     ? truncate(poll.description, 160)
     : `Vote in “${poll.title}” and see the live results on ${SITE_NAME}.`
 
+  // A community poll is user-generated: keep it out of search results and
+  // say so in the shared preview, so its title cannot pass as official.
+  const community = isCommunityPoll(poll)
+  const shareTitle = community ? `Community poll: ${title}` : title
+
   return {
-    title,
+    title: shareTitle,
     description,
+    ...(community ? { robots: { index: false, follow: false } } : {}),
     alternates: {
       canonical: `/polls/${poll.slug}`,
     },
     openGraph: {
       type: 'article',
-      title,
+      title: shareTitle,
       description,
       url: `/polls/${poll.slug}`,
       images: [SOCIAL_IMAGE],
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: shareTitle,
       description,
       images: [SOCIAL_IMAGE],
     },

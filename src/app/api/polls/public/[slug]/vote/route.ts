@@ -2,7 +2,13 @@ import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { queryOne } from '@/lib/db'
 import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
-import { getPollBySlug, isPollOpen, voterFingerprint } from '@/lib/polls'
+import {
+  getPollBySlug,
+  isPollOpen,
+  maxVotesPerAddress,
+  toPublicPoll,
+  voterFingerprint,
+} from '@/lib/polls'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,6 +67,24 @@ export async function POST(req: NextRequest, context: any) {
     )
     const ipHash = crypto.createHash('sha256').update(`${ip}`).digest('hex')
 
+    // The browser key above is chosen by the client, so on its own it lets one
+    // address vote again and again with a fresh key each time. This cap is
+    // counted in the database, so unlike the in-memory rate limit it holds
+    // across server instances and cold starts. It is generous because mobile
+    // carriers put many people behind one address.
+    const fromAddress = await queryOne<{ votes: number }>(
+      `SELECT COUNT(*)::int AS votes
+         FROM opinion_poll_votes
+        WHERE poll_id = $1 AND ip_hash = $2`,
+      [poll.id, ipHash]
+    )
+    if ((fromAddress?.votes ?? 0) >= maxVotesPerAddress()) {
+      return NextResponse.json(
+        { error: 'Too many votes in this poll from this connection.' },
+        { status: 429 }
+      )
+    }
+
     const inserted = await queryOne<{ id: number }>(
       `INSERT INTO opinion_poll_votes
          (poll_id, option_id, voter_fingerprint, ip_hash, user_agent)
@@ -81,7 +105,7 @@ export async function POST(req: NextRequest, context: any) {
 
     return NextResponse.json({
       message: 'Vote recorded',
-      poll: updated ? { ...updated, is_open: isPollOpen(updated) } : null,
+      poll: updated ? { ...toPublicPoll(updated), is_open: isPollOpen(updated) } : null,
     })
   } catch (error) {
     console.error('Error recording poll vote:', error)

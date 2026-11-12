@@ -52,6 +52,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
          FROM opinion_polls
         WHERE is_public = TRUE
           AND status = 'open'
+          -- Community polls (no account, no candidate) are user-generated and
+          -- not vouched for, so they are not offered to search engines.
+          AND (created_by IS NOT NULL OR candidate_id IS NOT NULL)
         ORDER BY updated_at DESC
         LIMIT 5000`
     )
