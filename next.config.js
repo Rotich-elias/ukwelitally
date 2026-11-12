@@ -16,9 +16,18 @@ const distDir = process.env.NEXT_DIST_DIR || (isDevelopment ? '.next-dev' : '.ne
 // hydrates, and forms fall back to a native submit (the login page just
 // reloads). Production builds do not use eval, so the stricter policy is
 // kept there.
+// Analytics is optional and consent-gated. When a measurement ID is present at
+// build time, allow only the Google endpoints the tag needs; without one the
+// stricter policy stays in place.
+const analyticsConfigured = Boolean(process.env.NEXT_PUBLIC_GA_ID?.trim())
+const analyticsScriptSrc = analyticsConfigured ? ' https://www.googletagmanager.com' : ''
+const analyticsConnectSrc = analyticsConfigured
+  ? ' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com'
+  : ''
+
 const scriptSrc = isDevelopment
-  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-  : "script-src 'self' 'unsafe-inline'"
+  ? `script-src 'self' 'unsafe-inline' 'unsafe-eval'${analyticsScriptSrc}`
+  : `script-src 'self' 'unsafe-inline'${analyticsScriptSrc}`
 
 const securityHeaders = [
   // Enforce HTTPS for two years, including subdomains.
@@ -48,7 +57,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      "connect-src 'self'",
+      `connect-src 'self'${analyticsConnectSrc}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -59,6 +68,9 @@ const securityHeaders = [
 
 const nextConfig = {
   distDir,
+  // A parent directory also has a package-lock.json. Pin the tracing root to
+  // this project so a production build does not pull in unrelated files.
+  outputFileTracingRoot: __dirname,
   images: {
     // Photos are served by the application itself (evidence through the
     // authorized route, profile photos from the storage host). The built-in
@@ -87,6 +99,7 @@ const nextConfig = {
       { source: '/login', headers: noindex },
       { source: '/register', headers: noindex },
       { source: '/offline', headers: noindex },
+      { source: '/volunteer-registration/thank-you', headers: noindex },
     ]
   },
 }

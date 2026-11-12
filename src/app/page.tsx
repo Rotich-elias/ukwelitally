@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import PublicNav from '@/components/PublicNav'
 import InstallAppButton from '@/components/InstallAppButton'
+import { trackEvent } from '@/lib/analytics'
 
 const stats = [
   { value: '47', label: 'Counties covered' },
@@ -295,7 +296,7 @@ export default function Home() {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3 animate-fade-in-up animation-delay-200">
-              <button onClick={() => setContactModalOpen(true)} className="btn-primary px-6 py-3.5 text-[15px]">
+              <button onClick={() => { trackEvent('cta_click', { label: 'get_started', location: 'hero' }); setContactModalOpen(true) }} className="btn-primary px-6 py-3.5 text-[15px]">
                 Get started
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -651,7 +652,7 @@ export default function Home() {
             <div className="max-w-sm">
               <Link href="/" className="flex items-center gap-2.5">
                 <img
-                  src="/icons/icon-192x192.png"
+                  src="/icons/icon-72x72.webp"
                   alt=""
                   width={32}
                   height={32}
@@ -685,6 +686,8 @@ export default function Home() {
                 <div className="mt-3 space-y-2.5 text-sm">
                   <Link href="/#how-it-works" className="block text-dark-400 transition-colors hover:text-white">How it works</Link>
                   <Link href="/#features" className="block text-dark-400 transition-colors hover:text-white">Features</Link>
+                  <Link href="/privacy" className="block text-dark-400 transition-colors hover:text-white">Privacy policy</Link>
+                  <Link href="/terms" className="block text-dark-400 transition-colors hover:text-white">Terms &amp; conditions</Link>
                   <a href="mailto:elgeiy8@gmail.com" className="block text-dark-400 transition-colors hover:text-white">Contact</a>
                 </div>
               </div>

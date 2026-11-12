@@ -3,7 +3,7 @@ import { SITE_NAME, SOCIAL_IMAGE } from '@/lib/site'
 
 const title = 'Volunteer Registration'
 const description =
-  'Register as a polling station agent or observer and help verify every result with photo evidence and GPS checks.'
+  'Register as a polling station agent or observer and help verify every presidential result with photo evidence, GPS checks and secure real-time tallying.'
 
 export const metadata: Metadata = {
   title,

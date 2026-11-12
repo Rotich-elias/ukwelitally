@@ -3,7 +3,7 @@ import { SITE_NAME, SOCIAL_IMAGE } from '@/lib/site'
 
 const title = 'Create an Opinion Poll'
 const description =
-  'Create a free public opinion poll in seconds — no account required. Share the link and see live results after voting.'
+  'Create a free public opinion poll in seconds — no account required. Share one link, let people vote once per browser and see live results after voting.'
 
 export const metadata: Metadata = {
   title,

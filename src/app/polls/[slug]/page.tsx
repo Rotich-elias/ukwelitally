@@ -321,7 +321,7 @@ export default function PublicPollPage() {
                 <div className="max-w-xl">
                   <div className="flex items-center gap-2.5">
                     <img
-                      src="/icons/icon-192x192.png"
+                      src="/icons/icon-72x72.webp"
                       alt=""
                       width={32}
                       height={32}
@@ -381,6 +381,20 @@ export default function PublicPollPage() {
           </>
         ) : null}
       </div>
+
+      <footer className="mt-10 border-t border-white/[0.06] bg-dark-950/50">
+        <div className="mx-auto flex max-w-3xl flex-col gap-3 px-4 py-8 text-xs text-dark-400 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="text-dark-500">
+            © {new Date().getFullYear()} UkweliTally. Not affiliated with IEBC.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link href="/" className="transition-colors hover:text-white">Home</Link>
+            <Link href="/privacy" className="transition-colors hover:text-white">Privacy policy</Link>
+            <Link href="/terms" className="transition-colors hover:text-white">Terms &amp; conditions</Link>
+            <a href="mailto:elgeiy8@gmail.com" className="transition-colors hover:text-white">Contact</a>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

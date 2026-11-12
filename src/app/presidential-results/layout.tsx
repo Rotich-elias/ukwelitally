@@ -3,7 +3,7 @@ import { SITE_NAME, SOCIAL_IMAGE } from '@/lib/site'
 
 const title = 'Live Presidential Results'
 const description =
-  'Follow the live presidential tally as verified polling station results arrive — candidate totals, turnout, rejected votes and reporting progress.'
+  "Follow Kenya's live presidential tally as verified results arrive — candidate totals, turnout, rejected votes and reporting progress across all 47 counties."
 
 export const metadata: Metadata = {
   title,

@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import ServiceWorkerRegistrar from './ServiceWorkerRegistrar'
 import RuntimeErrorRecovery from '@/components/RuntimeErrorRecovery'
+import Analytics from '@/components/Analytics'
+import CookieConsent from '@/components/CookieConsent'
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
@@ -49,14 +51,16 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icons/icon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/icons/icon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icons/icon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon.png', sizes: '256x256', type: 'image/png' },
       { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
       { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: [
       {
-        url: '/icons/icon-192x192.png',
-        sizes: '192x192',
+        url: '/apple-icon.png',
+        sizes: '180x180',
         type: 'image/png',
       },
     ],
@@ -88,7 +92,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  // Pinch-to-zoom must stay available for accessibility (WCAG 1.4.4). Setting
+  // maximumScale used to lock the layout at 1x on phones.
+  userScalable: true,
   themeColor: '#050814',
 }
 
@@ -143,7 +149,9 @@ export default function RootLayout({
       <body className="min-h-screen font-sans antialiased">
         <RuntimeErrorRecovery />
         <ServiceWorkerRegistrar />
+        <Analytics />
         {children}
+        <CookieConsent />
         <script
           type="application/ld+json"
           // The JSON is generated from constants above, but `<` is escaped so

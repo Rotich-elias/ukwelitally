@@ -292,7 +292,7 @@ export default function PresidentialResultsPage() {
             <div className="max-w-sm">
               <Link href="/" className="inline-flex items-center gap-2.5">
                 <img
-                  src="/icons/icon-192x192.png"
+                  src="/icons/icon-72x72.webp"
                   alt=""
                   width={32}
                   height={32}
@@ -318,6 +318,13 @@ export default function PresidentialResultsPage() {
                   <Link href="/" className="block text-dark-400 transition-colors hover:text-white">Home</Link>
                   <Link href="/volunteer-registration" className="block text-dark-400 transition-colors hover:text-white">Volunteer</Link>
                   <Link href="/login" className="block text-dark-400 transition-colors hover:text-white">Sign in</Link>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-dark-500">Legal</p>
+                <div className="mt-3 space-y-2.5 text-sm">
+                  <Link href="/privacy" className="block text-dark-400 transition-colors hover:text-white">Privacy policy</Link>
+                  <Link href="/terms" className="block text-dark-400 transition-colors hover:text-white">Terms &amp; conditions</Link>
                 </div>
               </div>
               <div>

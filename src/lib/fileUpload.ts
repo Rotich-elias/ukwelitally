@@ -38,8 +38,9 @@ export async function ensureUploadDir() {
 }
 
 // Generate unique filename with hash
-export function generateFilename(originalName: string): string {
-  const ext = originalName.split('.').pop()
+export function generateFilename(originalName: string, extension?: string): string {
+  const originalExt = originalName.split('.').pop() || 'bin'
+  const ext = extension ?? originalExt
   const timestamp = Date.now()
   const random = crypto.randomBytes(8).toString('hex')
   return `${timestamp}-${random}.${ext}`
@@ -90,7 +91,9 @@ export async function compressImage(
         fit: 'inside',
         withoutEnlargement: true,
       })
-      .jpeg({ quality })
+      // WebP keeps the evidence legible at roughly half the size of JPEG,
+      // which matters for agents uploading over mobile data.
+      .webp({ quality })
       .toBuffer()
   } catch (error) {
     console.error('Error compressing image:', error)
@@ -146,14 +149,14 @@ export async function saveUploadedFile(
   // Generate filename and store via the configured storage backend. On
   // serverless platforms the local filesystem is ephemeral, so writing to
   // disk would lose the evidence.
-  const filename = generateFilename(file.name)
+  const filename = generateFilename(file.name, 'webp')
   const storageKey = `${subdir}/${filename}`
-  await storage.put(storageKey, compressedBuffer, 'image/jpeg')
+  await storage.put(storageKey, compressedBuffer, 'image/webp')
 
   return {
     filePath: `/${storageKey}`, // Store relative path
     fileSize: compressedBuffer.length,
-    mimeType: file.type,
+    mimeType: 'image/webp',
     hash,
     width,
     height,
@@ -215,13 +218,13 @@ export async function saveCandidatePhoto(file: File): Promise<string> {
       fit: 'cover',
       position: 'center',
     })
-    .jpeg({ quality: 90 })
+    .webp({ quality: 88 })
     .toBuffer()
 
   // Generate filename and store via the configured storage backend
-  const filename = generateFilename(file.name)
+  const filename = generateFilename(file.name, 'webp')
   const storageKey = `candidate-photos/${filename}`
-  await storage.put(storageKey, compressedBuffer, 'image/jpeg')
+  await storage.put(storageKey, compressedBuffer, 'image/webp')
 
   // Return relative path for database storage (consistent with submission photos)
   return `/${storageKey}`

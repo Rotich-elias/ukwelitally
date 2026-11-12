@@ -119,7 +119,7 @@ export default function DashboardNav() {
         <div className="flex min-w-0 items-center gap-6">
           <Link href={dashboardHref} className="flex shrink-0 items-center gap-2.5">
             <img
-              src="/icons/icon-192x192.png"
+              src="/icons/icon-72x72.webp"
               alt=""
               width={34}
               height={34}

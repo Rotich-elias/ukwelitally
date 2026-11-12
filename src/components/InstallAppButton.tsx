@@ -88,7 +88,7 @@ export default function InstallAppButton({
         type="button"
         onClick={handleClick}
         className={buttonClass}
-        aria-label="Install UkweliTally on this device"
+        aria-label={`${label} — install UkweliTally on this device`}
         title="Install UkweliTally on this device"
       >
         <DownloadIcon className={compact ? 'w-4 h-4' : 'w-5 h-5'} />

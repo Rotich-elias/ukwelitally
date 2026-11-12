@@ -72,7 +72,7 @@ export default function LoginPage() {
         <div className="hidden flex-col justify-between border-r border-white/[0.06] px-10 py-12 lg:flex xl:px-16">
           <Link href="/" className="inline-flex w-fit items-center gap-2.5">
             <img
-              src="/icons/icon-192x192.png"
+              src="/icons/icon-72x72.webp"
               alt=""
               width={36}
               height={36}
@@ -135,7 +135,7 @@ export default function LoginPage() {
             <div className="mb-8 flex items-center justify-between lg:hidden">
               <Link href="/" className="inline-flex items-center gap-2.5">
                 <img
-                  src="/icons/icon-192x192.png"
+                  src="/icons/icon-72x72.webp"
                   alt=""
                   width={32}
                   height={32}
@@ -162,7 +162,7 @@ export default function LoginPage() {
             <div className="glass-effect rounded-3xl p-6 shadow-soft sm:p-8">
               <form onSubmit={handleSubmit} className="space-y-5">
                 {error && (
-                  <div className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                  <div role="alert" className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                     <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>

@@ -270,3 +270,14 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * Public pages include a fixed contact bar on phones (rendered by PublicNav).
+ * Reserve matching space at the end of the document so the bar can never cover
+ * the footer, a form button or the last line of content.
+ */
+@media (max-width: 767px) {
+  body.has-mobile-contact {
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  }
+}

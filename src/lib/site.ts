@@ -41,13 +41,14 @@ export const SITE_NAME = 'UkweliTally'
 export const SITE_TAGLINE =
   'Independent election results tallying for Kenya'
 export const SITE_DESCRIPTION =
-  'Transparent, independent election results tallying for candidates, agents and observers — with photo evidence, GPS checks and real-time aggregation.'
+  'Transparent, independent election results tallying for candidates, agents and observers — with photo evidence, GPS checks and real-time aggregation nationwide.'
 
 /**
- * The social preview image lives in `src/app/opengraph-image.png`, so Next also
- * injects it automatically. It is declared explicitly on every route whose
- * metadata overrides the root Open Graph object: a nested `openGraph` replaces
- * the parent's, and an image is too important to lose in that merge.
+ * The social preview image is a static 1200x630 file in `public/`, so it is
+ * served from the canonical domain rather than through Next's file-convention
+ * route. It is declared explicitly on every route whose metadata overrides the
+ * root Open Graph object: a nested `openGraph` replaces the parent's, and an
+ * image is too important to lose in that merge.
  */
 export const SOCIAL_IMAGE = {
   url: '/opengraph-image.png',

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import PublicNav from '@/components/PublicNav'
 import PageHeader from '@/components/PageHeader'
 import LocationSelector from '@/components/LocationSelector'
@@ -57,6 +58,7 @@ const instructions = [
 ]
 
 export default function VolunteerRegistrationPage() {
+  const router = useRouter()
   const [volunteerFormData, setVolunteerFormData] = useState({
     full_name: '',
     email: '',
@@ -122,6 +124,9 @@ export default function VolunteerRegistrationPage() {
         password: '',
         confirm_password: '',
       })
+      // A dedicated URL gives analytics a real conversion page and leaves the
+      // visitor with clear next steps instead of an inline banner.
+      router.push('/volunteer-registration/thank-you')
     } catch (err: any) {
       setVolunteerError(err.message || 'Failed to submit registration. Please try again.')
     } finally {
@@ -169,7 +174,7 @@ export default function VolunteerRegistrationPage() {
           {/* Form */}
           <div className="glass-effect rounded-3xl p-5 sm:p-7">
             {volunteerError && (
-              <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              <div role="alert" className="mb-6 flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                 <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -178,7 +183,7 @@ export default function VolunteerRegistrationPage() {
             )}
 
             {volunteerSuccess && (
-              <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+              <div role="status" className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
                 <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -318,8 +323,15 @@ export default function VolunteerRegistrationPage() {
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="max-w-sm text-xs leading-relaxed text-dark-500">
-                  By registering, you agree to our terms of service and privacy policy. You&apos;ll
-                  be contacted for verification and training.
+                  By registering, you agree to our{' '}
+                  <Link href="/terms" className="font-medium text-brand-300 hover:text-brand-200">
+                    terms of service
+                  </Link>{' '}
+                  and{' '}
+                  <Link href="/privacy" className="font-medium text-brand-300 hover:text-brand-200">
+                    privacy policy
+                  </Link>
+                  . You&apos;ll be contacted for verification and training.
                 </p>
                 <button type="submit" disabled={volunteerLoading} className="btn-primary px-6 py-3">
                   {volunteerLoading ? (
@@ -402,7 +414,7 @@ export default function VolunteerRegistrationPage() {
             <div className="max-w-sm">
               <Link href="/" className="inline-flex items-center gap-2.5">
                 <img
-                  src="/icons/icon-192x192.png"
+                  src="/icons/icon-72x72.webp"
                   alt=""
                   width={32}
                   height={32}
@@ -428,6 +440,13 @@ export default function VolunteerRegistrationPage() {
                   <Link href="/" className="block text-dark-400 transition-colors hover:text-white">Home</Link>
                   <Link href="/presidential-results" className="block text-dark-400 transition-colors hover:text-white">Live results</Link>
                   <Link href="/login" className="block text-dark-400 transition-colors hover:text-white">Sign in</Link>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-dark-500">Legal</p>
+                <div className="mt-3 space-y-2.5 text-sm">
+                  <Link href="/privacy" className="block text-dark-400 transition-colors hover:text-white">Privacy policy</Link>
+                  <Link href="/terms" className="block text-dark-400 transition-colors hover:text-white">Terms &amp; conditions</Link>
                 </div>
               </div>
               <div>
