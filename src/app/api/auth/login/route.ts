@@ -7,6 +7,11 @@ import { User } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
+// A bcrypt hash (same cost as real ones) of a random value nobody knows. It is
+// compared against when an email has no account, so an unknown email takes
+// as long to reject as a wrong password.
+const DUMMY_PASSWORD_HASH = '$2a$10$0dwpLN1fDkvl9Ub296QghODt/Saxe9af8fJzLQ/zuNUjbHprYKa2W'
+
 export async function POST(request: NextRequest) {
   try {
     // Parse request body. A malformed body is a client error, not a 500.
@@ -86,7 +91,15 @@ export async function POST(request: NextRequest) {
       [email]
     )
 
-    if (!user) {
+    // The password is always checked, against a dummy hash when there is no
+    // such account, so the response time does not reveal which emails are
+    // registered. Whether an account is deactivated is only said to someone
+    // who knows its password.
+    const isValidPassword = await verifyPassword(
+      password,
+      user?.password_hash || DUMMY_PASSWORD_HASH
+    )
+    if (!user || !isValidPassword) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
@@ -98,15 +111,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Account is deactivated. Please contact support.' },
         { status: 403 }
-      )
-    }
-
-    // Verify password
-    const isValidPassword = await verifyPassword(password, user.password_hash)
-    if (!isValidPassword) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
       )
     }
 

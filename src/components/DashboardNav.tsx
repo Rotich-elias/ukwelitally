@@ -87,9 +87,15 @@ export default function DashboardNav() {
   }
 
   const handleLogout = async () => {
-    // Clear the httpOnly session cookie used by route middleware
+    // Revoke the session on the server and clear the httpOnly cookie used by
+    // route middleware. The token is sent so the server knows whose session
+    // to end even if the cookie is missing.
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
+      const token = localStorage.getItem('token')
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
     } catch (error) {
       console.error('Failed to clear session cookie:', error)
     }
