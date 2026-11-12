@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import { authenticateRequest } from '@/lib/authenticate'
+import { recordAudit, auditRequestContext } from '@/lib/audit'
 
 export async function PUT(
   request: NextRequest,
@@ -140,6 +141,25 @@ export async function PUT(
         candidateId,
       ]
     )
+
+    // Payments decide a candidate's access, so every change is audited.
+    const { ipAddress, userAgent } = auditRequestContext(request)
+    await recordAudit({
+      userId: decoded.userId,
+      action: 'candidate_payment_updated',
+      entityType: 'candidate',
+      entityId: candidateId,
+      newValues: {
+        expected_payment_amount: expected_payment_amount ?? null,
+        payment_amount: payment_amount && payment_amount > 0 ? payment_amount : null,
+        payment_method: payment_method || null,
+        payment_reference: payment_reference || null,
+        payment_status: newStatus,
+        total_paid: totalPaid,
+      },
+      ipAddress,
+      userAgent,
+    })
 
     // Get payment history
     const historyResult = await query(

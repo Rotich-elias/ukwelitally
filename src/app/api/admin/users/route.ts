@@ -9,6 +9,7 @@ import {
 } from '@/lib/auth'
 import { authenticateRequest } from '@/lib/authenticate'
 import { validateCandidateLocation } from '@/lib/candidateLocation'
+import { getClientIp } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -206,7 +207,7 @@ export async function POST(request: NextRequest) {
         'user',
         newUser.id,
         JSON.stringify({ role, created_by: 'admin' }),
-        request.headers.get('x-forwarded-for') || 'unknown',
+        getClientIp(request),
       ]
     )
 
@@ -327,7 +328,7 @@ export async function PUT(request: NextRequest) {
             currentAccess.id,
             JSON.stringify({ access_status: currentAccess.access_status }),
             JSON.stringify({ access_status }),
-            request.headers.get('x-forwarded-for') || 'unknown',
+            getClientIp(request),
           ]
         )
       }
@@ -400,7 +401,7 @@ export async function PUT(request: NextRequest) {
         user_id,
         JSON.stringify({ email: currentUser.email, phone: currentUser.phone, full_name: currentUser.full_name, active: currentUser.active }),
         JSON.stringify({ email, phone, full_name, active, password_changed: passwordChanged }),
-        request.headers.get('x-forwarded-for') || 'unknown',
+        getClientIp(request),
       ]
     )
 
@@ -468,7 +469,7 @@ export async function DELETE(request: NextRequest) {
         'user',
         userId,
         JSON.stringify({ email: userToDelete.email, role: userToDelete.role, full_name: userToDelete.full_name }),
-        request.headers.get('x-forwarded-for') || 'unknown',
+        getClientIp(request),
       ]
     )
 

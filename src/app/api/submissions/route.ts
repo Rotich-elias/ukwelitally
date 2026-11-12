@@ -425,7 +425,7 @@ async function handlePost(req: NextRequest) {
           capturedAt,
           deviceId,
           deviceType,
-          req.headers.get('x-forwarded-for') || 'unknown',
+          getClientIp(req),
           0, // Will update after processing photos
         ]
       )

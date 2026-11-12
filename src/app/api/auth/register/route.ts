@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
         'user',
         result.id,
         JSON.stringify({ role: result.role }),
-        request.headers.get('x-forwarded-for') || 'unknown',
+        getClientIp(request),
       ]
     )
 

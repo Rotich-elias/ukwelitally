@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryMany, transaction } from '@/lib/db'
 import { authenticateRequest } from '@/lib/authenticate'
+import { getClientIp } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
               count: deletedUsers.length,
               users: deletedUsers.map(u => ({ id: u.id, email: u.email, role: u.role }))
             }),
-            request.headers.get('x-forwarded-for') || 'unknown',
+            getClientIp(request),
           ]
         )
       }

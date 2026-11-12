@@ -1,4 +1,10 @@
 import { query } from '@/lib/db'
+import { getClientIp } from '@/lib/rateLimit'
+
+function clientIpOrNull(req: { headers: { get(name: string): string | null } }): string | null {
+  const ip = getClientIp(req)
+  return ip === 'unknown' ? null : ip
+}
 
 /**
  * Audit trail helper.
@@ -73,7 +79,9 @@ export function auditRequestContext(req: {
   headers: { get(name: string): string | null }
 }): { ipAddress: string | null; userAgent: string | null } {
   return {
-    ipAddress: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
+    // The leftmost x-forwarded-for entry is whatever the client sent;
+    // getClientIp uses the address the platform itself added.
+    ipAddress: clientIpOrNull(req),
     userAgent: req.headers.get('user-agent'),
   }
 }

@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
         'agent',
         agent.id,
         JSON.stringify({ agent_id: agent.id, candidate_id: candidate.id }),
-        request.headers.get('x-forwarded-for') || 'unknown',
+        getClientIp(request),
       ]
     )
 

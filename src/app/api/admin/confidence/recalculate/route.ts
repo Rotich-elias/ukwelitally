@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { queryMany } from '@/lib/db'
 import { withRole } from '@/middleware/auth'
 import { recalculateSubmissionConfidence } from '@/lib/confidence'
+import { recordAudit, auditRequestContext } from '@/lib/audit'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic'
  * entered. Running it once after deployment replaces the uniform 35% scores
  * with the new explainable score. It is safe to run again at any time.
  */
-async function handlePost(_req: NextRequest) {
+async function handlePost(req: NextRequest) {
   try {
     const submissions = await queryMany<{ id: number }>(
       'SELECT id FROM submissions ORDER BY id'
@@ -35,6 +36,17 @@ async function handlePost(_req: NextRequest) {
         else failed++
       }
     }
+
+    // Confidence scores feed auto-verification, so a bulk rescore is audited.
+    const { ipAddress, userAgent } = auditRequestContext(req)
+    await recordAudit({
+      userId: (req as any).user?.userId ?? null,
+      action: 'confidence_recalculated',
+      entityType: 'submission',
+      newValues: { updated, failed, total: submissions.length },
+      ipAddress,
+      userAgent,
+    })
 
     return NextResponse.json({
       message: `Recalculated confidence for ${updated} submission${updated === 1 ? '' : 's'}.`,

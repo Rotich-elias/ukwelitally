@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
         'user_login',
         'user',
         user.id,
-        request.headers.get('x-forwarded-for') || 'unknown',
+        getClientIp(request),
       ]
     )
 
