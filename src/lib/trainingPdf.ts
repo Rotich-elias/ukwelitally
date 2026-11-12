@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf'
 import { BRAND, brandWebsiteLabel } from './branding'
+import { drawLogo, loadLogoDataUrl } from './pdfLogo'
 import { getTrainingGuide, TRAINING_SUPPORT, type TrainingGuide } from './trainingGuides'
 
 /**
@@ -66,15 +67,21 @@ function drawGradientBand(doc: jsPDF, y: number, height: number, strips = 60) {
   }
 }
 
-function drawFooter(doc: jsPDF, page: number, total: number) {
+function drawFooter(doc: jsPDF, page: number, total: number, logo: string | null) {
   setDraw(doc, COLORS.line)
   doc.setLineWidth(0.2)
   doc.line(MARGIN, FOOTER_Y - 5, PAGE_WIDTH - MARGIN, FOOTER_Y - 5)
 
+  // A small emblem on every page, so a single printed page still shows where
+  // it came from.
+  const footerLogo = 5
+  drawLogo(doc, logo, MARGIN, FOOTER_Y - 3.6, footerLogo)
+  const textX = logo ? MARGIN + footerLogo + 2 : MARGIN
+
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7.5)
   setText(doc, COLORS.muted)
-  doc.text(`${BRAND.name} training guide · ${brandWebsiteLabel()}`, MARGIN, FOOTER_Y)
+  doc.text(`${BRAND.name} training guide · ${brandWebsiteLabel()}`, textX, FOOTER_Y)
   doc.text(`Page ${page} of ${total}`, PAGE_WIDTH - MARGIN, FOOTER_Y, { align: 'right' })
 }
 
@@ -101,25 +108,39 @@ function wrappedLines(doc: jsPDF, text: string, width: number, size: number): st
   return doc.splitTextToSize(text, width) as string[]
 }
 
-function renderGuide(guide: TrainingGuide): jsPDF {
+export function renderGuide(guide: TrainingGuide, logo: string | null = null): jsPDF {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
   const state: RenderState = { doc, y: 0, page: 1 }
 
+  doc.setProperties({
+    title: guide.title,
+    subject: `${BRAND.name} training guide for ${guide.audience}`,
+    author: BRAND.name,
+    creator: `${BRAND.name} (${BRAND.website})`,
+  })
+
   /* ------------------------------------------------------------ cover band */
   drawGradientBand(doc, 0, 46)
+
+  // The emblem sits on the left of the band, vertically centred, with the
+  // wordmark and title beside it.
+  const coverLogo = 30
+  drawLogo(doc, logo, MARGIN, (46 - coverLogo) / 2, coverLogo)
+  const textX = logo ? MARGIN + coverLogo + 6 : MARGIN
+
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
   setText(doc, COLORS.white)
-  doc.text(BRAND.name, MARGIN, 18)
+  doc.text(BRAND.name, textX, 18)
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8.5)
-  doc.text(BRAND.tagline.toUpperCase(), MARGIN, 24)
-  doc.text(`${BRAND.election} · ${brandWebsiteLabel()}`, MARGIN, 29)
+  doc.text(BRAND.tagline.toUpperCase(), textX, 24)
+  doc.text(`${BRAND.election} · ${brandWebsiteLabel()}`, textX, 29)
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(19)
-  doc.text(guide.title, MARGIN, 39)
+  doc.text(guide.title, textX, 39)
 
   state.y = 56
 
@@ -278,7 +299,7 @@ function renderGuide(guide: TrainingGuide): jsPDF {
   const total = doc.getNumberOfPages()
   for (let page = 1; page <= total; page += 1) {
     doc.setPage(page)
-    drawFooter(doc, page, total)
+    drawFooter(doc, page, total, logo)
   }
 
   return doc
@@ -290,9 +311,10 @@ export function trainingFileName(role: string): string {
   return `UkweliTally-${guide.role}-training-${date}.pdf`
 }
 
-/** Build and download the guide for a role. */
-export function downloadTrainingGuide(role: string): void {
+/** Build and download the guide for a role, with the brand emblem. */
+export async function downloadTrainingGuide(role: string): Promise<void> {
   const guide = getTrainingGuide(role)
-  const doc = renderGuide(guide)
+  const logo = await loadLogoDataUrl()
+  const doc = renderGuide(guide, logo)
   doc.save(trainingFileName(guide.role))
 }

@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
+import { readFileSync } from 'fs'
+import path from 'path'
 import type { jsPDF } from 'jspdf'
 
 // jsPDF attaches save() to each document when it is created, so the class is
@@ -19,7 +21,7 @@ vi.mock('jspdf', async (importOriginal) => {
 })
 
 const { TRAINING_GUIDES } = await import('@/lib/trainingGuides')
-const { downloadTrainingGuide } = await import('@/lib/trainingPdf')
+const { downloadTrainingGuide, renderGuide } = await import('@/lib/trainingPdf')
 type TrainingRole = keyof typeof TRAINING_GUIDES
 
 /**
@@ -34,18 +36,51 @@ function guideText(role: TrainingRole): string {
   return JSON.stringify(guide)
 }
 
+// The real emblem from the public folder, as the browser would fetch it.
+const LOGO_PATH = path.join(__dirname, '..', 'public', 'icons', 'icon-192x192.png')
+const LOGO_DATA_URL = `data:image/png;base64,${readFileSync(LOGO_PATH).toString('base64')}`
+
 describe('training guide PDFs', () => {
   for (const role of ROLES) {
-    it(`renders the ${role} guide`, () => {
+    it(`renders the ${role} guide with the logo on every page`, async () => {
+      // Serve the emblem to the logo loader the way the site does.
+      const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(readFileSync(LOGO_PATH), { headers: { 'Content-Type': 'image/png' } })
+      )
       rendered.length = 0
-      downloadTrainingGuide(role)
+      await downloadTrainingGuide(role)
+      fetchMock.mockRestore()
 
       expect(rendered).toHaveLength(1)
       const doc = rendered[0]
-      expect(doc.getNumberOfPages()).toBeGreaterThan(1)
-      expect(doc.output('arraybuffer').byteLength).toBeGreaterThan(5_000)
+      const pages = doc.getNumberOfPages()
+      expect(pages).toBeGreaterThan(1)
+
+      const pdf = Buffer.from(doc.output('arraybuffer')).toString('latin1')
+      // The emblem is stored once (as the image plus its transparency mask,
+      // since the PNG has an alpha channel), not once per page, and is drawn
+      // on the cover and in each footer.
+      expect(pdf.match(/\/Subtype \/Image/g)?.length).toBe(2)
+      expect(pdf).toMatch(/\/SMask/)
+      expect(pdf.match(/\/I\d+ Do/g)?.length ?? 0).toBe(pages + 1)
     })
   }
+
+  it('still renders when the logo cannot be loaded', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'))
+    rendered.length = 0
+    await downloadTrainingGuide('agent')
+    fetchMock.mockRestore()
+
+    expect(rendered).toHaveLength(1)
+    const pdf = Buffer.from(rendered[0].output('arraybuffer')).toString('latin1')
+    expect(pdf).not.toMatch(/\/Subtype \/Image/)
+  })
+
+  it('places the cover logo inside the header band', () => {
+    const doc = renderGuide(TRAINING_GUIDES.admin, LOGO_DATA_URL)
+    expect(doc.getNumberOfPages()).toBeGreaterThan(1)
+  })
 })
 
 describe('training guide content', () => {

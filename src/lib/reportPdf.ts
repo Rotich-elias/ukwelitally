@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { BRAND, brandWebsiteLabel } from './branding'
+import { drawLogo, loadLogoDataUrl } from './pdfLogo'
 
 export interface ReportProfile {
   full_name: string
@@ -146,23 +147,9 @@ function reportReference(profile: ReportProfile): string {
   return `UKW-${position}-${date}-${area}`
 }
 
-/** Reads the brand emblem so it can be embedded in the PDF letterhead. */
-export async function loadLogoDataUrl(): Promise<string | null> {
-  try {
-    const response = await fetch(BRAND.logoUrl, { cache: 'force-cache' })
-    if (!response.ok) return null
-    const bytes = new Uint8Array(await response.arrayBuffer())
-    let binary = ''
-    const chunkSize = 0x8000
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
-    }
-    return `data:image/png;base64,${btoa(binary)}`
-  } catch {
-    // A missing logo must never stop the report from being produced.
-    return null
-  }
-}
+// The emblem loader is shared with the training guides; re-exported here for
+// existing callers.
+export { loadLogoDataUrl }
 
 /* --------------------------------------------------------------- letterhead */
 
@@ -173,9 +160,7 @@ function drawLetterhead(doc: jsPDF, logo: string | null) {
   const logoSize = 24
   const logoX = MARGIN
   const logoY = (LETTERHEAD_HEIGHT - logoSize) / 2
-  if (logo) {
-    doc.addImage(logo, 'PNG', logoX, logoY, logoSize, logoSize, 'ukwelitally-logo')
-  }
+  drawLogo(doc, logo, logoX, logoY, logoSize)
 
   const textX = logo ? logoX + logoSize + 6 : logoX
   doc.setTextColor('#ffffff')
@@ -205,12 +190,14 @@ function drawLetterhead(doc: jsPDF, logo: string | null) {
 }
 
 /** Slim brand bar repeated at the top of continuation pages. */
-function drawContinuationHeader(doc: jsPDF) {
+function drawContinuationHeader(doc: jsPDF, logo: string | null) {
   drawGradientBand(doc, 0, 0, PAGE_WIDTH, CONTINUATION_HEADER_HEIGHT, COLORS.deepBlue, COLORS.purple, 36)
+  const headerLogo = 8
+  drawLogo(doc, logo, MARGIN, (CONTINUATION_HEADER_HEIGHT - headerLogo) / 2, headerLogo)
   doc.setTextColor('#ffffff')
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9)
-  doc.text(`${BRAND.name} — Election Results Report`, MARGIN, 8)
+  doc.text(`${BRAND.name} — Election Results Report`, logo ? MARGIN + headerLogo + 3 : MARGIN, 8)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
   doc.setTextColor('#e0e7ff')
@@ -351,7 +338,12 @@ function drawStatCards(doc: jsPDF, cards: StatCard[], y: number, columns = 4): n
 
 /* ------------------------------------------------------------------- table */
 
-function drawResultsTable(doc: jsPDF, results: ReportResult[], startY: number) {
+function drawResultsTable(
+  doc: jsPDF,
+  results: ReportResult[],
+  startY: number,
+  logo: string | null
+) {
   const body = results.map((result, index) => [
     String(index + 1),
     result.candidate_name,
@@ -410,7 +402,7 @@ function drawResultsTable(doc: jsPDF, results: ReportResult[], startY: number) {
     // Keep a candidate on a single page instead of splitting the row.
     rowPageBreak: 'avoid',
     willDrawPage: (data) => {
-      if (data.pageNumber > 1) drawContinuationHeader(doc)
+      if (data.pageNumber > 1) drawContinuationHeader(doc, logo)
     },
   })
 }
@@ -418,7 +410,7 @@ function drawResultsTable(doc: jsPDF, results: ReportResult[], startY: number) {
 /* ------------------------------------------------------------------ footer */
 
 /** Footer applied to every page once the document is complete. */
-function drawFooters(doc: jsPDF) {
+function drawFooters(doc: jsPDF, logo: string | null) {
   const total = doc.getNumberOfPages()
   for (let page = 1; page <= total; page += 1) {
     doc.setPage(page)
@@ -426,12 +418,18 @@ function drawFooters(doc: jsPDF) {
     doc.setLineWidth(0.3)
     doc.line(MARGIN, FOOTER_Y - 4, PAGE_WIDTH - MARGIN, FOOTER_Y - 4)
 
+    // A small emblem on every page, so a single printed page still shows
+    // where it came from.
+    const footerLogo = 5
+    drawLogo(doc, logo, MARGIN, FOOTER_Y - 3.6, footerLogo)
+    const textX = logo ? MARGIN + footerLogo + 2 : MARGIN
+
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(7.5)
     doc.setTextColor(COLORS.muted)
     doc.text(
       `${BRAND.name} — ${BRAND.tagline}  |  ${BRAND.email}  |  WhatsApp: ${BRAND.phone}`,
-      MARGIN,
+      textX,
       FOOTER_Y
     )
     doc.text(`Page ${page} of ${total}`, PAGE_WIDTH - MARGIN, FOOTER_Y, { align: 'right' })
@@ -589,7 +587,7 @@ export async function buildElectionReportPdf(data: ElectionReportData): Promise<
     )
     y += 8
   } else {
-    drawResultsTable(doc, results, y)
+    drawResultsTable(doc, results, y, logo)
     y = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y
   }
 
@@ -619,7 +617,7 @@ export async function buildElectionReportPdf(data: ElectionReportData): Promise<
   let disclaimerY = y + 6
   if (disclaimerY + disclaimerHeight > FOOTER_Y - 8) {
     doc.addPage()
-    drawContinuationHeader(doc)
+    drawContinuationHeader(doc, logo)
     disclaimerY = TABLE_MARGIN.top
   }
   doc.setFillColor(COLORS.panel)
@@ -635,7 +633,7 @@ export async function buildElectionReportPdf(data: ElectionReportData): Promise<
   doc.setTextColor(COLORS.slate)
   doc.text(note, MARGIN + 4, disclaimerY + 11)
 
-  drawFooters(doc)
+  drawFooters(doc, logo)
   return doc
 }
 

@@ -1,4 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+import { readFileSync } from 'fs'
+import path from 'path'
 import {
   buildElectionReportPdf,
   buildReportFileName,
@@ -65,5 +67,30 @@ describe('buildElectionReportPdf', () => {
     const output = Buffer.from(doc.output('arraybuffer'))
 
     expect(output.subarray(0, 5).toString()).toBe('%PDF-')
+  })
+
+  it('shows the logo in the letterhead and in the footer of every page', async () => {
+    // Serve the real emblem to the logo loader, as the site does.
+    const logo = readFileSync(path.join(__dirname, '..', 'public', 'icons', 'icon-192x192.png'))
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(logo, { headers: { 'Content-Type': 'image/png' } }))
+
+    // Enough candidates to run onto a second page.
+    const manyResults = Array.from({ length: 60 }, (_, i) => ({
+      candidate_name: `Candidate ${i + 1}`,
+      party_name: 'Party',
+      total_votes: 1000 - i,
+      percentage: 1,
+    }))
+    const doc = await buildElectionReportPdf({ ...data, results: manyResults })
+    fetchMock.mockRestore()
+
+    const pages = doc.getNumberOfPages()
+    expect(pages).toBeGreaterThan(1)
+    const pdf = Buffer.from(doc.output('arraybuffer')).toString('latin1')
+    // Letterhead once, one footer emblem per page, and the slim header bar
+    // on every continuation page.
+    expect(pdf.match(/\/I\d+ Do/g)?.length ?? 0).toBe(pages + 1 + (pages - 1))
   })
 })

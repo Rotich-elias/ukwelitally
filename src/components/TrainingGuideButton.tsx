@@ -22,7 +22,7 @@ export default function TrainingGuideButton({
     setBusy(true)
     try {
       const { downloadTrainingGuide } = await import('@/lib/trainingPdf')
-      downloadTrainingGuide(role)
+      await downloadTrainingGuide(role)
     } catch (error) {
       console.error('Could not build the training guide:', error)
       window.alert('The training guide could not be generated. Please try again.')
