@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
-import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
+import { getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
+import { checkSharedRateLimit } from '@/lib/sharedRateLimit'
 import { hashPassword } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
     // This endpoint is public, so throttle submissions per client to prevent
     // spam from flooding the volunteer review queue.
     const ip = getClientIp(req)
-    const limit = checkRateLimit(
+    const limit = await checkSharedRateLimit(
       rateLimitKey('volunteer_register', ip),
       RATE_LIMITS.volunteerRegister.limit,
       RATE_LIMITS.volunteerRegister.windowMs

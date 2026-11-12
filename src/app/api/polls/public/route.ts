@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
+import { getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
+import { checkSharedRateLimit } from '@/lib/sharedRateLimit'
 import { createOpinionPoll, parsePollInput, toPublicPoll } from '@/lib/polls'
 
 export const dynamic = 'force-dynamic'
@@ -15,7 +16,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req)
-    const limit = checkRateLimit(
+    const limit = await checkSharedRateLimit(
       rateLimitKey('poll_create', ip),
       RATE_LIMITS.pollCreate.limit,
       RATE_LIMITS.pollCreate.windowMs

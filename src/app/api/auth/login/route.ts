@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { queryOne, query } from '@/lib/db'
 import { verifyPassword, generateToken, sanitizeUser, normalizeEmail } from '@/lib/auth'
 import { loginSchema } from '@/lib/validation'
-import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
+import { getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
+import { checkSharedRateLimit } from '@/lib/sharedRateLimit'
 import { User } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     // First a per-address cap. The per-account bucket below can be evaded by
     // trying a different email on every request; this one cannot.
-    const ipLimit = checkRateLimit(
+    const ipLimit = await checkSharedRateLimit(
       rateLimitKey('login-ip', ip),
       RATE_LIMITS.loginIp.limit,
       RATE_LIMITS.loginIp.windowMs
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const limit = checkRateLimit(
+    const limit = await checkSharedRateLimit(
       rateLimitKey('login', `${ip}:${email}`),
       RATE_LIMITS.login.limit,
       RATE_LIMITS.login.windowMs

@@ -1,7 +1,8 @@
 import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { queryOne } from '@/lib/db'
-import { checkRateLimit, getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
+import { getClientIp, RATE_LIMITS, rateLimitKey } from '@/lib/rateLimit'
+import { checkSharedRateLimit } from '@/lib/sharedRateLimit'
 import {
   getPollBySlug,
   isPollOpen,
@@ -16,7 +17,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest, context: any) {
   try {
     const ip = getClientIp(req)
-    const limit = checkRateLimit(
+    const limit = await checkSharedRateLimit(
       rateLimitKey('poll_vote', ip),
       RATE_LIMITS.pollVote.limit,
       RATE_LIMITS.pollVote.windowMs
