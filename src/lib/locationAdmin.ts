@@ -948,12 +948,72 @@ export function geographyNameKey(value: string): string {
     .join(' ')
 }
 
+/**
+ * The name with every space and punctuation mark removed.
+ *
+ * The polling-station file writes "OLDO/NYIRO" where the official ward list
+ * writes "Oldonyiro": the slash splits one word in two, which the word-order
+ * key cannot see.
+ */
+function geographyCompactKey(value: string): string {
+  return normaliseName(value).toLowerCase().replace(/[^a-z0-9]+/g, '')
+}
+
+/**
+ * Every key a county, constituency or ward name is matched under. Two names
+ * are the same place when they share any one of them.
+ */
+export function geographyNameKeys(value: string): string[] {
+  const sorted = geographyNameKey(value)
+  const compact = `compact:${geographyCompactKey(value)}`
+  return [sorted, compact]
+}
+
+/** Whether two county, constituency or ward names are the same place. */
+export function sameGeographyName(a: string, b: string): boolean {
+  const keys = new Set(geographyNameKeys(a))
+  return geographyNameKeys(b).some((key) => keys.has(key))
+}
+
 function constituencyKey(countyId: number, name: string): string {
   return `${countyId}::${geographyNameKey(name)}`
 }
 
+function constituencyKeys(countyId: number, name: string): string[] {
+  return geographyNameKeys(name).map((key) => `${countyId}::${key}`)
+}
+
 function wardKey(constituencyId: number, name: string): string {
   return `${constituencyId}::${geographyNameKey(name)}`
+}
+
+function wardKeys(constituencyId: number, name: string): string[] {
+  return geographyNameKeys(name).map((key) => `${constituencyId}::${key}`)
+}
+
+/** The first value stored under any of the keys. */
+function getByKeys<V>(map: Map<string, V>, keys: string[]): V | undefined {
+  for (const key of keys) {
+    const value = map.get(key)
+    if (value !== undefined) return value
+  }
+  return undefined
+}
+
+/** Store a value under every key that does not have one yet. */
+function setByKeys<V>(map: Map<string, V>, keys: string[], value: V): void {
+  for (const key of keys) {
+    if (!map.has(key)) map.set(key, value)
+  }
+}
+
+/** Add a value to the list stored under every key. */
+function pushByKeys<V>(map: Map<string, V[]>, keys: string[], value: V): void {
+  for (const key of keys) {
+    const list = map.get(key) ?? []
+    if (!list.includes(value)) list.push(value)
+    map.set(key, list)
+  }
 }
 
 function stationCodeKey(code: string, stream: string | null): string {
@@ -1018,29 +1078,29 @@ async function loadLocationCache(): Promise<LocationCache> {
   }
 
   for (const county of counties) {
-    cache.countiesByName.set(geographyNameKey(county.name), county)
+    setByKeys(cache.countiesByName, geographyNameKeys(county.name), county)
     cache.countyCodes.add(county.code)
   }
 
   for (const constituency of constituencies) {
-    const key = geographyNameKey(constituency.name)
-    const list = cache.constituenciesByName.get(key) ?? []
-    list.push(constituency)
-    cache.constituenciesByName.set(key, list)
-    cache.constituenciesByCountyName.set(
-      constituencyKey(constituency.county_id, constituency.name),
+    pushByKeys(
+      cache.constituenciesByName,
+      geographyNameKeys(constituency.name),
+      constituency
+    )
+    setByKeys(
+      cache.constituenciesByCountyName,
+      constituencyKeys(constituency.county_id, constituency.name),
       constituency
     )
     cache.constituencyCodes.add(constituency.code)
   }
 
   for (const ward of wards) {
-    const key = geographyNameKey(ward.name)
-    const list = cache.wardsByName.get(key) ?? []
-    list.push(ward)
-    cache.wardsByName.set(key, list)
-    cache.wardsByConstituencyName.set(
-      wardKey(ward.constituency_id, ward.name),
+    pushByKeys(cache.wardsByName, geographyNameKeys(ward.name), ward)
+    setByKeys(
+      cache.wardsByConstituencyName,
+      wardKeys(ward.constituency_id, ward.name),
       ward
     )
     cache.wardsById.set(ward.id, ward)
@@ -1384,21 +1444,26 @@ function planStationImport(text: string, cache: LocationCache): StationPlan {
     if (wardName) {
       if (constituencyName) {
         const county = countyName
-          ? cache.countiesByName.get(geographyNameKey(countyName))
+          ? getByKeys(cache.countiesByName, geographyNameKeys(countyName))
           : undefined
 
         let constituency = county
-          ? cache.constituenciesByCountyName.get(
-              constituencyKey(county.id, constituencyName)
+          ? getByKeys(
+              cache.constituenciesByCountyName,
+              constituencyKeys(county.id, constituencyName)
             )
-          : cache.constituenciesByName.get(geographyNameKey(constituencyName))?.[0]
+          : getByKeys(
+              cache.constituenciesByName,
+              geographyNameKeys(constituencyName)
+            )?.[0]
 
         // A constituency of the same name under another county is still the
         // constituency of the file's ward: the county of the file is reported
         // but never duplicated.
         if (!constituency && county) {
-          constituency = cache.constituenciesByName.get(
-            geographyNameKey(constituencyName)
+          constituency = getByKeys(
+            cache.constituenciesByName,
+            geographyNameKeys(constituencyName)
           )?.[0]
         }
 
@@ -1406,8 +1471,7 @@ function planStationImport(text: string, cache: LocationCache): StationPlan {
           if (
             countyName &&
             constituency.county_name &&
-            geographyNameKey(countyName) !==
-              geographyNameKey(constituency.county_name)
+            !sameGeographyName(countyName, constituency.county_name)
           ) {
             issues.push({
               row: rowNumber,
@@ -1419,8 +1483,9 @@ function planStationImport(text: string, cache: LocationCache): StationPlan {
           }
 
           ward =
-            cache.wardsByConstituencyName.get(
-              wardKey(constituency.id, wardName)
+            getByKeys(
+              cache.wardsByConstituencyName,
+              wardKeys(constituency.id, wardName)
             ) ?? null
 
           if (!ward) {
@@ -1458,7 +1523,7 @@ function planStationImport(text: string, cache: LocationCache): StationPlan {
         }
       } else {
         ward =
-          cache.wardsByName.get(geographyNameKey(wardName))?.[0] ?? null
+          getByKeys(cache.wardsByName, geographyNameKeys(wardName))?.[0] ?? null
 
         if (!ward) {
           planned.push(
@@ -1843,23 +1908,27 @@ async function ensureHierarchy(
   const constituencyById = new Map(
     cache.constituencies.map((constituency) => [constituency.id, constituency])
   )
-  const countyIdsByName = new Map(
-    cache.counties.map((county) => [geographyNameKey(county.name), county.id])
-  )
-  const constituencyIdsByKey = new Map(
-    cache.constituencies.map((constituency) => [
-      constituencyKey(constituency.county_id, constituency.name),
-      constituency.id,
-    ])
-  )
-  const wardIdsByKey = new Map(
-    cache.wards.map((ward) => [wardKey(ward.constituency_id, ward.name), ward.id])
-  )
+  const countyIdsByName = new Map<string, number>()
+  for (const county of cache.counties) {
+    setByKeys(countyIdsByName, geographyNameKeys(county.name), county.id)
+  }
+  const constituencyIdsByKey = new Map<string, number>()
+  for (const constituency of cache.constituencies) {
+    setByKeys(
+      constituencyIdsByKey,
+      constituencyKeys(constituency.county_id, constituency.name),
+      constituency.id
+    )
+  }
+  const wardIdsByKey = new Map<string, number>()
+  for (const ward of cache.wards) {
+    setByKeys(wardIdsByKey, wardKeys(ward.constituency_id, ward.name), ward.id)
+  }
 
   const resolveCountyId = (target: StationWrite): number | undefined =>
     target.county_id ??
     (target.county_name
-      ? countyIdsByName.get(geographyNameKey(target.county_name))
+      ? getByKeys(countyIdsByName, geographyNameKeys(target.county_name))
       : undefined)
 
   const resolveConstituencyId = (
@@ -1868,8 +1937,9 @@ async function ensureHierarchy(
     if (target.constituency_id !== undefined) return target.constituency_id
     const countyId = resolveCountyId(target)
     if (countyId === undefined || !target.constituency_name) return undefined
-    return constituencyIdsByKey.get(
-      constituencyKey(countyId, target.constituency_name)
+    return getByKeys(
+      constituencyIdsByKey,
+      constituencyKeys(countyId, target.constituency_name)
     )
   }
 
@@ -1879,7 +1949,12 @@ async function ensureHierarchy(
     if (target.county_id !== undefined || !target.county_name) continue
     const displayName = target.county_name.trim().replace(/\s+/g, ' ')
     const key = geographyNameKey(displayName)
-    if (!cache.countiesByName.has(key)) {
+    if (
+      !getByKeys(cache.countiesByName, geographyNameKeys(displayName)) &&
+      ![...countiesToCreate.values()].some((name) =>
+        sameGeographyName(name, displayName)
+      )
+    ) {
       countiesToCreate.set(key, displayName)
     }
   }
@@ -1898,11 +1973,11 @@ async function ensureHierarchy(
     )
 
     for (const county of result.rows) {
-      const key = geographyNameKey(county.name)
+      const keys = geographyNameKeys(county.name)
       cache.counties.push(county)
-      cache.countiesByName.set(key, county)
+      setByKeys(cache.countiesByName, keys, county)
       countyById.set(county.id, county)
-      countyIdsByName.set(key, county.id)
+      setByKeys(countyIdsByName, keys, county.id)
     }
   }
 
@@ -1917,7 +1992,7 @@ async function ensureHierarchy(
     const countyId =
       target.county_id ??
       (target.county_name
-        ? countyIdsByName.get(geographyNameKey(target.county_name))
+        ? getByKeys(countyIdsByName, geographyNameKeys(target.county_name))
         : undefined)
     if (countyId === undefined) {
       throw new LocationError(
@@ -1928,7 +2003,14 @@ async function ensureHierarchy(
 
     const displayName = target.constituency_name.trim().replace(/\s+/g, ' ')
     const key = constituencyKey(countyId, displayName)
-    if (!constituencyIdsByKey.has(key)) {
+    if (
+      getByKeys(constituencyIdsByKey, constituencyKeys(countyId, displayName)) ===
+        undefined &&
+      ![...constituenciesToCreate.values()].some(
+        (entry) =>
+          entry.countyId === countyId && sameGeographyName(entry.name, displayName)
+      )
+    ) {
       constituenciesToCreate.set(key, { name: displayName, countyId })
     }
   }
@@ -1953,16 +2035,12 @@ async function ensureHierarchy(
         ...constituency,
         county_name: countyById.get(constituency.county_id)?.name ?? null,
       }
-      const key = constituencyKey(created.county_id, created.name)
+      const keys = constituencyKeys(created.county_id, created.name)
       cache.constituencies.push(created)
-      cache.constituenciesByName.set(geographyNameKey(created.name), [
-        ...(cache.constituenciesByName.get(geographyNameKey(created.name)) ??
-          []),
-        created,
-      ])
-      cache.constituenciesByCountyName.set(key, created)
+      pushByKeys(cache.constituenciesByName, geographyNameKeys(created.name), created)
+      setByKeys(cache.constituenciesByCountyName, keys, created)
       constituencyById.set(created.id, created)
-      constituencyIdsByKey.set(key, created.id)
+      setByKeys(constituencyIdsByKey, keys, created.id)
     }
   }
 
@@ -1998,7 +2076,15 @@ async function ensureHierarchy(
 
     const displayName = target.ward_name.trim().replace(/\s+/g, ' ')
     const key = wardKey(constituencyId, displayName)
-    if (!wardIdsByKey.has(key)) {
+    if (
+      getByKeys(wardIdsByKey, wardKeys(constituencyId, displayName)) ===
+        undefined &&
+      ![...wardsToCreate.values()].some(
+        (entry) =>
+          entry.constituencyId === constituencyId &&
+          sameGeographyName(entry.name, displayName)
+      )
+    ) {
       wardsToCreate.set(key, {
         name: displayName,
         constituencyId,
@@ -2034,11 +2120,11 @@ async function ensureHierarchy(
     )
 
     for (const ward of result.rows) {
-      const key = wardKey(ward.constituency_id, ward.name)
+      const keys = wardKeys(ward.constituency_id, ward.name)
       cache.wards.push(ward)
-      cache.wardsByConstituencyName.set(key, ward)
+      setByKeys(cache.wardsByConstituencyName, keys, ward)
       cache.wardsById.set(ward.id, ward)
-      wardIdsByKey.set(key, ward.id)
+      setByKeys(wardIdsByKey, keys, ward.id)
     }
   }
 
@@ -2053,8 +2139,9 @@ async function ensureHierarchy(
         `The row ${target.row} names a constituency that could not be resolved`
       )
     }
-    const wardId = wardIdsByKey.get(
-      wardKey(constituencyId, target.ward_name)
+    const wardId = getByKeys(
+      wardIdsByKey,
+      wardKeys(constituencyId, target.ward_name)
     )
     if (wardId === undefined) {
       throw new LocationError(
@@ -2665,7 +2752,8 @@ function pickKeeperWard(wards: DuplicateWard[]): DuplicateWard {
 /**
  * Wards of the same constituency whose names are the same once case,
  * punctuation and word order are ignored ("Sang'alo West" and
- * "WEST SANG'ALO").
+ * "WEST SANG'ALO"), or once the spaces are removed too ("Oldonyiro" and
+ * "OLDO/NYIRO").
  */
 export async function findDuplicateWards(): Promise<DuplicateWardGroup[]> {
   const wards = await queryMany<
@@ -2681,13 +2769,35 @@ export async function findDuplicateWards(): Promise<DuplicateWardGroup[]> {
       ORDER BY w.id`
   )
 
-  const groups = new Map<string, typeof wards>()
-  for (const ward of wards) {
-    const key = wardKey(ward.constituency_id, ward.name)
-    const list = groups.get(key) ?? []
-    list.push({ ...ward, station_count: Number(ward.station_count) })
-    groups.set(key, list)
+  // Two wards are the same when they share any of their name keys, so the
+  // wards are joined into groups through the keys they have in common.
+  const groupOfKey = new Map<string, number>()
+  const parent: number[] = wards.map((_, index) => index)
+  const find = (index: number): number => {
+    while (parent[index] !== index) {
+      parent[index] = parent[parent[index]]
+      index = parent[index]
+    }
+    return index
   }
+  wards.forEach((ward, index) => {
+    for (const key of wardKeys(ward.constituency_id, ward.name)) {
+      const other = groupOfKey.get(key)
+      if (other === undefined) {
+        groupOfKey.set(key, index)
+      } else {
+        parent[find(index)] = find(other)
+      }
+    }
+  })
+
+  const groups = new Map<number, typeof wards>()
+  wards.forEach((ward, index) => {
+    const root = find(index)
+    const list = groups.get(root) ?? []
+    list.push({ ...ward, station_count: Number(ward.station_count) })
+    groups.set(root, list)
+  })
 
   const duplicates: DuplicateWardGroup[] = []
   for (const list of groups.values()) {

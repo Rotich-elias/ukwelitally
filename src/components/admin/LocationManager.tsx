@@ -495,8 +495,9 @@ export default function LocationManager() {
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
               <p className="text-sm text-yellow-300">
                 Finds wards of the same constituency whose names only differ in
-                case, punctuation or word order (for example &quot;Sang&apos;alo
-                West&quot; and &quot;WEST SANG&apos;ALO&quot;). The official ward,
+                case, punctuation, spacing or word order (for example &quot;Sang&apos;alo
+                West&quot; and &quot;WEST SANG&apos;ALO&quot;, or
+                &quot;Oldonyiro&quot; and &quot;OLDO/NYIRO&quot;). The official ward,
                 the one with the numeric IEBC code, is kept: the polling stations,
                 candidates and volunteers of the copies are moved to it and the
                 copies are deleted. Preview first to see the pairs.

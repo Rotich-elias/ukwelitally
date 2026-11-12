@@ -86,7 +86,12 @@ vi.mock('@/lib/audit', () => ({
 }))
 
 import { generateToken } from '@/lib/auth'
-import { parseCsv, LocationError, geographyNameKey } from '@/lib/locationAdmin'
+import {
+  parseCsv,
+  LocationError,
+  geographyNameKey,
+  sameGeographyName,
+} from '@/lib/locationAdmin'
 import { GET as wardsGet, POST as wardsPost } from '@/app/api/admin/locations/wards/route'
 import { PUT as wardPut, DELETE as wardDelete } from '@/app/api/admin/locations/wards/[id]/route'
 import {
@@ -1382,6 +1387,12 @@ describe('geographyNameKey', () => {
     expect(geographyNameKey('EMBOBUT / EMBULOT')).toBe(geographyNameKey('Embobut/Embulot'))
   })
 
+  it('matches a name a slash splits in two', () => {
+    expect(sameGeographyName('OLDO/NYIRO', 'Oldonyiro')).toBe(true)
+    expect(sameGeographyName("WEST SANG'ALO", "Sang'alo West")).toBe(true)
+    expect(sameGeographyName('Oldonyiro', 'Ngare Mara')).toBe(false)
+  })
+
   it('still tells different names apart', () => {
     expect(geographyNameKey('Township')).toBe('township')
     expect(geographyNameKey('Sangalo West')).not.toBe(geographyNameKey('Sangalo East'))
@@ -1467,5 +1478,45 @@ describe('merging duplicate wards', () => {
     expect(body.kept).toHaveLength(1)
     expect(body.kept[0].reason).toContain('Kayole Hall')
     expect(db.wards.some((ward) => ward.id === 2671)).toBe(true)
+  })
+
+  it('pairs a ward a slash split in two with the official ward', async () => {
+    db.wards.push(
+      { id: 2680, constituency_id: 628, county_id: 201, name: 'Oldonyiro', code: '0247' },
+      { id: 2681, constituency_id: 628, county_id: 201, name: 'OLDO/NYIRO', code: 'OLDONYIRO' }
+    )
+    handlers.unshift(mergeHandler({ 2680: 17 }))
+
+    const response = await importPost(importRequest('merge_duplicate_wards', true) as any)
+    const body = await response.json()
+
+    expect(body.groups).toHaveLength(1)
+    expect(body.groups[0].keeper.code).toBe('0247')
+    expect(body.groups[0].removed[0].code).toBe('OLDONYIRO')
+  })
+})
+
+describe('the import matches the official ward', () => {
+  it('does not create a second ward for a name a slash splits in two', async () => {
+    db.wards.push({
+      id: 2690,
+      constituency_id: 628,
+      county_id: 201,
+      name: 'Oldonyiro',
+      code: '0247',
+    })
+    const csv = [
+      HEADER,
+      'Nairobi\tTest Constituency\tOLDO/NYIRO\tNEW777\tOldonyiro Hall\t1\tOldonyiro Primary\t300',
+    ].join('\n')
+
+    const response = await importPost(
+      importRequest('polling_stations', false, csv, ADMIN, 'update') as any
+    )
+    const body = await response.json()
+
+    expect(body.created).toBe(1)
+    expect(db.wards.filter((ward) => /oldo/i.test(ward.name))).toHaveLength(1)
+    expect(db.stations.find((station) => station.code === 'NEW777')?.ward_id).toBe(2690)
   })
 })
