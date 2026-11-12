@@ -132,6 +132,100 @@ function emptyLocation(): ResolvedLocation {
   return { county_id: null, constituency_id: null, ward_id: null }
 }
 
+/** Limits a lookup to one part of the country, such as a candidate's area. */
+export interface AreaLimit {
+  county_id?: number | null
+  constituency_id?: number | null
+  ward_id?: number | null
+}
+
+export type WardResult = { ok: true; ward: WardRef } | { ok: false; error: string }
+
+/**
+ * Resolve a ward from the county, constituency and ward columns.
+ *
+ * `within` restricts the search to an area, so a candidate importing agents
+ * only matches wards inside their own electoral area. That also tells apart
+ * two wards with the same name, and lets a ward-level candidate leave the ward
+ * column empty.
+ */
+export function resolveWard(
+  input: ImportLocationInput,
+  lookup: GeographyLookup,
+  within: AreaLimit = {}
+): WardResult {
+  const countyResult = findCounty(lookup, input)
+  if (!countyResult.ok) return countyResult
+  const county = countyResult.county ?? null
+
+  const constituencyResult = findConstituency(lookup, input, county)
+  if (!constituencyResult.ok) return constituencyResult
+  const constituency = constituencyResult.constituency ?? null
+
+  if (constituency && county && constituency.county_id !== county.id) {
+    return {
+      ok: false,
+      error: `Constituency '${constituency.name}' is not in ${county.name} county`,
+    }
+  }
+
+  const inArea = (w: WardRef) =>
+    (!within.ward_id || w.id === within.ward_id) &&
+    (!within.constituency_id || w.constituency_id === within.constituency_id) &&
+    (!within.county_id || w.county_id === within.county_id)
+
+  const wardName = clean(input.ward)
+
+  if (!wardName) {
+    const id = parseId(input.ward_id)
+    if (id === null) {
+      // A candidate whose whole area is a single ward does not need to name it.
+      const only = within.ward_id ? lookup.wards.find((w) => w.id === within.ward_id) : undefined
+      if (only) return { ok: true, ward: only }
+      return { ok: false, error: 'a ward is required' }
+    }
+    const ward = Number.isNaN(id) ? undefined : lookup.wards.find((w) => w.id === id)
+    if (!ward) return { ok: false, error: `Ward ID '${clean(input.ward_id)}' not found` }
+    if (!inArea(ward)) return { ok: false, error: `Ward '${ward.name}' is outside your electoral area` }
+    return { ok: true, ward }
+  }
+
+  const named = lookup.wards.filter(
+    (w) =>
+      sameGeographyName(w.name, wardName) &&
+      (!constituency || w.constituency_id === constituency.id) &&
+      (!county || w.county_id === county.id)
+  )
+  const matches = named.filter(inArea)
+
+  if (matches.length === 0) {
+    if (named.length > 0) {
+      return { ok: false, error: `Ward '${wardName}' is outside your electoral area` }
+    }
+    const where = constituency
+      ? ` in ${constituency.name} constituency`
+      : county
+        ? ` in ${county.name} county`
+        : ''
+    return { ok: false, error: `Ward '${wardName}' not found${where}` }
+  }
+
+  if (matches.length > 1) {
+    const parents = matches
+      .map((w) => lookup.constituencies.find((c) => c.id === w.constituency_id))
+      .filter((c): c is ConstituencyRef => Boolean(c))
+    return {
+      ok: false,
+      error:
+        `Ward '${wardName}' exists in more than one place` +
+        (parents.length ? ` (${describe(parents)})` : '') +
+        '; add the constituency column to choose one',
+    }
+  }
+
+  return { ok: true, ward: matches[0] }
+}
+
 /**
  * Resolve the location for one row. Only the level the position competes at
  * is returned, matching how ballot candidates are stored.
@@ -145,6 +239,14 @@ export function resolveCandidateLocation(
     return { ok: true, location: emptyLocation() }
   }
 
+  if (position === 'mca') {
+    const result = resolveWard(input, lookup)
+    if (!result.ok) {
+      return { ok: false, error: result.error === 'a ward is required' ? 'mca requires a ward' : result.error }
+    }
+    return { ok: true, location: { ...emptyLocation(), ward_id: result.ward.id } }
+  }
+
   const countyResult = findCounty(lookup, input)
   if (!countyResult.ok) return countyResult
   const county = countyResult.county ?? null
@@ -152,6 +254,10 @@ export function resolveCandidateLocation(
   if (COUNTY_POSITIONS.includes(position)) {
     if (!county) return { ok: false, error: `${position} requires a county` }
     return { ok: true, location: { ...emptyLocation(), county_id: county.id } }
+  }
+
+  if (position !== 'mp') {
+    return { ok: false, error: `Unknown position '${position}'` }
   }
 
   const constituencyResult = findConstituency(lookup, input, county)
@@ -165,52 +271,6 @@ export function resolveCandidateLocation(
     }
   }
 
-  if (position === 'mp') {
-    if (!constituency) return { ok: false, error: 'mp requires a constituency' }
-    return { ok: true, location: { ...emptyLocation(), constituency_id: constituency.id } }
-  }
-
-  if (position !== 'mca') {
-    return { ok: false, error: `Unknown position '${position}'` }
-  }
-
-  const wardName = clean(input.ward)
-  let ward: WardRef | undefined
-
-  if (wardName) {
-    const matches = lookup.wards.filter(
-      (w) =>
-        sameGeographyName(w.name, wardName) &&
-        (!constituency || w.constituency_id === constituency.id) &&
-        (!county || w.county_id === county.id)
-    )
-    if (matches.length === 0) {
-      const where = constituency
-        ? ` in ${constituency.name} constituency`
-        : county
-          ? ` in ${county.name} county`
-          : ''
-      return { ok: false, error: `Ward '${wardName}' not found${where}` }
-    }
-    if (matches.length > 1) {
-      const parents = matches
-        .map((w) => lookup.constituencies.find((c) => c.id === w.constituency_id))
-        .filter((c): c is ConstituencyRef => Boolean(c))
-      return {
-        ok: false,
-        error:
-          `Ward '${wardName}' exists in more than one place` +
-          (parents.length ? ` (${describe(parents)})` : '') +
-          '; add the constituency column to choose one',
-      }
-    }
-    ward = matches[0]
-  } else {
-    const id = parseId(input.ward_id)
-    if (id === null) return { ok: false, error: 'mca requires a ward' }
-    ward = Number.isNaN(id) ? undefined : lookup.wards.find((w) => w.id === id)
-    if (!ward) return { ok: false, error: `Ward ID '${clean(input.ward_id)}' not found` }
-  }
-
-  return { ok: true, location: { ...emptyLocation(), ward_id: ward.id } }
+  if (!constituency) return { ok: false, error: 'mp requires a constituency' }
+  return { ok: true, location: { ...emptyLocation(), constituency_id: constituency.id } }
 }
