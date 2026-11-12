@@ -67,9 +67,7 @@ async function handlePost(
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 })
     }
 
-    // A candidate may only review submissions that belong to their own team or
-    // fall inside their electoral scope. Without this check any authenticated
-    // candidate could review a rival's submission (IDOR).
+    // A candidate may only review submissions that belong to their own team.
     if (user.role === 'candidate') {
       const candidateProfile = await queryOne<{ id: number; access_status: string }>(
         'SELECT id, access_status FROM candidates WHERE user_id = $1',
@@ -87,43 +85,14 @@ async function handlePost(
         )
       }
 
-      const inScope = await queryOne<{ allowed: boolean }>(
-        `SELECT EXISTS (
-           SELECT 1 FROM submissions s
-           JOIN polling_stations ps ON ps.id = s.polling_station_id
-           JOIN wards w ON w.id = ps.ward_id
-           JOIN constituencies con ON con.id = w.constituency_id
-           JOIN candidates c ON c.id = $1
-           WHERE s.id = $2
-             AND (
-               s.candidate_id = c.id
-               OR s.scope_candidate_id = c.id
-               OR (
-                 c.position = 'president'
-               )
-               OR (
-                 c.position = 'governor' AND ps.county_id = c.county_id
-               )
-               OR (
-                 c.position = 'senator' AND ps.county_id = c.county_id
-               )
-               OR (
-                 c.position = 'women_rep' AND ps.county_id = c.county_id
-               )
-               OR (
-                 c.position = 'mp' AND con.id = c.constituency_id
-               )
-               OR (
-                 c.position = 'mca' AND w.id = c.ward_id
-               )
-             )
-         ) AS allowed`,
-        [candidateProfile.id, submissionId]
-      )
-
-      if (!inScope?.allowed) {
+      // A candidate reviews only their own team's submissions. An agent can
+      // only enter results for their own candidate's race, so this also keeps
+      // the review inside the candidate's race. A geographic check is not
+      // enough: it let a candidate approve or reject a rival team's results,
+      // or another race's, and so change the published tally.
+      if (submission.candidate_id !== candidateProfile.id) {
         return NextResponse.json(
-          { error: 'You can only review submissions within your electoral scope.' },
+          { error: 'You can only review submissions from your own team.' },
           { status: 403 }
         )
       }
@@ -140,6 +109,37 @@ async function handlePost(
         },
         { status: 400 }
       )
+    }
+
+    // A corrected version replaces this one; only the latest version can be
+    // reviewed, otherwise an outdated version could become the result again.
+    if (submission.superseded_by_submission_id) {
+      return NextResponse.json(
+        { error: 'This submission has been replaced by a corrected version. Review the latest version instead.' },
+        { status: 409 }
+      )
+    }
+
+    // Approving makes the figures count, so there must be figures, and a
+    // candidate may not approve figures that failed validation. An admin can,
+    // as a deliberate manual override after checking the form.
+    if (action === 'approve') {
+      const results = await query<{ is_valid: boolean | null }>(
+        'SELECT is_valid FROM results WHERE submission_id = $1',
+        [submissionId]
+      )
+      if (results.rows.length === 0) {
+        return NextResponse.json(
+          { error: 'This submission has no results entered yet, so it cannot be approved.' },
+          { status: 400 }
+        )
+      }
+      if (user.role !== 'admin' && results.rows.some((r) => r.is_valid === false)) {
+        return NextResponse.json(
+          { error: 'The results of this submission failed validation. Ask an administrator to review them.' },
+          { status: 400 }
+        )
+      }
     }
 
     let newStatus = submission.status
