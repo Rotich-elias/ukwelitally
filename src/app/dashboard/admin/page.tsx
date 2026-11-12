@@ -388,7 +388,14 @@ export default function AdminDashboard() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Import failed')
+        // Show the per-row reasons, otherwise "No valid candidates" gives the
+        // admin nothing to fix.
+        const rowErrors: string[] = Array.isArray(data.errors) ? data.errors : []
+        const details = rowErrors.slice(0, 10).join('\n')
+        const more = rowErrors.length > 10 ? `\n…and ${rowErrors.length - 10} more` : ''
+        throw new Error(
+          [data.error || 'Import failed', details + more].filter(Boolean).join('\n')
+        )
       }
 
       setImportResult(data)
@@ -1632,10 +1639,14 @@ export default function AdminDashboard() {
                   <p className="font-semibold text-blue-300 mb-1">Position Requirements:</p>
                   <ul className="space-y-1">
                     <li>• <strong>President:</strong> No location required</li>
-                    <li>• <strong>Governor/Senator/Women Rep:</strong> Requires county_id</li>
-                    <li>• <strong>MP:</strong> Requires constituency_id</li>
-                    <li>• <strong>MCA:</strong> Requires ward_id</li>
+                    <li>• <strong>Governor/Senator/Women Rep:</strong> Requires county</li>
+                    <li>• <strong>MP:</strong> Requires constituency (add county if the name is not unique)</li>
+                    <li>• <strong>MCA:</strong> Requires ward, plus constituency so the ward can be told apart from wards with the same name elsewhere</li>
                   </ul>
+                  <p className="mt-2">
+                    Use location <strong>names</strong>, e.g. <em>Nairobi</em>, <em>Westlands</em>,{' '}
+                    <em>Parklands/Highridge</em>. Capitalisation and punctuation do not matter.
+                  </p>
                 </div>
               </div>
 
@@ -1721,7 +1732,7 @@ export default function AdminDashboard() {
 
               {/* Error Display */}
               {error && (
-                <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm mb-4">
+                <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm mb-4 whitespace-pre-line">
                   {error}
                 </div>
               )}
