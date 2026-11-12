@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryMany, queryOne } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
+import { candidateCanSeeSubmissionSql } from '@/lib/submissionAccess'
 
 // GET /api/submissions/[id]/reviews - Get reviews for a submission
 async function handleGet(
@@ -50,36 +51,27 @@ async function handleGet(
     }
 
     // The review history contains reviewer identities and notes. It is not
-    // public: an administrator sees every review, a candidate only sees the
-    // submissions in the race and area they own, and an agent or observer
+    // public: an administrator sees every review, a candidate only sees their
+    // own team's submissions and the observer submissions of their race and
+    // area, and an agent or observer
     // only sees the history of a submission they submitted themselves.
     let allowed = user.role === 'admin'
 
     if (!allowed && user.role === 'candidate') {
-      const candidate = await queryOne<{
-        id: number
-        position: string
-        county_id: number | null
-        constituency_id: number | null
-        ward_id: number | null
-      }>(
-        `SELECT id, position, county_id, constituency_id, ward_id
-           FROM candidates
-          WHERE user_id = $1 AND access_status = 'active'`,
-        [user.userId]
+      // Own team's submissions, or observer submissions of the candidate's
+      // race and area; never a rival team's.
+      const access = await queryOne<{ allowed: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1
+             FROM submissions s
+             JOIN polling_stations ps ON ps.id = s.polling_station_id
+             JOIN candidates c ON c.user_id = $1 AND c.access_status = 'active'
+            WHERE s.id = $2
+              AND ${candidateCanSeeSubmissionSql('s', 'ps', 'c')}
+         ) AS allowed`,
+        [user.userId, submissionId]
       )
-
-      if (candidate) {
-        allowed =
-          submission.candidate_id === candidate.id ||
-          submission.scope_candidate_id === candidate.id ||
-          candidate.position === 'president' ||
-          (['governor', 'senator', 'women_rep'].includes(candidate.position) &&
-            submission.county_id === candidate.county_id) ||
-          (candidate.position === 'mp' &&
-            submission.constituency_id === candidate.constituency_id) ||
-          (candidate.position === 'mca' && submission.ward_id === candidate.ward_id)
-      }
+      allowed = access?.allowed === true
     }
 
     if (!allowed && (user.role === 'agent' || user.role === 'observer')) {

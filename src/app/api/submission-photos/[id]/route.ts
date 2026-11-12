@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { queryOne } from '@/lib/db'
 import { getStorage, contentTypeFromKey } from '@/lib/storage'
 import { authenticateRequest } from '@/lib/authenticate'
+import { candidateCanSeeSubmissionSql } from '@/lib/submissionAccess'
 
 export const dynamic = 'force-dynamic'
 
@@ -72,28 +73,18 @@ export async function GET(
       (photo.scope_candidate_user_id !== null &&
         photo.scope_candidate_user_id === user.userId)
 
-    // A candidate can review submissions inside their electoral scope, so they
-    // must be able to see the evidence of those submissions too. This is the
-    // same scope the review queue and the review action enforce. Without it
-    // the queue renders a submission whose images are all 403.
+    // A candidate also sees the evidence of the submissions the review queue
+    // shows them: observer submissions of their race and area. A rival team's
+    // evidence stays private. This is the same rule the queue applies.
     if (!allowed && user.role === 'candidate') {
       const scope = await queryOne<{ allowed: boolean }>(
         `SELECT EXISTS (
            SELECT 1
            FROM submissions s
            JOIN polling_stations ps ON ps.id = s.polling_station_id
-           JOIN wards w ON w.id = ps.ward_id
-           JOIN constituencies con ON con.id = w.constituency_id
-           JOIN candidates c ON c.user_id = $1
+           JOIN candidates c ON c.user_id = $1 AND c.access_status = 'active'
            WHERE s.id = $2
-             AND (
-               s.candidate_id = c.id
-               OR s.scope_candidate_id = c.id
-               OR c.position = 'president'
-               OR (c.position IN ('governor','senator','women_rep') AND ps.county_id = c.county_id)
-               OR (c.position = 'mp' AND con.id = c.constituency_id)
-               OR (c.position = 'mca' AND w.id = c.ward_id)
-             )
+             AND ${candidateCanSeeSubmissionSql('s', 'ps', 'c')}
          ) AS allowed`,
         [user.userId, photo.submission_id]
       )

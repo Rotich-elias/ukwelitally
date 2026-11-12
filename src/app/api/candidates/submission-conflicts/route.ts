@@ -90,10 +90,13 @@ async function handleGet(req: NextRequest) {
         AND sel.position = d.position
        WHERE d.discrepancy_type = 'agent_vs_backup'
          AND ${scope.clause}
+         -- Only the candidate's own race: an MCA candidate must not see the
+         -- presidential or governor conflicts of the stations in their ward.
+         AND d.position = $${scope.params.length + 1}
          ${statusCondition}
        ORDER BY d.created_at DESC
        LIMIT 100`,
-      scope.params
+      [...scope.params, candidate.position]
     )
 
     return NextResponse.json({ success: true, conflicts, count: conflicts.length })

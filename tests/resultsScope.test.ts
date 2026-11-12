@@ -425,6 +425,91 @@ describe('GET /api/polling-stations/[id]/detailed-results', () => {
 
     const [submissionsQuery] = queriesMatching(/FROM submissions s/)
     expect(submissionsQuery.text).toContain('c.position = $2')
-    expect(submissionsQuery.params).toEqual([55, 'mca'])
+    // The third parameter is the viewing candidate; an admin has none.
+    expect(submissionsQuery.params).toEqual([55, 'mca', null])
+  })
+
+  const STATION = {
+    match: /FROM polling_stations ps\s+JOIN wards/,
+    handler: () => [
+      { id: 55, name: 'Test Station', code: 'PS55', registered_voters: 900, ward_id: 5, constituency_id: 2, county_id: 1 },
+    ],
+  }
+
+  it("shows a candidate only their own team's and observers' submissions, without rivals' contacts", async () => {
+    register(
+      STATION,
+      {
+        match: /FROM candidates c\s+JOIN users u ON u\.id = c\.user_id/,
+        handler: () => [
+          { id: 77, user_id: CANDIDATE.id, position: 'president', county_id: null, constituency_id: null, ward_id: null, access_status: 'active', full_name: 'Me', party_name: null },
+        ],
+      },
+      {
+        match: /FROM submissions s/,
+        handler: () => [
+          // Own team: contacts kept.
+          { id: 1, candidate_id: 77, status: 'pending', submitter_email: 'mine@x', submitter_phone: '+1', photos: [] },
+          // Observer submission: shared, but the volunteer's contacts are not.
+          { id: 2, candidate_id: 5, submission_origin: 'observer', status: 'pending', submitter_email: 'obs@x', submitter_phone: '+2', photos: [] },
+        ],
+      }
+    )
+
+    const response = await detailedResultsGet(
+      request('/api/polling-stations/55/detailed-results', CANDIDATE),
+      { params: Promise.resolve({ id: '55' }) }
+    )
+    const body = await response.json()
+    expect(response.status).toBe(200)
+
+    const [submissionsQuery] = queriesMatching(/FROM submissions s/)
+    expect(submissionsQuery.text).toContain("s.candidate_id = $3 OR s.submission_origin = 'observer'")
+    expect(submissionsQuery.params?.[2]).toBe(77)
+
+    const byId = Object.fromEntries(body.submissions.map((s: any) => [s.id, s]))
+    expect(byId[1].submitter_phone).toBe('+1')
+    expect(byId[2].submitter_phone).toBeNull()
+    expect(byId[2].submitter_email).toBeNull()
+  })
+
+  it('refuses a candidate account without an active profile', async () => {
+    register(STATION)
+    const response = await detailedResultsGet(
+      request('/api/polling-stations/55/detailed-results', CANDIDATE),
+      { params: Promise.resolve({ id: '55' }) }
+    )
+    expect(response.status).toBe(403)
+    expect(queriesMatching(/FROM submissions s/)).toHaveLength(0)
+  })
+
+  it('refuses an observer at a station they are not assigned to', async () => {
+    register(STATION)
+    const response = await detailedResultsGet(
+      request('/api/polling-stations/55/detailed-results', OBSERVER),
+      { params: Promise.resolve({ id: '55' }) }
+    )
+    expect(response.status).toBe(403)
+    expect(queriesMatching(/FROM submissions s/)).toHaveLength(0)
+  })
+
+  it('lets an observer view their assigned station, without submitter contacts', async () => {
+    register(
+      STATION,
+      { match: /FROM observer_assignments/, handler: () => [{ id: 1 }] },
+      {
+        match: /FROM submissions s/,
+        handler: () => [
+          { id: 3, candidate_id: 9, status: 'pending', submitter_email: 'agent@x', submitter_phone: '+3', photos: [] },
+        ],
+      }
+    )
+    const response = await detailedResultsGet(
+      request('/api/polling-stations/55/detailed-results', OBSERVER),
+      { params: Promise.resolve({ id: '55' }) }
+    )
+    const body = await response.json()
+    expect(response.status).toBe(200)
+    expect(body.submissions[0].submitter_phone).toBeNull()
   })
 })

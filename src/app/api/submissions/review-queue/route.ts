@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { queryMany } from '@/lib/db'
+import { queryMany, queryOne } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import { getEvidenceUrl } from '@/lib/storage'
+import { candidateCanSeeSubmissionSql, redactSubmitterContact } from '@/lib/submissionAccess'
+
+// The queue is sorted by urgency; a page this size covers any realistic
+// backlog without letting one request scan every submission in the country.
+const MAX_QUEUE_ROWS = 500
 
 // GET /api/submissions/review-queue - Get submissions needing admin review
 async function handleGet(req: NextRequest) {
@@ -36,23 +41,25 @@ async function handleGet(req: NextRequest) {
         statusClause = "(s.status IN ('pending', 'flagged') OR s.has_discrepancy = TRUE)"
     }
 
-    // A candidate only sees submissions from their own team or inside their
-    // electoral scope. An admin sees everything.
+    // A candidate sees their own team's submissions and the observer
+    // submissions of their race and area, never a rival team's. An admin sees
+    // everything.
+    let viewerCandidateId: number | null = null
     let scopeClause = ''
     if (user.role === 'candidate') {
-      params.push(user.userId)
+      const own = await queryOne<{ id: number }>(
+        `SELECT id FROM candidates WHERE user_id = $1 AND access_status = 'active'`,
+        [user.userId]
+      )
+      if (!own) {
+        return NextResponse.json({ success: true, submissions: [], count: 0 })
+      }
+      viewerCandidateId = own.id
+      params.push(own.id)
       scopeClause = ` AND EXISTS (
         SELECT 1 FROM candidates c2
-        WHERE c2.user_id = $${params.length}
-          AND c2.access_status = 'active'
-          AND (
-            s.candidate_id = c2.id
-            OR s.scope_candidate_id = c2.id
-            OR c2.position = 'president'
-            OR (c2.position IN ('governor','senator','women_rep') AND ps.county_id = c2.county_id)
-            OR (c2.position = 'mp' AND const.id = c2.constituency_id)
-            OR (c2.position = 'mca' AND w.id = c2.ward_id)
-          )
+        WHERE c2.id = $${params.length}
+          AND ${candidateCanSeeSubmissionSql('s', 'ps', 'c2')}
       )`
     }
 
@@ -106,6 +113,7 @@ async function handleGet(req: NextRequest) {
           ELSE 4
         END,
         s.submitted_at DESC
+      LIMIT ${MAX_QUEUE_ROWS}
     `
 
     const submissions = await queryMany(sql, params)
@@ -113,7 +121,7 @@ async function handleGet(req: NextRequest) {
     // The evidence of a submission is private, so it is served through the
     // authorized evidence route instead of the public upload route.
     const withPhotoUrls = submissions.map((submission: any) => ({
-      ...submission,
+      ...redactSubmitterContact(submission, { role: user.role, candidateId: viewerCandidateId }),
       photos: (submission.photos || []).map((photo: any) => ({
         ...photo,
         file_path: getEvidenceUrl(photo.id),

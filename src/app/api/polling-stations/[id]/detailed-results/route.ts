@@ -3,7 +3,12 @@ import { queryMany, queryOne } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
 import { buildCandidateBreakdown } from '@/lib/aggregation'
 import { getEvidenceUrl } from '@/lib/storage'
-import { getCandidateRestrictions, canAccessLocation } from '@/lib/candidate-restrictions'
+import {
+  getCandidateProfile,
+  canAccessLocation,
+  type CandidateProfile,
+} from '@/lib/candidate-restrictions'
+import { redactSubmitterContact } from '@/lib/submissionAccess'
 
 // GET /api/polling-stations/[id]/detailed-results - Get detailed results for a specific polling station
 async function handleGet(req: NextRequest, context?: any) {
@@ -46,12 +51,33 @@ async function handleGet(req: NextRequest, context?: any) {
     }
 
     // A candidate may only ever see their own race, so the position is taken
-    // from the stored profile instead of the query string.
-    let candidateRestrictions = null
+    // from the stored profile instead of the query string. A candidate
+    // account without a profile sees nothing rather than everything.
+    let candidateRestrictions: CandidateProfile | null = null
     if (user.role === 'candidate') {
-      candidateRestrictions = await getCandidateRestrictions(user.userId)
-      if (candidateRestrictions) {
-        position = candidateRestrictions.position
+      candidateRestrictions = await getCandidateProfile(user.userId)
+      if (!candidateRestrictions || candidateRestrictions.access_status !== 'active') {
+        return NextResponse.json(
+          { error: 'Your candidate profile is not active' },
+          { status: 403 }
+        )
+      }
+      position = candidateRestrictions.position
+    }
+
+    // A volunteer observer only sees the station they are assigned to.
+    if (user.role === 'observer') {
+      const assigned = await queryOne<{ id: number }>(
+        `SELECT id FROM observer_assignments
+          WHERE user_id = $1 AND polling_station_id = $2 AND status = 'active'
+          LIMIT 1`,
+        [user.userId, pollingStationId]
+      )
+      if (!assigned) {
+        return NextResponse.json(
+          { error: 'You can only view the polling station you are assigned to' },
+          { status: 403 }
+        )
       }
     }
 
@@ -160,6 +186,9 @@ async function handleGet(req: NextRequest, context?: any) {
       LEFT JOIN submission_photos sp ON s.id = sp.submission_id
       WHERE s.polling_station_id = $1
         AND ($2::text IS NULL OR c.position = $2)
+        -- A candidate sees their own team's submissions and the shared
+        -- observer submissions, never a rival team's.
+        AND ($3::int IS NULL OR s.candidate_id = $3 OR s.submission_origin = 'observer')
       GROUP BY s.id, u.id, c.id, r.id
       ORDER BY
         CASE s.status
@@ -170,7 +199,7 @@ async function handleGet(req: NextRequest, context?: any) {
           ELSE 5
         END,
         s.submitted_at DESC`,
-      [pollingStationId, position || null]
+      [pollingStationId, position || null, candidateRestrictions?.id ?? null]
     )
 
     console.log('[Detailed Results] Submissions fetched:', submissions.length)
@@ -178,7 +207,10 @@ async function handleGet(req: NextRequest, context?: any) {
     // The evidence of a submission is private, so it is served through the
     // authorized evidence route instead of the public upload route.
     const submissionsWithUrls = submissions.map((submission: any) => ({
-      ...submission,
+      ...redactSubmitterContact(submission, {
+        role: user.role,
+        candidateId: candidateRestrictions?.id ?? null,
+      }),
       photos: (submission.photos || []).map((photo: any) => ({
         ...photo,
         file_path: getEvidenceUrl(photo.id),
