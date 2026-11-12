@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query, queryOne } from '@/lib/db'
-import { hashPassword, isStrongPassword, normalizeEmail, normalizePhoneNumber } from '@/lib/auth'
+import { query, queryOne, transaction } from '@/lib/db'
+import {
+  hashPassword,
+  isPublishedPassword,
+  isStrongPassword,
+  normalizeEmail,
+  normalizePhoneNumber,
+} from '@/lib/auth'
 import { authenticateRequest } from '@/lib/authenticate'
 import { validateCandidateLocation } from '@/lib/candidateLocation'
 
 export const dynamic = 'force-dynamic'
+
+// Roles an administrator can create directly. Anything else (a typo, or a
+// made-up role) is refused instead of producing an account no route expects.
+const CREATABLE_ROLES = ['admin', 'candidate', 'agent', 'observer']
 
 // GET - List all users (admin only)
 export async function GET(request: NextRequest) {
@@ -79,44 +89,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
     }
 
-    // Normalize email and phone
-    const normalizedEmail = normalizeEmail(email)
-    const normalizedPhone = normalizePhoneNumber(phone)
-
-    // Check if user exists
-    const existingUser = await queryOne(
-      'SELECT id FROM users WHERE email = $1 OR phone = $2 OR id_number = $3',
-      [normalizedEmail, normalizedPhone, id_number]
-    )
-
-    if (existingUser) {
+    if (!CREATABLE_ROLES.includes(role)) {
       return NextResponse.json(
-        { error: 'User with this email, phone, or ID number already exists' },
-        { status: 409 }
+        { error: `role must be one of ${CREATABLE_ROLES.join(', ')}` },
+        { status: 400 }
       )
     }
 
-    // Hash password
-    const passwordHash = await hashPassword(password)
-
-    // Create user
-    const newUser = await queryOne(
-      `INSERT INTO users (email, phone, password_hash, full_name, role, id_number, verified, active)
-       VALUES ($1, $2, $3, $4, $5, $6, true, true)
-       RETURNING id, email, phone, full_name, role, verified, active, created_at`,
-      [normalizedEmail, normalizedPhone, passwordHash, full_name, role, id_number]
-    )
-
-    if (!newUser) {
-      throw new Error('Failed to create user')
+    // The same password policy as a reset, so an account cannot be created
+    // with a guessable password.
+    if (typeof password !== 'string' || isPublishedPassword(password)) {
+      return NextResponse.json(
+        { error: 'This password is a published example and cannot be used' },
+        { status: 400 }
+      )
+    }
+    const strength = isStrongPassword(password)
+    if (!strength.valid) {
+      return NextResponse.json({ error: strength.errors.join('. ') }, { status: 400 })
     }
 
-    // If role is candidate, create candidate profile
+    // A candidate's race and area are checked before anything is written.
+    // Checking them after inserting the user left an active candidate
+    // account without a profile, which several routes treat as "no limits".
+    const position = body.position || 'president'
+    const { county_id, constituency_id, ward_id } = body
     if (role === 'candidate') {
-      const position = body.position || 'president'
-      const { county_id, constituency_id, ward_id } = body
-
-      // Validate location restrictions based on position
       if (position === 'mca' && !ward_id) {
         return NextResponse.json(
           { error: 'MCA candidates must be assigned to a specific ward' },
@@ -146,20 +144,57 @@ export async function POST(request: NextRequest) {
       if (!locationCheck.ok) {
         return NextResponse.json({ error: locationCheck.error }, { status: 400 })
       }
+    }
 
-      await query(
-        `INSERT INTO candidates (user_id, party_name, position, county_id, constituency_id, ward_id, is_system_user)
-         VALUES ($1, $2, $3, $4, $5, $6, true)`,
-        [
-          newUser.id,
-          body.party_name || 'Independent',
-          position,
-          county_id || null,
-          constituency_id || null,
-          ward_id || null
-        ]
+    // Normalize email and phone
+    const normalizedEmail = normalizeEmail(email)
+    const normalizedPhone = normalizePhoneNumber(phone)
+
+    // Check if user exists
+    const existingUser = await queryOne(
+      'SELECT id FROM users WHERE email = $1 OR phone = $2 OR id_number = $3',
+      [normalizedEmail, normalizedPhone, id_number]
+    )
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'User with this email, phone, or ID number already exists' },
+        { status: 409 }
       )
     }
+
+    // Hash password
+    const passwordHash = await hashPassword(password)
+
+    // The user and the candidate profile are created together: a failure
+    // leaves neither behind.
+    const newUser = await transaction(async (client) => {
+      const created = (
+        await client.query(
+          `INSERT INTO users (email, phone, password_hash, full_name, role, id_number, verified, active)
+           VALUES ($1, $2, $3, $4, $5, $6, true, true)
+           RETURNING id, email, phone, full_name, role, verified, active, created_at`,
+          [normalizedEmail, normalizedPhone, passwordHash, full_name, role, id_number]
+        )
+      ).rows[0]
+
+      if (role === 'candidate') {
+        await client.query(
+          `INSERT INTO candidates (user_id, party_name, position, county_id, constituency_id, ward_id, is_system_user)
+           VALUES ($1, $2, $3, $4, $5, $6, true)`,
+          [
+            created.id,
+            body.party_name || 'Independent',
+            position,
+            county_id || null,
+            constituency_id || null,
+            ward_id || null
+          ]
+        )
+      }
+
+      return created
+    })
 
     // Audit log
     await query(
@@ -212,6 +247,17 @@ export async function PUT(request: NextRequest) {
     const currentUser = await queryOne('SELECT * FROM users WHERE id = $1', [user_id])
     if (!currentUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // An admin cannot deactivate their own account here (the bulk routes
+    // already refuse it): a sole admin would lock everyone out. Because the
+    // caller is always an active admin, this also guarantees at least one
+    // active admin remains after any change made through this route.
+    if (currentUser.id === decoded.userId && active === false) {
+      return NextResponse.json(
+        { error: 'You cannot deactivate your own account' },
+        { status: 400 }
+      )
     }
 
     // Admins can reset the password of any account without knowing the old
