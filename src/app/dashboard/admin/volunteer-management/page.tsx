@@ -32,6 +32,12 @@ interface Volunteer {
   password_set?: boolean
 }
 
+const UNVERIFIED_VOLUNTEER_WARNING =
+  'The name, email, phone and ID number on a volunteer registration are not verified, and the ' +
+  'volunteer may have chosen their own password. Anyone could have registered in someone ' +
+  "else's name. Confirm each volunteer's identity, for example by calling the phone number, " +
+  'before approving: an approved volunteer can sign in and submit results.'
+
 export default function VolunteerManagement() {
   const router = useRouter()
   const [volunteers, setVolunteers] = useState<Volunteer[]>([])
@@ -103,6 +109,15 @@ export default function VolunteerManagement() {
   }, [router, fetchVolunteers])
 
   const handleStatusUpdate = async (volunteerId: number, status: string, notes?: string) => {
+    // The public form does not verify the email or phone, and a volunteer can
+    // choose their own password. Approving turns the registration into an
+    // observer account that submits results, so the admin confirms first.
+    if (
+      status === 'approved' &&
+      !window.confirm(UNVERIFIED_VOLUNTEER_WARNING + '\n\nApprove this volunteer?')
+    ) {
+      return
+    }
     try {
       const token = localStorage.getItem('token')
       const response = await fetch(`/api/admin/volunteers/${volunteerId}/status`, {
@@ -872,6 +887,11 @@ export default function VolunteerManagement() {
                       : 'Deleted volunteers will be permanently removed from the system. This action cannot be undone.'
                     }
                   </p>
+                  {bulkActionType === 'approve' && (
+                    <p className="mb-4 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                      {UNVERIFIED_VOLUNTEER_WARNING}
+                    </p>
+                  )}
                 </div>
 
                 {bulkActionType !== 'delete' && (
