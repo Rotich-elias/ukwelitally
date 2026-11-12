@@ -779,6 +779,45 @@ function importHandler(db: FakeDb): QueryHandler {
         return []
       }
 
+      // The duplicate ward repair.
+      if (sql.startsWith('SELECT w.id, w.code, w.name, w.constituency_id')) {
+        const countyId = params.length ? Number(params[0]) : undefined
+        return db.wards
+          .filter((ward) => countyId === undefined || ward.county_id === countyId)
+          .map((ward) => ({
+            ...ward,
+            constituency_name:
+              db.constituencies.find((c) => c.id === ward.constituency_id)?.name ?? null,
+            county_name: db.counties.find((c) => c.id === ward.county_id)?.name ?? null,
+            station_count: db.stations.filter((st) => st.ward_id === ward.id).length,
+          }))
+      }
+
+      if (sql.includes('GROUP BY name, COALESCE(stream')) {
+        const ids: number[] = params[0]
+        const seen = new Set<string>()
+        for (const station of db.stations.filter((st) => ids.includes(st.ward_id))) {
+          const key = `${station.name}::${station.stream ?? ''}`
+          if (seen.has(key)) return [{ name: station.name, stream: station.stream ?? '' }]
+          seen.add(key)
+        }
+        return []
+      }
+
+      if (sql.startsWith('UPDATE polling_stations SET ward_id')) {
+        const [keeper, ids] = params as [number, number[]]
+        for (const station of db.stations) {
+          if (ids.includes(station.ward_id)) station.ward_id = keeper
+        }
+        return []
+      }
+
+      if (sql.startsWith('DELETE FROM wards WHERE id = ANY')) {
+        const ids: number[] = params[0]
+        db.wards = db.wards.filter((ward) => !ids.includes(ward.id))
+        return []
+      }
+
       return []
     },
   }
@@ -1518,5 +1557,53 @@ describe('the import matches the official ward', () => {
     expect(body.created).toBe(1)
     expect(db.wards.filter((ward) => /oldo/i.test(ward.name))).toHaveLength(1)
     expect(db.stations.find((station) => station.code === 'NEW777')?.ward_id).toBe(2690)
+  })
+})
+
+describe('the import cleans up duplicate wards', () => {
+  it('removes the empty copy once the stations land on the official ward', async () => {
+    db.wards.push(
+      { id: 2670, constituency_id: 628, county_id: 201, name: "Sang'alo West", code: '1103' },
+      { id: 2671, constituency_id: 628, county_id: 201, name: "WEST SANG'ALO", code: 'WESTSANGALO' }
+    )
+    const csv = [
+      HEADER,
+      "Nairobi\tTest Constituency\tWEST SANG'ALO\tSNG001\tSangalo Hall\t1\tSangalo Primary\t300",
+    ].join('\n')
+
+    const preview = await (
+      await importPost(importRequest('polling_stations', true, csv, ADMIN, 'update') as any)
+    ).json()
+    expect(preview.wards_to_merge).toBe(1)
+    expect(db.wards.some((ward) => ward.id === 2671)).toBe(true)
+
+    const response = await importPost(
+      importRequest('polling_stations', false, csv, ADMIN, 'update') as any
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.wards_merged).toBe(1)
+    expect(body.merged_wards[0].keeper.code).toBe('1103')
+    expect(db.wards.some((ward) => ward.id === 2671)).toBe(false)
+    expect(db.stations.find((station) => station.code === 'SNG001')?.ward_id).toBe(2670)
+  })
+
+  it('leaves the duplicate wards of another county to a county replacement', async () => {
+    db.counties.push({ id: 202, name: 'Isiolo', code: 'ISL' })
+    db.constituencies.push({ id: 629, county_id: 202, name: 'Isiolo North', code: 'IN' })
+    db.wards.push(
+      { id: 2680, constituency_id: 629, county_id: 202, name: 'Oldonyiro', code: '0247' },
+      { id: 2681, constituency_id: 629, county_id: 202, name: 'OLDO/NYIRO', code: 'OLDONYIRO' }
+    )
+
+    const response = await importPost(
+      importRequest('polling_stations', false, STATIONS_CSV) as any
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.wards_merged).toBe(0)
+    expect(db.wards.some((ward) => ward.id === 2681)).toBe(true)
   })
 })

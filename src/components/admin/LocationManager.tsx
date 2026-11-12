@@ -594,6 +594,19 @@ export default function LocationManager() {
                       ...(importResult.outside_county !== undefined
                         ? [['Other counties (ignored)', importResult.outside_county]]
                         : []),
+                      ...(importResult.wards_to_merge !== undefined ||
+                      importResult.wards_merged !== undefined
+                        ? [
+                            [
+                              importResult.dry_run
+                                ? 'Duplicate wards to merge'
+                                : 'Duplicate wards merged',
+                              importResult.wards_to_merge ??
+                                importResult.wards_merged ??
+                                0,
+                            ],
+                          ]
+                        : []),
                       ['With errors', importResult.error_rows ?? importResult.errors?.length ?? 0],
                     ] as Array<[string, number]>
                   ).map(([label, value]) => (
@@ -617,9 +630,9 @@ export default function LocationManager() {
                   {importResult.kept?.length ? ` · kept ${importResult.kept.length}` : ''}
                 </p>
               )}
-              {importResult.groups?.length > 0 && (
+              {(importResult.groups ?? importResult.merged_wards)?.length > 0 && (
                 <div className="mt-2 max-h-64 overflow-y-auto space-y-1">
-                  {importResult.groups.map((group: any) => (
+                  {(importResult.groups ?? importResult.merged_wards).map((group: any) => (
                     <p key={group.keeper.id} className="text-xs text-dark-300">
                       {group.removed
                         .map((ward: any) => `${ward.name} (${ward.code})`)
@@ -632,9 +645,13 @@ export default function LocationManager() {
                   ))}
                 </div>
               )}
-              {importResult.groups && importResult.kept?.length > 0 && (
+              {(importResult.groups ? importResult.kept : importResult.wards_not_merged)
+                ?.length > 0 && (
                 <div className="mt-2 space-y-1">
-                  {importResult.kept.map((entry: any, i: number) => (
+                  {(importResult.groups
+                    ? importResult.kept
+                    : importResult.wards_not_merged
+                  ).map((entry: any, i: number) => (
                     <p key={i} className="text-xs text-yellow-300">
                       Not merged: {entry.name}: {entry.reason}
                     </p>

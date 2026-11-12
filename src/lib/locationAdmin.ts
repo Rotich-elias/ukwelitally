@@ -773,6 +773,10 @@ export interface ImportSummary {
   county_name?: string
   /** The rows of the file that belong to another county and were ignored. */
   outside_county?: number
+  /** The duplicate wards removed after the stations were written. */
+  wards_merged?: number
+  merged_wards?: DuplicateWardGroup[]
+  wards_not_merged?: Array<{ name: string; reason: string }>
   skipped: number
   errors: Array<{ row: number; message: string }>
 }
@@ -845,6 +849,9 @@ export interface ImportPreview {
   county_name?: string
   /** The rows of the file that belong to another county and are ignored. */
   outside_county?: number
+  /** The duplicate wards the import would merge after writing. */
+  wards_to_merge?: number
+  merged_wards?: DuplicateWardGroup[]
   skip: number
   error_rows: number
   warning_rows: number
@@ -2556,6 +2563,16 @@ export async function importPollingStationsFromCsv(
     })
   }
 
+  // An earlier import may have created a copy of an official ward under a
+  // spelling the matching did not recognise then ("WEST SANG'ALO" for
+  // "Sang'alo West"). The stations of this file now land on the official
+  // ward, so the copies are merged into it and removed. A county replacement
+  // only cleans up its own county.
+  const wards = await mergeDuplicateWards(actor, false, county?.id)
+  summary.wards_merged = wards.merged
+  summary.merged_wards = wards.groups
+  summary.wards_not_merged = wards.kept
+
   return summary
 }
 
@@ -2594,10 +2611,16 @@ export async function previewPollingStationsImport(
   const countyStations = county
     ? cache.stations.filter((station) => station.county_id === county.id).length
     : 0
+  const duplicateWards = await findDuplicateWards(county?.id)
 
   return {
     ...summarisePreview('polling_stations', rows),
     deleted: county && hasWrites ? countyStations : 0,
+    wards_to_merge: duplicateWards.reduce(
+      (total, group) => total + group.removed.length,
+      0
+    ),
+    merged_wards: duplicateWards,
     ...(county
       ? {
           county_id: county.id,
@@ -2755,7 +2778,9 @@ function pickKeeperWard(wards: DuplicateWard[]): DuplicateWard {
  * "WEST SANG'ALO"), or once the spaces are removed too ("Oldonyiro" and
  * "OLDO/NYIRO").
  */
-export async function findDuplicateWards(): Promise<DuplicateWardGroup[]> {
+export async function findDuplicateWards(
+  countyId?: number
+): Promise<DuplicateWardGroup[]> {
   const wards = await queryMany<
     DuplicateWard & { constituency_name: string | null; county_name: string | null }
   >(
@@ -2766,7 +2791,9 @@ export async function findDuplicateWards(): Promise<DuplicateWardGroup[]> {
        FROM wards w
        LEFT JOIN constituencies c ON c.id = w.constituency_id
        LEFT JOIN counties co ON co.id = w.county_id
-      ORDER BY w.id`
+      ${countyId !== undefined ? 'WHERE w.county_id = $1' : ''}
+      ORDER BY w.id`,
+    countyId !== undefined ? [countyId] : []
   )
 
   // Two wards are the same when they share any of their name keys, so the
@@ -2828,13 +2855,14 @@ export async function findDuplicateWards(): Promise<DuplicateWardGroup[]> {
  */
 export async function mergeDuplicateWards(
   actor: { userId: number; ipAddress?: string | null },
-  dryRun = true
+  dryRun = true,
+  countyId?: number
 ): Promise<{
   merged: number
   groups: DuplicateWardGroup[]
   kept: Array<{ name: string; reason: string }>
 }> {
-  const found = await findDuplicateWards()
+  const found = await findDuplicateWards(countyId)
   const groups: DuplicateWardGroup[] = []
   const kept: Array<{ name: string; reason: string }> = []
   let merged = 0

@@ -175,6 +175,10 @@ async function handlePost(req: NextRequest) {
                   : ''
               }`
             : ''
+        }${
+          preview.wards_to_merge
+            ? `; ${preview.wards_to_merge} duplicate ward(s) will be merged into the official ward`
+            : ''
         }. Nothing was written.`,
         ...preview,
       })
@@ -194,6 +198,10 @@ async function handlePost(req: NextRequest) {
       } created, ${summary.updated} updated, ${summary.skipped} skipped${
         summary.outside_county
           ? `, ${summary.outside_county} row(s) of other counties ignored`
+          : ''
+      }${
+        summary.wards_merged
+          ? `, ${summary.wards_merged} duplicate ward(s) merged`
           : ''
       }`,
       total_rows: summary.created + summary.updated + summary.skipped,
