@@ -100,8 +100,8 @@ async function main() {
     console.log('📝 CSV FORMAT EXAMPLE:');
     console.log('='.repeat(70));
     console.log('full_name,email,phone,id_number,candidate_id,polling_station_id,is_primary,password');
-    console.log('John Doe,john.doe@example.com,+254712345678,12345678,1,1,true,Agent123!');
-    console.log('Jane Smith,jane.smith@example.com,+254723456789,23456789,1,2,true,Agent123!');
+    console.log('John Doe,john.doe@example.com,+254712345678,12345678,1,1,true,');
+    console.log('Jane Smith,jane.smith@example.com,+254723456789,23456789,1,2,true,');
     console.log();
 
     console.log('📌 FIELD DESCRIPTIONS:');
@@ -113,7 +113,7 @@ async function main() {
     console.log('  candidate_id         - ID of the candidate this agent works for');
     console.log('  polling_station_id   - ID of the polling station assigned');
     console.log('  is_primary           - true (primary agent) or false (backup agent)');
-    console.log('  password             - Login password (optional, defaults to Agent123!)');
+    console.log('  password             - Login password (optional, a secure one is generated when empty)');
     console.log();
 
     console.log('💾 TEMPLATE FILE:');

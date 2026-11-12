@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs'
+import { randomInt } from 'crypto'
 import jwt from 'jsonwebtoken'
 import { JWTPayload, AuthUser, UserRole } from '@/types/database'
 import { getJwtSecret, isJwtSecretConfigured } from '@/lib/jwtSecret'
@@ -143,6 +144,33 @@ export function isStrongPassword(password: string): {
     valid: errors.length === 0,
     errors,
   }
+}
+
+// Generate a random password that satisfies isStrongPassword. Ambiguous
+// characters (0/O, 1/l/I) are left out because the password is usually read
+// out or typed by the person it is given to.
+export function generateSecurePassword(length = 12): string {
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+  const lower = 'abcdefghijkmnopqrstuvwxyz'
+  const digits = '23456789'
+  const symbols = '!@#$%&*'
+  const all = upper + lower + digits + symbols
+  const pick = (chars: string) => chars[randomInt(chars.length)]
+  const chars = [pick(upper), pick(lower), pick(digits), pick(symbols)]
+  while (chars.length < length) chars.push(pick(all))
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomInt(i + 1)
+    ;[chars[i], chars[j]] = [chars[j], chars[i]]
+  }
+  return chars.join('')
+}
+
+// Example passwords that were published in templates and documentation.
+// They are refused even though they meet the strength rules.
+const PUBLISHED_PASSWORDS = new Set(['agent123!', 'admin123', 'pass1234', 'password123'])
+
+export function isPublishedPassword(password: string): boolean {
+  return PUBLISHED_PASSWORDS.has(password.trim().toLowerCase())
 }
 
 // Generate OTP (for phone verification)

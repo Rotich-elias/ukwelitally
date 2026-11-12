@@ -1,4 +1,4 @@
 full_name,email,phone,id_number,candidate,county,constituency,ward,polling_station,stream,is_primary,password
-John Doe,john.doe@example.com,254712345678,12345678,,Nairobi,Westlands,Parklands/Highridge,Westlands Primary School,1,true,Agent123!
-Jane Smith,jane.smith@example.com,254723456789,23456789,,Nairobi,Westlands,Parklands/Highridge,Westlands Primary School,2,true,Agent123!
-Peter Kamau,peter.kamau@example.com,254734567890,34567890,,Nairobi,Westlands,Parklands/Highridge,Westlands Primary School,1,false,Agent123!
+John Doe,john.doe@example.com,254712345678,12345678,,Nairobi,Westlands,Parklands/Highridge,Westlands Primary School,1,true,
+Jane Smith,jane.smith@example.com,254723456789,23456789,,Nairobi,Westlands,Parklands/Highridge,Westlands Primary School,2,true,
+Peter Kamau,peter.kamau@example.com,254734567890,34567890,,Nairobi,Westlands,Parklands/Highridge,Westlands Primary School,1,false,

@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, transaction } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
-import { hashPassword, normalizePhoneNumber } from '@/lib/auth'
+import {
+  generateSecurePassword,
+  hashPassword,
+  isPublishedPassword,
+  isStrongPassword,
+  normalizePhoneNumber,
+} from '@/lib/auth'
 import { getAssignmentScope, isStationInScope } from '@/lib/agentScope'
 import { parseCsv, readCsvHeaders } from '@/lib/locationAdmin'
 import {
@@ -178,6 +184,22 @@ async function handlePost(req: NextRequest) {
         return
       }
 
+      // A password in the file must meet the same policy as every other
+      // password, and may not be a published example.
+      if (row.password) {
+        if (isPublishedPassword(row.password)) {
+          errors.push(
+            `Row ${rowNumber}${who}: The password '${row.password}' is a published example and cannot be used. Leave the column empty to generate one.`
+          )
+          return
+        }
+        const strength = isStrongPassword(row.password)
+        if (!strength.valid) {
+          errors.push(`Row ${rowNumber}${who}: ${strength.errors.join('. ')}`)
+          return
+        }
+      }
+
       const candidate = resolveCandidate(row)
       if ('error' in candidate) {
         errors.push(`Row ${rowNumber}${who}: ${candidate.error}`)
@@ -288,6 +310,7 @@ async function handlePost(req: NextRequest) {
       let deleted = 0
       let skipped = 0
       const skippedList: string[] = []
+      const credentials: Array<{ full_name: string; email: string; phone: string; password: string }> = []
       const replaces = mode === 'replace'
 
       // Replace mode clears the agent assignments of the candidates in the
@@ -428,8 +451,15 @@ async function handlePost(req: NextRequest) {
           continue
         }
 
-        // New account. A file without a password gets the documented default.
-        const passwordHash = await hashPassword(agent.password || 'Agent123!')
+        // New account. A file without a password gets a random one, returned
+        // once in the response so it can be shared with the agent. It is never
+        // stored in plain text. (A shared default password let anyone who
+        // knew an agent's email sign in as them.)
+        const password = agent.password || generateSecurePassword()
+        if (!agent.password) {
+          credentials.push({ full_name: agent.full_name, email: agent.email, phone: normalizedPhone, password })
+        }
+        const passwordHash = await hashPassword(password)
 
         // Create user
         const userResult = await client.query(
@@ -451,7 +481,7 @@ async function handlePost(req: NextRequest) {
         imported++
       }
 
-      return { imported, updated, deleted, skipped, skippedList }
+      return { imported, updated, deleted, skipped, skippedList, credentials }
     })
 
     // Audit log
@@ -481,6 +511,8 @@ async function handlePost(req: NextRequest) {
       deleted: result.deleted,
       skipped: result.skipped,
       skippedList: result.skippedList,
+      // Generated passwords, shown once. Not written to the audit log.
+      credentials: result.credentials,
       errors: errors.length > 0 ? errors : null,
     })
   } catch (error) {

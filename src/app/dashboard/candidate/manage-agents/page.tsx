@@ -193,6 +193,29 @@ export default function ManageAgentsPage() {
     }
   }
 
+  // Save the generated sign-in details as a CSV file in the browser. Nothing
+  // is sent anywhere. Cells that a spreadsheet would read as a formula are
+  // prefixed with an apostrophe.
+  const downloadCredentials = (
+    credentials: Array<{ full_name: string; email: string; phone: string; password: string }>
+  ) => {
+    const cell = (value: string) => {
+      const safe = /^[=+\-@]/.test(value) ? `'${value}` : value
+      return `"${safe.replace(/"/g, '""')}"`
+    }
+    const lines = [
+      'full_name,email,phone,password',
+      ...credentials.map((c) => [c.full_name, c.email, c.phone, c.password].map(cell).join(',')),
+    ]
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'agent-sign-in-details.csv'
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="min-h-screen bg-dark-950">
       <DashboardNav />
@@ -518,6 +541,10 @@ export default function ManageAgentsPage() {
                     and stream instead of the names.
                   </p>
                   <p>Leave the candidate column empty: agents are added to your own team.</p>
+                  <p>
+                    Leave the password column empty to have a secure password generated for
+                    each new agent; you can download them after the import.
+                  </p>
                 </div>
               </div>
 
@@ -623,6 +650,48 @@ export default function ManageAgentsPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* Generated passwords, shown once */}
+                  {importResult.credentials && importResult.credentials.length > 0 && (
+                    <div className="bg-amber-500/10 border border-amber-500/40 rounded-lg p-4">
+                      <p className="text-amber-300 font-semibold mb-1">
+                        🔑 Sign-in details for {importResult.credentials.length} new agent
+                        {importResult.credentials.length === 1 ? '' : 's'}
+                      </p>
+                      <p className="text-dark-300 text-xs mb-3">
+                        These passwords were generated because the file had none. They are shown
+                        only now: download them before closing this window and share each one
+                        privately with its agent.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => downloadCredentials(importResult.credentials)}
+                        className="mb-3 px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 rounded-lg text-sm"
+                      >
+                        ⬇️ Download sign-in details (CSV)
+                      </button>
+                      <div className="max-h-48 overflow-y-auto">
+                        <table className="w-full text-xs text-dark-200">
+                          <thead>
+                            <tr className="text-left text-dark-400">
+                              <th className="py-1 pr-2">Name</th>
+                              <th className="py-1 pr-2">Email</th>
+                              <th className="py-1">Password</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {importResult.credentials.map((c: any) => (
+                              <tr key={c.email} className="border-t border-white/[0.05]">
+                                <td className="py-1 pr-2">{c.full_name}</td>
+                                <td className="py-1 pr-2">{c.email}</td>
+                                <td className="py-1 font-mono">{c.password}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Skipped Items */}
                   {importResult.skippedList && importResult.skippedList.length > 0 && (
