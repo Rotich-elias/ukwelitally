@@ -156,8 +156,13 @@ connection strings:
 # Pooled for the app, direct for migrations
 DATABASE_URL='postgresql://user:pass@ep-xxx-pooler.region.neon.tech/neondb?sslmode=require' \
 DATABASE_URL_DIRECT='postgresql://user:pass@ep-xxx.region.neon.tech/neondb?sslmode=require' \
+BOOTSTRAP_ADMIN_PASSWORD='<a strong password>' \
   node scripts/bootstrap-db.js
 ```
+
+The admin password is required and has no default. It must be at least 12
+characters with an uppercase letter, a lowercase letter, a digit and a symbol.
+Setting it through `BOOTSTRAP_ADMIN_PASSWORD` keeps it out of your shell history.
 
 This will:
 
@@ -168,8 +173,8 @@ This will:
 Options:
 
 ```bash
-# Use a different admin email/password
-node scripts/bootstrap-db.js --admin-email you@example.com --admin-password 'YourPassword123'
+# Use a different admin email
+BOOTSTRAP_ADMIN_PASSWORD='<a strong password>' node scripts/bootstrap-db.js --admin-email you@example.com
 
 # Skip creating the admin account
 node scripts/bootstrap-db.js --skip-admin
@@ -216,7 +221,7 @@ curl https://ukwelitally.vercel.app/api/results/aggregate?position=president
 # Login should succeed
 curl -X POST https://ukwelitally.vercel.app/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"admin@ukwelitally.com","password":"Admin123"}'
+  -d '{"email":"<admin email>","password":"<admin password>"}'
 ```
 
 Then sign in at `https://ukwelitally.vercel.app/login`.

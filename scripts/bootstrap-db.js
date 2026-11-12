@@ -13,7 +13,10 @@
  * Flags:
  *   --skip-admin     do not create the admin account
  *   --admin-email    email for the admin account (default admin@ukwelitally.com)
- *   --admin-password password for the admin account (default Admin123)
+ *   --admin-password password for the admin account. Required unless
+ *                    --skip-admin is given; BOOTSTRAP_ADMIN_PASSWORD can be
+ *                    used instead so the password stays out of shell history.
+ *                    It must meet the same policy as scripts/seed-admin.js.
  */
 
 const fs = require('fs')
@@ -130,6 +133,26 @@ async function seedGeography(pool) {
   })
 }
 
+// The same policy as scripts/seed-admin.js. There is deliberately no default
+// password: a published default such as "Admin123" lets anyone sign in as the
+// administrator of a database that was bootstrapped without one.
+const PASSWORD_MIN_LENGTH = 12
+const WEAK_PASSWORDS = new Set([
+  'admin123', 'admin1234', 'admin12345', 'password', 'password1', 'password123',
+  'changeme', 'ukwelitally', 'qwerty123', 'letmein', 'welcome1', 'agent123!',
+])
+
+function passwordProblems(password) {
+  const problems = []
+  if (password.length < PASSWORD_MIN_LENGTH) problems.push(`at least ${PASSWORD_MIN_LENGTH} characters`)
+  if (!/[A-Z]/.test(password)) problems.push('an uppercase letter')
+  if (!/[a-z]/.test(password)) problems.push('a lowercase letter')
+  if (!/[0-9]/.test(password)) problems.push('a digit')
+  if (!/[^A-Za-z0-9]/.test(password)) problems.push('a symbol')
+  if (WEAK_PASSWORDS.has(password.toLowerCase())) problems.push('it is not a commonly used password')
+  return problems
+}
+
 async function seedAdmin(pool, email, password) {
   const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email])
   if (existing.rows.length > 0) {
@@ -153,6 +176,33 @@ async function main() {
   console.log('\n🚀 Bootstrapping UkweliTally database\n')
   console.log('=====================================\n')
 
+  // Check the admin password before touching the database, so a missing or
+  // weak password never leaves a half-bootstrapped database behind.
+  let adminEmail = null
+  let adminPassword = null
+  if (!hasFlag('--skip-admin')) {
+    adminEmail = flagValue('--admin-email', 'admin@ukwelitally.com')
+    adminPassword = flagValue('--admin-password', process.env.BOOTSTRAP_ADMIN_PASSWORD || '')
+    if (!adminPassword) {
+      console.error(
+        '❌ An admin password is required. Pass --admin-password <password>, set\n' +
+          '   BOOTSTRAP_ADMIN_PASSWORD, or use --skip-admin and run scripts/seed-admin.js.\n' +
+          '   Nothing was changed.\n'
+      )
+      process.exitCode = 1
+      return
+    }
+    const problems = passwordProblems(adminPassword)
+    if (problems.length > 0) {
+      console.error(
+        '❌ The admin password does not meet the policy. It needs ' +
+          problems.join(', ') + '.\n   Nothing was changed.\n'
+      )
+      process.exitCode = 1
+      return
+    }
+  }
+
   console.log('1. Running migrations...')
   await runMigrations()
 
@@ -162,11 +212,9 @@ async function main() {
     console.log('\n2. Seeding electoral geography...')
     await seedGeography(pool)
 
-    if (!hasFlag('--skip-admin')) {
-      const email = flagValue('--admin-email', 'admin@ukwelitally.com')
-      const password = flagValue('--admin-password', 'Admin123')
+    if (adminPassword) {
       console.log('\n3. Creating admin account...')
-      await seedAdmin(pool, email, password)
+      await seedAdmin(pool, adminEmail, adminPassword)
     }
 
     const counts = await pool.query(`

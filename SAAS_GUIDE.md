@@ -25,8 +25,10 @@ Admin (You)
 ### 1. Login as Admin
 
 **Admin Credentials:**
-- Email: `admin@ukwelitally.com`
-- Password: `Admin123`
+- Email: the admin email given to `scripts/bootstrap-db.js` or `scripts/seed-admin.js`
+  (default `admin@ukwelitally.com`)
+- Password: the password you chose when running that script. There is no
+  default password.
 
 **Login URL:** http://localhost:3000/login
 

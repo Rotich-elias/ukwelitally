@@ -557,7 +557,7 @@ Quick summary:
    local filesystem is ephemeral on Vercel
 4. Bootstrap the database:
    ```bash
-   DATABASE_URL='postgresql://...' npm run db:bootstrap
+   DATABASE_URL='postgresql://...' BOOTSTRAP_ADMIN_PASSWORD='<a strong password>' npm run db:bootstrap
    ```
    This applies all migrations, loads the Kenya electoral geography and
    creates the first admin account
