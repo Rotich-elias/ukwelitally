@@ -859,7 +859,10 @@ export async function resolveSubmissionConflict(params: {
       return { ok: false as const, message: 'Conflict not found', code: 'not_found' }
     }
 
-    if (conflict.status === 'resolved') {
+    // Both outcomes are final. 'confirmed_error' is what accept_agent writes;
+    // treating only 'resolved' as final let a conflict be re-resolved without
+    // limit, flipping the selected result back and forth.
+    if (conflict.status === 'resolved' || conflict.status === 'confirmed_error') {
       return {
         ok: false as const,
         message: 'This conflict has already been resolved.',
@@ -892,6 +895,52 @@ export async function resolveSubmissionConflict(params: {
         ok: false as const,
         message: 'The conflict has no agent submission to resolve.',
         code: 'conflict',
+      }
+    }
+
+    // Only the submissions the conflict is about can be selected, and only in
+    // a state that may count: an approved, current agent primary result, or a
+    // real observer submission for the fallback. Selecting a pending agent
+    // result dropped the station from the tally, and a second agent result
+    // stored in the backup slot could be selected under the observer label.
+    const candidatesResult = await client.query<{
+      id: number
+      status: string
+      submission_origin: string
+      submission_type: string
+      superseded_by_submission_id: number | null
+    }>(
+      `SELECT id, status, submission_origin, submission_type, superseded_by_submission_id
+         FROM submissions
+        WHERE id = ANY($1::int[])`,
+      [[agentSubmissionId, observerSubmissionId].filter((id): id is number => Boolean(id))]
+    )
+    const byId = new Map(candidatesResult.rows.map((row) => [row.id, row]))
+
+    if (params.action === 'accept_agent') {
+      const agentSubmission = byId.get(agentSubmissionId)
+      if (
+        !agentSubmission ||
+        agentSubmission.submission_origin !== 'agent' ||
+        agentSubmission.submission_type !== 'primary' ||
+        agentSubmission.status !== 'verified' ||
+        agentSubmission.superseded_by_submission_id
+      ) {
+        return {
+          ok: false as const,
+          message:
+            'The agent result can only be accepted once it is approved and is the latest version.',
+          code: 'conflict',
+        }
+      }
+    } else {
+      const observerSubmission = observerSubmissionId ? byId.get(observerSubmissionId) : undefined
+      if (!observerSubmission || observerSubmission.submission_origin !== 'observer') {
+        return {
+          ok: false as const,
+          message: 'This conflict has no observer result to keep.',
+          code: 'conflict',
+        }
       }
     }
 
