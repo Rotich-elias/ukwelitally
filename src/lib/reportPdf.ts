@@ -177,12 +177,13 @@ function drawLetterhead(doc: jsPDF, logo: string | null) {
   doc.setFontSize(8.5)
   doc.setTextColor('#e0e7ff')
   doc.setFont('helvetica', 'bold')
-  doc.text(BRAND.election, PAGE_WIDTH - MARGIN, 12.5, { align: 'right' })
+  doc.text(BRAND.election, PAGE_WIDTH - MARGIN, 10.5, { align: 'right' })
   doc.setFont('helvetica', 'normal')
   doc.setTextColor('#ffffff')
-  doc.text(BRAND.email, PAGE_WIDTH - MARGIN, 18, { align: 'right' })
-  doc.text(`WhatsApp: ${BRAND.phone}`, PAGE_WIDTH - MARGIN, 23, { align: 'right' })
-  doc.text(brandWebsiteLabel(), PAGE_WIDTH - MARGIN, 28, { align: 'right' })
+  doc.text(BRAND.email, PAGE_WIDTH - MARGIN, 15.5, { align: 'right' })
+  doc.text(BRAND.altEmail, PAGE_WIDTH - MARGIN, 20, { align: 'right' })
+  doc.text(`WhatsApp: ${BRAND.phone}`, PAGE_WIDTH - MARGIN, 24.5, { align: 'right' })
+  doc.text(brandWebsiteLabel(), PAGE_WIDTH - MARGIN, 29, { align: 'right' })
 
   // Accent strip under the band.
   doc.setFillColor('#10b981')
@@ -428,7 +429,7 @@ function drawFooters(doc: jsPDF, logo: string | null) {
     doc.setFontSize(7.5)
     doc.setTextColor(COLORS.muted)
     doc.text(
-      `${BRAND.name} — ${BRAND.tagline}  |  ${BRAND.email}  |  WhatsApp: ${BRAND.phone}`,
+      `${BRAND.name} — Powered by ${BRAND.poweredBy.name}  |  ${BRAND.email}  |  WhatsApp: ${BRAND.phone}`,
       textX,
       FOOTER_Y
     )
@@ -609,7 +610,7 @@ export async function buildElectionReportPdf(data: ElectionReportData): Promise<
     sourceNote +
       `This report was generated from the ${BRAND.name} Election Results System and reflects the figures submitted by agents at the time of generation. ` +
       `Percentages are calculated from the valid votes cast at the polling stations that have reported so far. ` +
-      `Please verify all data before making public announcements. For inquiries contact ${BRAND.email} | WhatsApp: ${BRAND.phone}.`,
+      `Please verify all data before making public announcements. For inquiries contact ${BRAND.email} or ${BRAND.altEmail} | WhatsApp: ${BRAND.phone}.`,
     CONTENT_WIDTH - 8
   ) as string[]
 

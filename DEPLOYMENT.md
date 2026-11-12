@@ -102,7 +102,7 @@ an `sslmode` is already present. `DATABASE_SSL` overrides the detection
 | `DATABASE_URL` | pooled connection string | **Required** |
 | `DATABASE_URL_DIRECT` | direct connection string | Recommended, used for migrations |
 | `JWT_SECRET` | `openssl rand -base64 32` | **Required.** Generate a new one for production |
-| `NEXT_PUBLIC_APP_URL` | `https://ukwelitally.vercel.app` | Used to build absolute URLs |
+| `NEXT_PUBLIC_APP_URL` | `https://ukwelitally.teto.co.ke` | Used to build absolute URLs |
 | `BLOB_READ_WRITE_TOKEN` | set automatically by Vercel Blob | Or see option B below |
 | `DATABASE_SSL` | `require` | Only if your provider needs it explicitly |
 | `DATABASE_POOL_MAX` | `5` | Connections per function instance |
@@ -216,15 +216,15 @@ npx vercel
 
 ```bash
 # Public results should return JSON, not an error
-curl https://ukwelitally.vercel.app/api/results/aggregate?position=president
+curl https://ukwelitally.teto.co.ke/api/results/aggregate?position=president
 
 # Login should succeed
-curl -X POST https://ukwelitally.vercel.app/api/auth/login \
+curl -X POST https://ukwelitally.teto.co.ke/api/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"<admin email>","password":"<admin password>"}'
 ```
 
-Then sign in at `https://ukwelitally.vercel.app/login`.
+Then sign in at `https://ukwelitally.teto.co.ke/login`.
 
 ---
 

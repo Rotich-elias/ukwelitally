@@ -613,6 +613,15 @@ export default function CandidateDashboard() {
                   elgeiy8@gmail.com
                 </a>
                 <a
+                  href="mailto:tetoteknologies@gmail.com"
+                  className="w-full flex items-center justify-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg px-4 py-2.5 transition-colors text-sm font-medium"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  tetoteknologies@gmail.com
+                </a>
+                <a
                   href="https://wa.me/254721237811"
                   target="_blank"
                   rel="noopener noreferrer"

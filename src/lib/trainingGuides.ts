@@ -25,7 +25,7 @@ export interface TrainingGuide {
   checklist: string[]
 }
 
-const SUPPORT = `Support: ${'elgeiy8@gmail.com'} · ${'0721 237 811'}`
+const SUPPORT = `Support: ${'elgeiy8@gmail.com'} or ${'tetoteknologies@gmail.com'} · ${'0721 237 811'}`
 
 export const TRAINING_GUIDES: Record<TrainingRole, TrainingGuide> = {
   admin: {

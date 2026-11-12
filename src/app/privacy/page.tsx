@@ -145,6 +145,10 @@ export default function PrivacyPolicyPage() {
           To exercise a right, email{' '}
           <a href="mailto:elgeiy8@gmail.com" className="font-medium text-brand-300 hover:text-brand-200">
             elgeiy8@gmail.com
+          </a>{' '}
+          or{' '}
+          <a href="mailto:tetoteknologies@gmail.com" className="font-medium text-brand-300 hover:text-brand-200">
+            tetoteknologies@gmail.com
           </a>
           . We may need to verify your identity before acting on a request, and we will respond
           within the period required by law.

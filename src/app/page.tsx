@@ -5,6 +5,7 @@ import Link from 'next/link'
 import PublicNav from '@/components/PublicNav'
 import InstallAppButton from '@/components/InstallAppButton'
 import { trackEvent } from '@/lib/analytics'
+import PoweredBy from '@/components/PoweredBy'
 
 const stats = [
   { value: '47', label: 'Counties covered' },
@@ -667,7 +668,7 @@ export default function Home() {
                 observers. Not affiliated with IEBC.
               </p>
               <p className="mt-4 text-xs text-dark-600">
-                © {new Date().getFullYear()} UkweliTally. Built for Kenyan elections.
+                © {new Date().getFullYear()} UkweliTally. Built for Kenyan elections. <PoweredBy />
               </p>
             </div>
 
@@ -741,6 +742,16 @@ export default function Home() {
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-white">Email</p>
                   <p className="truncate text-sm text-dark-400">elgeiy8@gmail.com</p>
+                </div>
+              </a>
+
+              <a href="mailto:tetoteknologies@gmail.com" className="group flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 transition-colors hover:border-brand-400/30 hover:bg-white/[0.045]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-300">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white">Alternative email</p>
+                  <p className="truncate text-sm text-dark-400">tetoteknologies@gmail.com</p>
                 </div>
               </a>
 

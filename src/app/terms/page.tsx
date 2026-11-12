@@ -172,7 +172,11 @@ export default function TermsPage() {
           <a href="mailto:elgeiy8@gmail.com" className="font-medium text-brand-300 hover:text-brand-200">
             elgeiy8@gmail.com
           </a>{' '}
-          or raised by phone on{' '}
+          (alternative:{' '}
+          <a href="mailto:tetoteknologies@gmail.com" className="font-medium text-brand-300 hover:text-brand-200">
+            tetoteknologies@gmail.com
+          </a>
+          ) or raised by phone on{' '}
           <a href="tel:+254721237811" className="font-medium text-brand-300 hover:text-brand-200">
             +254 721 237811
           </a>

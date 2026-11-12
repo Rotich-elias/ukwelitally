@@ -81,7 +81,11 @@ function drawFooter(doc: jsPDF, page: number, total: number, logo: string | null
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7.5)
   setText(doc, COLORS.muted)
-  doc.text(`${BRAND.name} training guide · ${brandWebsiteLabel()}`, textX, FOOTER_Y)
+  doc.text(
+    `${BRAND.name} training guide · ${brandWebsiteLabel()} · Powered by ${BRAND.poweredBy.name}`,
+    textX,
+    FOOTER_Y
+  )
   doc.text(`Page ${page} of ${total}`, PAGE_WIDTH - MARGIN, FOOTER_Y, { align: 'right' })
 }
 

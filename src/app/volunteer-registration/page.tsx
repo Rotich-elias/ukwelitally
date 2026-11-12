@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import PublicNav from '@/components/PublicNav'
 import PageHeader from '@/components/PageHeader'
 import LocationSelector from '@/components/LocationSelector'
+import PoweredBy from '@/components/PoweredBy'
 
 const benefits = [
   {
@@ -429,7 +430,7 @@ export default function VolunteerRegistrationPage() {
                 affiliated with IEBC.
               </p>
               <p className="mt-4 text-xs text-dark-600">
-                © {new Date().getFullYear()} UkweliTally. Built for Kenyan elections.
+                © {new Date().getFullYear()} UkweliTally. Built for Kenyan elections. <PoweredBy />
               </p>
             </div>
 

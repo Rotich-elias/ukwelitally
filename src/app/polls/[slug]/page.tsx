@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import PublicNav from '@/components/PublicNav'
 import { SITE_NAME } from '@/lib/site'
+import PoweredBy from '@/components/PoweredBy'
 
 interface PollOption {
   id: number
@@ -393,7 +394,7 @@ export default function PublicPollPage() {
       <footer className="mt-10 border-t border-white/[0.06] bg-dark-950/50">
         <div className="mx-auto flex max-w-3xl flex-col gap-3 px-4 py-8 text-xs text-dark-400 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p className="text-dark-500">
-            © {new Date().getFullYear()} UkweliTally. Not affiliated with IEBC.
+            © {new Date().getFullYear()} UkweliTally. Not affiliated with IEBC. <PoweredBy />
           </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link href="/" className="transition-colors hover:text-white">Home</Link>

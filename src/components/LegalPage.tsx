@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import PublicNav from '@/components/PublicNav'
+import PoweredBy from '@/components/PoweredBy'
 
 interface LegalPageProps {
   title: string
@@ -36,7 +37,11 @@ export default function LegalPage({ title, intro, updated, children }: LegalPage
             <a href="mailto:elgeiy8@gmail.com" className="font-medium text-brand-300 hover:text-brand-200">
               elgeiy8@gmail.com
             </a>{' '}
-            or{' '}
+            (alternative:{' '}
+            <a href="mailto:tetoteknologies@gmail.com" className="font-medium text-brand-300 hover:text-brand-200">
+              tetoteknologies@gmail.com
+            </a>)
+            {' '}or{' '}
             <a href="tel:+254721237811" className="font-medium text-brand-300 hover:text-brand-200">
               +254 721 237811
             </a>
@@ -48,7 +53,7 @@ export default function LegalPage({ title, intro, updated, children }: LegalPage
       <footer className="border-t border-white/[0.06] bg-dark-950/50">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-dark-400 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="text-xs text-dark-500">
-            © {new Date().getFullYear()} UkweliTally. Not affiliated with IEBC.
+            © {new Date().getFullYear()} UkweliTally. Not affiliated with IEBC. <PoweredBy />
           </p>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <Link href="/" className="transition-colors hover:text-white">Home</Link>

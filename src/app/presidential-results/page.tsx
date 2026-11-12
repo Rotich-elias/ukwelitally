@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import PublicNav from '@/components/PublicNav'
 import PageHeader from '@/components/PageHeader'
+import PoweredBy from '@/components/PoweredBy'
 
 interface ResultsData {
   candidate_name: string
@@ -307,7 +308,7 @@ export default function PresidentialResultsPage() {
                 affiliated with IEBC.
               </p>
               <p className="mt-4 text-xs text-dark-600">
-                © {new Date().getFullYear()} UkweliTally. Built for Kenyan elections.
+                © {new Date().getFullYear()} UkweliTally. Built for Kenyan elections. <PoweredBy />
               </p>
             </div>
 

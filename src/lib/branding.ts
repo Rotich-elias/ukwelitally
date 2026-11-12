@@ -11,10 +11,21 @@ export const BRAND = {
   election: 'Kenya 2027 Elections',
   /** Support email shown on the letterhead and in the footer. */
   email: 'elgeiy8@gmail.com',
+  /** Alternative support email (Teto Technologies). */
+  altEmail: 'tetoteknologies@gmail.com',
   /** Support phone / WhatsApp number. */
   phone: '0721 237 811',
-  /** Public URL of the deployed platform. */
-  website: process.env.NEXT_PUBLIC_APP_URL || 'https://ukwelitally.vercel.app',
+  /**
+   * Public URL of the platform, printed on documents. Always the official
+   * domain: documents are shared outside the site, so they must not show a
+   * local development or preview address.
+   */
+  website: 'https://ukwelitally.teto.co.ke',
+  /** The company that builds and runs the platform. */
+  poweredBy: {
+    name: 'Teto Technologies',
+    email: 'tetoteknologies@gmail.com',
+  },
   /** Brand emblem served from the public folder. */
   logoUrl: '/icons/icon-192x192.png',
 } as const
