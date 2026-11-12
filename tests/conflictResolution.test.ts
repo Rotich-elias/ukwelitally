@@ -8,6 +8,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const executed: Array<{ text: string; params?: any[] }> = []
 let conflict: Record<string, unknown>
 let submissions: Array<Record<string, unknown>>
+// Who approved the station's current (fallback) result.
+let approvedBy: number | null
 
 function run(text: string, params?: any[]) {
   executed.push({ text, params })
@@ -15,6 +17,7 @@ function run(text: string, params?: any[]) {
   if (/FROM discrepancies/.test(text)) rows = [conflict]
   else if (/FROM candidates c/.test(text)) rows = [{ '?column?': 1 }] // in scope
   else if (/FROM submissions\s+WHERE id = ANY/.test(text)) rows = submissions
+  else if (/SELECT approved_by FROM selected_results/.test(text)) rows = [{ approved_by: approvedBy }]
   return { rows, rowCount: rows.length }
 }
 
@@ -49,6 +52,33 @@ describe('resolveSubmissionConflict', () => {
     executed.length = 0
     conflict = { id: 9, polling_station_id: 7, position: 'president', primary_submission_id: 1, backup_submission_id: 2, status: 'open' }
     submissions = [AGENT, OBSERVER]
+    approvedBy = 100 // the resolving candidate's own approval
+  })
+
+  it("refuses to let a candidate change a result another candidate approved", async () => {
+    approvedBy = 200
+    for (const action of ['accept_agent', 'keep_fallback'] as const) {
+      executed.length = 0
+      const result = await resolve(action)
+      expect(result.ok).toBe(false)
+      expect(result.code).toBe('needs_admin')
+      expect(selected()).toBe(false)
+    }
+  })
+
+  it('lets an administrator change a result another candidate approved', async () => {
+    approvedBy = 200
+    const result = await resolveSubmissionConflict({
+      conflictId: 9,
+      candidateId: null,
+      asAdmin: true,
+      actorId: 1,
+      action: 'accept_agent',
+    })
+    expect(result.ok).toBe(true)
+    expect(selected()).toBe(true)
+    // An administrator is not limited to a candidate's area.
+    expect(executed.some((q) => /FROM candidates c/.test(q.text))).toBe(false)
   })
 
   it('accepts an approved, current agent result', async () => {

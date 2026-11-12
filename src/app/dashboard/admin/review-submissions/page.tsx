@@ -38,6 +38,16 @@ interface ReviewSubmission {
   }>
 }
 
+interface ResultConflict {
+  id: number
+  polling_station_name: string
+  position: string
+  agent_name: string | null
+  observer_name: string | null
+  approved_by_name: string | null
+  selected_source: string | null
+}
+
 export default function ReviewSubmissionsPage() {
   const router = useRouter()
   const [submissions, setSubmissions] = useState<ReviewSubmission[]>([])
@@ -47,6 +57,9 @@ export default function ReviewSubmissionsPage() {
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
   const [reviewNotes, setReviewNotes] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [conflicts, setConflicts] = useState<ResultConflict[]>([])
+  const [conflictWorkingId, setConflictWorkingId] = useState<number | null>(null)
 
   // Check authorization - Allow admins and candidates
   useEffect(() => {
@@ -61,7 +74,55 @@ export default function ReviewSubmissionsPage() {
       router.push('/dashboard')
       return
     }
+    setIsAdmin(user.role === 'admin')
   }, [router])
+
+  // Conflicts between an agent result and an approved observer fallback.
+  // Candidates resolve the ones they approved themselves; changing a result
+  // approved by another candidate is left to an administrator, here.
+  const fetchConflicts = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/candidates/submission-conflicts?status=open', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setConflicts(data.conflicts || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch conflicts:', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isAdmin) fetchConflicts()
+  }, [isAdmin, fetchConflicts])
+
+  const resolveConflict = async (conflict: ResultConflict, action: 'accept_agent' | 'keep_fallback') => {
+    const question =
+      action === 'accept_agent'
+        ? `Use the agent result for ${conflict.polling_station_name}? The approved observer fallback is kept on record but no longer counts.`
+        : `Keep the approved observer fallback as the result for ${conflict.polling_station_name}?`
+    if (!window.confirm(question)) return
+
+    setConflictWorkingId(conflict.id)
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`/api/candidates/submission-conflicts/${conflict.id}/resolve`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        alert(`Error: ${data.error || 'The conflict could not be resolved'}`)
+      }
+      await fetchConflicts()
+    } finally {
+      setConflictWorkingId(null)
+    }
+  }
 
   const fetchSubmissions = useCallback(async () => {
     setLoading(true)
@@ -161,6 +222,50 @@ export default function ReviewSubmissionsPage() {
           title="Review Submissions"
           description="Review and approve pending submissions, with anomalies and flagged results surfaced first."
         />
+
+        {isAdmin && conflicts.length > 0 && (
+          <div className="glass-effect rounded-2xl p-6 mb-8 border border-orange-500/30">
+            <h2 className="text-lg font-bold text-white mb-1">Result conflicts</h2>
+            <p className="text-sm text-dark-300 mb-4">
+              An agent result arrived for a station where an observer fallback was already
+              approved. Candidates decide the ones they approved; the ones marked below were
+              approved by another candidate and need your decision.
+            </p>
+            <div className="space-y-3">
+              {conflicts.map((conflict) => (
+                <div
+                  key={conflict.id}
+                  className="bg-white/[0.03] border border-orange-500/30 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3"
+                >
+                  <div>
+                    <p className="text-white font-medium">{conflict.polling_station_name}</p>
+                    <p className="text-xs text-dark-400">
+                      {conflict.position.toUpperCase()} · agent: {conflict.agent_name || 'unknown'} ·
+                      observer: {conflict.observer_name || 'unknown'} · fallback approved by:{' '}
+                      {conflict.approved_by_name || 'unknown'}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => resolveConflict(conflict, 'accept_agent')}
+                      disabled={conflictWorkingId === conflict.id}
+                      className="btn-primary text-xs py-2 disabled:opacity-50"
+                    >
+                      Use agent result
+                    </button>
+                    <button
+                      onClick={() => resolveConflict(conflict, 'keep_fallback')}
+                      disabled={conflictWorkingId === conflict.id}
+                      className="btn-secondary text-xs py-2 disabled:opacity-50"
+                    >
+                      Keep fallback
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Filter Tabs */}
         <div className="mb-6 inline-flex flex-wrap gap-1 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-1.5">

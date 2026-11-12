@@ -21,23 +21,30 @@ async function handlePost(req: NextRequest, context?: any) {
   try {
     const user = (req as any).user
 
-    if (user.role !== 'candidate') {
+    // A candidate makes the first decision; changing a result another
+    // candidate approved is left to an administrator, who can resolve any
+    // conflict.
+    const isAdmin = user.role === 'admin'
+    if (user.role !== 'candidate' && !isAdmin) {
       return NextResponse.json(
-        { error: 'Only candidates can resolve submission conflicts' },
+        { error: 'Only candidates and administrators can resolve submission conflicts' },
         { status: 403 }
       )
     }
 
-    const candidate = await getCandidateProfile(user.userId)
-    if (!candidate) {
-      return NextResponse.json({ error: 'Candidate profile not found' }, { status: 404 })
-    }
+    let candidate: Awaited<ReturnType<typeof getCandidateProfile>> = null
+    if (!isAdmin) {
+      candidate = await getCandidateProfile(user.userId)
+      if (!candidate) {
+        return NextResponse.json({ error: 'Candidate profile not found' }, { status: 404 })
+      }
 
-    if (candidate.access_status !== 'active') {
-      return NextResponse.json(
-        { error: 'Your subscription is not active. Contact an administrator to restore access.' },
-        { status: 403 }
-      )
+      if (candidate.access_status !== 'active') {
+        return NextResponse.json(
+          { error: 'Your subscription is not active. Contact an administrator to restore access.' },
+          { status: 403 }
+        )
+      }
     }
 
     const params = await Promise.resolve(context?.params ?? {})
@@ -59,7 +66,8 @@ async function handlePost(req: NextRequest, context?: any) {
 
     const result = await resolveSubmissionConflict({
       conflictId,
-      candidateId: candidate.id,
+      candidateId: candidate?.id ?? null,
+      asAdmin: isAdmin,
       actorId: user.userId,
       action,
       reason,
@@ -76,7 +84,7 @@ async function handlePost(req: NextRequest, context?: any) {
       action: `submission_conflict_${action}`,
       entityType: 'discrepancy',
       entityId: conflictId,
-      newValues: { candidate_id: candidate.id, reason: reason ?? null },
+      newValues: { candidate_id: candidate?.id ?? null, as_admin: isAdmin, reason: reason ?? null },
       ipAddress,
       userAgent,
     })

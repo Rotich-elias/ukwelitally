@@ -829,7 +829,10 @@ export async function recordAgentFallbackConflict(params: {
  */
 export async function resolveSubmissionConflict(params: {
   conflictId: number
-  candidateId: number
+  /** The resolving candidate; null when an administrator resolves. */
+  candidateId: number | null
+  /** An administrator may resolve any conflict. */
+  asAdmin?: boolean
   actorId: number
   action: 'accept_agent' | 'keep_fallback'
   reason?: string | null
@@ -870,20 +873,44 @@ export async function resolveSubmissionConflict(params: {
       }
     }
 
-    // A candidate may only resolve conflicts in the race and electoral area
-    // they own. Without this check any candidate could resolve (and thereby
-    // rewrite the selected result of) another candidate's station.
-    const ownsScope = await candidateOwnsStationScope(
-      client,
-      params.candidateId,
-      conflict.polling_station_id,
-      conflict.position
-    )
-    if (!ownsScope) {
-      return {
-        ok: false as const,
-        message: 'This conflict is outside the electoral area you are responsible for.',
-        code: 'not_in_scope',
+    if (!params.asAdmin) {
+      // A candidate may only resolve conflicts in the race and electoral area
+      // they own. Without this check any candidate could resolve (and thereby
+      // rewrite the selected result of) another candidate's station.
+      const ownsScope =
+        params.candidateId !== null &&
+        (await candidateOwnsStationScope(
+          client,
+          params.candidateId,
+          conflict.polling_station_id,
+          conflict.position
+        ))
+      if (!ownsScope) {
+        return {
+          ok: false as const,
+          message: 'This conflict is outside the electoral area you are responsible for.',
+          code: 'not_in_scope',
+        }
+      }
+
+      // The station's result is shared by every candidate in the race. The
+      // first decision is open to any of them, but changing a result another
+      // candidate approved needs an administrator; otherwise rivals could
+      // keep overriding each other's decisions.
+      const selected = await client.query<{ approved_by: number | null }>(
+        `SELECT approved_by FROM selected_results
+          WHERE polling_station_id = $1 AND position = $2
+          FOR UPDATE`,
+        [conflict.polling_station_id, conflict.position]
+      )
+      const approvedBy = selected.rows[0]?.approved_by ?? null
+      if (approvedBy !== null && approvedBy !== params.actorId) {
+        return {
+          ok: false as const,
+          message:
+            'This result was approved by another candidate. Only an administrator can change it.',
+          code: 'needs_admin',
+        }
       }
     }
 

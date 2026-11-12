@@ -15,23 +15,29 @@ async function handleGet(req: NextRequest) {
   try {
     const user = (req as any).user
 
-    if (user.role !== 'candidate') {
+    // An administrator sees every conflict, so they can decide the ones a
+    // candidate may not: changing a result another candidate approved.
+    const isAdmin = user.role === 'admin'
+    if (user.role !== 'candidate' && !isAdmin) {
       return NextResponse.json(
-        { error: 'Only candidates can view submission conflicts' },
+        { error: 'Only candidates and administrators can view submission conflicts' },
         { status: 403 }
       )
     }
 
-    const candidate = await getCandidateProfile(user.userId)
-    if (!candidate) {
-      return NextResponse.json({ error: 'Candidate profile not found' }, { status: 404 })
-    }
+    let candidate: Awaited<ReturnType<typeof getCandidateProfile>> = null
+    if (!isAdmin) {
+      candidate = await getCandidateProfile(user.userId)
+      if (!candidate) {
+        return NextResponse.json({ error: 'Candidate profile not found' }, { status: 404 })
+      }
 
-    if (candidate.access_status !== 'active') {
-      return NextResponse.json(
-        { error: 'Your subscription is not active. Contact an administrator to restore access.' },
-        { status: 403 }
-      )
+      if (candidate.access_status !== 'active') {
+        return NextResponse.json(
+          { error: 'Your subscription is not active. Contact an administrator to restore access.' },
+          { status: 403 }
+        )
+      }
     }
 
     const { searchParams } = new URL(req.url)
@@ -39,8 +45,9 @@ async function handleGet(req: NextRequest) {
     const status =
       statusParam === 'resolved' || statusParam === 'all' ? statusParam : 'open'
 
-    const scope =
-      candidate.position === 'mca' && candidate.ward_id
+    const scope = !candidate
+      ? { clause: '1=1', params: [] as any[] }
+      : candidate.position === 'mca' && candidate.ward_id
         ? { clause: 'ps.ward_id = $1', params: [candidate.ward_id] }
         : candidate.position === 'mp' && candidate.constituency_id
           ? { clause: 'ps.constituency_id = $1', params: [candidate.constituency_id] }
@@ -75,7 +82,9 @@ async function handleGet(req: NextRequest) {
          agent_user.full_name as agent_name,
          observer_user.full_name as observer_name,
          sel.source as selected_source,
-         sel.submission_id as selected_submission_id
+         sel.submission_id as selected_submission_id,
+         sel.approved_by as selected_approved_by,
+         approver.full_name as approved_by_name
        FROM discrepancies d
        JOIN polling_stations ps ON ps.id = d.polling_station_id
        LEFT JOIN wards w ON w.id = ps.ward_id
@@ -88,18 +97,32 @@ async function handleGet(req: NextRequest) {
        LEFT JOIN selected_results sel
          ON sel.polling_station_id = d.polling_station_id
         AND sel.position = d.position
+       LEFT JOIN users approver ON approver.id = sel.approved_by
        WHERE d.discrepancy_type = 'agent_vs_backup'
          AND ${scope.clause}
          -- Only the candidate's own race: an MCA candidate must not see the
          -- presidential or governor conflicts of the stations in their ward.
-         AND d.position = $${scope.params.length + 1}
+         AND ($${scope.params.length + 1}::text IS NULL OR d.position = $${scope.params.length + 1})
          ${statusCondition}
        ORDER BY d.created_at DESC
-       LIMIT 100`,
-      [...scope.params, candidate.position]
+       LIMIT 200`,
+      [...scope.params, candidate?.position ?? null]
     )
 
-    return NextResponse.json({ success: true, conflicts, count: conflicts.length })
+    // Whether the viewer may resolve the conflict themselves. A candidate
+    // may only change a result they approved (or one nobody approved); the
+    // rest is shown with a note that an administrator decides.
+    const withPermissions = conflicts.map(({ selected_approved_by, ...conflict }: any) => ({
+      ...conflict,
+      can_resolve:
+        isAdmin || selected_approved_by === null || selected_approved_by === user.userId,
+    }))
+
+    return NextResponse.json({
+      success: true,
+      conflicts: withPermissions,
+      count: withPermissions.length,
+    })
   } catch (error) {
     console.error('Error fetching submission conflicts:', error)
     return NextResponse.json(

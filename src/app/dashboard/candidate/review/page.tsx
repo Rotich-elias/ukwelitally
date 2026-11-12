@@ -57,6 +57,8 @@ interface Conflict {
   observer_name: string | null
   status: string
   selected_source: string | null
+  approved_by_name?: string | null
+  can_resolve?: boolean
   created_at: string
 }
 
@@ -229,8 +231,9 @@ export default function ObserverReviewPage() {
           <div className="glass-effect rounded-2xl p-6 mb-8 border border-orange-500/30">
             <h2 className="text-lg font-bold text-white mb-1">Conflicts to resolve</h2>
             <p className="text-sm text-dark-300 mb-4">
-              An agent result arrived for a station where you already approved an observer
-              fallback. The approved fallback was not replaced. Choose which result stands.
+              An agent result arrived for a station where an observer fallback was already
+              approved. The approved fallback was not replaced. If you approved it, choose which
+              result stands; a result approved by another candidate is decided by an administrator.
             </p>
             <div className="space-y-3">
               {conflicts.map((conflict) => (
@@ -248,22 +251,29 @@ export default function ObserverReviewPage() {
                         : 'agent result'}
                     </p>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => resolveConflict(conflict, 'accept_agent')}
-                      disabled={workingId === conflict.id}
-                      className="btn-primary text-xs py-2 disabled:opacity-50"
-                    >
-                      Use agent result
-                    </button>
-                    <button
-                      onClick={() => resolveConflict(conflict, 'keep_fallback')}
-                      disabled={workingId === conflict.id}
-                      className="btn-secondary text-xs py-2 disabled:opacity-50"
-                    >
-                      Keep fallback
-                    </button>
-                  </div>
+                  {conflict.can_resolve === false ? (
+                    <p className="text-xs text-amber-300 max-w-xs">
+                      Approved by {conflict.approved_by_name || 'another candidate'}. Only an
+                      administrator can change this result.
+                    </p>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => resolveConflict(conflict, 'accept_agent')}
+                        disabled={workingId === conflict.id}
+                        className="btn-primary text-xs py-2 disabled:opacity-50"
+                      >
+                        Use agent result
+                      </button>
+                      <button
+                        onClick={() => resolveConflict(conflict, 'keep_fallback')}
+                        disabled={workingId === conflict.id}
+                        className="btn-secondary text-xs py-2 disabled:opacity-50"
+                      >
+                        Keep fallback
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
