@@ -218,11 +218,19 @@ export default function LocationSelector({
 
   const selectClassName = "w-full px-4 py-3 bg-white/[0.025] border border-white/[0.07] rounded-lg text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
 
+  const visibleFieldCount = [showCounty, showConstituency, showWard, showPollingStations].filter(Boolean).length
+  const inlineGridClassName =
+    visibleFieldCount >= 4
+      ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'
+      : visibleFieldCount === 3
+        ? 'grid grid-cols-1 gap-3 sm:grid-cols-3'
+        : 'grid grid-cols-1 gap-3 sm:grid-cols-2'
+
   return (
     <div
       className={
         variant === 'inline'
-          ? 'grid grid-cols-1 gap-3 sm:grid-cols-3'
+          ? inlineGridClassName
           : 'space-y-4'
       }
     >

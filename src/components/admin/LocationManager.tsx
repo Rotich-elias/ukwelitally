@@ -56,6 +56,9 @@ interface WardOption {
 
 type Tab = 'wards' | 'stations' | 'import'
 
+type SortKey = 'name' | 'code' | 'area' | 'registered_voters' | 'count'
+type SortDirection = 'asc' | 'desc'
+
 type ImportPhase = 'idle' | 'uploading' | 'processing'
 
 /** A byte count as a short size for the progress line, e.g. "1.2 MB". */
@@ -132,6 +135,8 @@ export default function LocationManager() {
   const [constituencyId, setConstituencyId] = useState('')
   const [wardId, setWardId] = useState('')
   const [search, setSearch] = useState('')
+  const [sortKey, setSortKey] = useState<SortKey>('name')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -302,6 +307,94 @@ export default function LocationManager() {
         ? constituencies.filter((c) => String(c.county_id) === countyId)
         : constituencies,
     [constituencies, countyId]
+  )
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortDirection('asc')
+    }
+  }
+
+  const sortedRecords = useMemo(() => {
+    const records: Array<Ward | Station> = tab === 'stations' ? stations : wards
+
+    const areaValue = (record: Ward | Station) =>
+      (tab === 'stations'
+        ? [
+            (record as Station).county_name,
+            (record as Station).constituency_name,
+            (record as Station).ward_name,
+          ]
+        : [(record as Ward).county_name, (record as Ward).constituency_name]
+      )
+        .map((part) => part || '')
+        .join('|')
+        .toLowerCase()
+
+    return [...records].sort((a, b) => {
+      let aValue: string | number
+      let bValue: string | number
+
+      switch (sortKey) {
+        case 'code':
+          aValue = a.code.toLowerCase()
+          bValue = b.code.toLowerCase()
+          break
+        case 'area':
+          aValue = areaValue(a)
+          bValue = areaValue(b)
+          break
+        case 'registered_voters':
+          aValue = Number(a.registered_voters || 0)
+          bValue = Number(b.registered_voters || 0)
+          break
+        case 'count':
+          aValue =
+            tab === 'stations'
+              ? Number((a as Station).submission_count || 0)
+              : Number((a as Ward).station_count || 0)
+          bValue =
+            tab === 'stations'
+              ? Number((b as Station).submission_count || 0)
+              : Number((b as Ward).station_count || 0)
+          break
+        case 'name':
+        default:
+          aValue = a.name.toLowerCase()
+          bValue = b.name.toLowerCase()
+          break
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [tab, wards, stations, sortKey, sortDirection])
+
+  const renderSortHeader = (label: string, key: SortKey) => (
+    <button
+      type="button"
+      onClick={() => handleSort(key)}
+      className={`inline-flex items-center gap-1.5 uppercase transition-colors ${
+        sortKey === key ? 'text-white' : 'text-dark-300 hover:text-white'
+      }`}
+      title={`Sort by ${label.toLowerCase()}`}
+    >
+      {label}
+      <svg
+        className={`h-3 w-3 transition-transform ${
+          sortKey === key ? 'opacity-100' : 'opacity-40'
+        } ${sortKey === key && sortDirection === 'desc' ? 'rotate-180' : ''}`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" />
+      </svg>
+    </button>
   )
 
   return (
@@ -776,19 +869,19 @@ export default function LocationManager() {
                 <thead className="bg-white/[0.03] border-b border-white/[0.07]">
                   <tr>
                     <th className="px-5 py-3 text-left text-xs font-medium text-dark-300 uppercase">
-                      {tab === 'stations' ? 'Station' : 'Ward'}
+                      {renderSortHeader(tab === 'stations' ? 'Station' : 'Ward', 'name')}
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-medium text-dark-300 uppercase">
-                      Code
+                      {renderSortHeader('Code', 'code')}
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-medium text-dark-300 uppercase">
-                      Area
+                      {renderSortHeader('Area', 'area')}
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-medium text-dark-300 uppercase">
-                      Voters
+                      {renderSortHeader('Voters', 'registered_voters')}
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-medium text-dark-300 uppercase">
-                      {tab === 'stations' ? 'Submissions' : 'Stations'}
+                      {renderSortHeader(tab === 'stations' ? 'Submissions' : 'Stations', 'count')}
                     </th>
                     <th className="px-5 py-3 text-right text-xs font-medium text-dark-300 uppercase">
                       Actions
@@ -802,14 +895,14 @@ export default function LocationManager() {
                         Loading...
                       </td>
                     </tr>
-                  ) : (tab === 'stations' ? stations : wards).length === 0 ? (
+                  ) : sortedRecords.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-5 py-8 text-center text-dark-400">
                         Nothing found for these filters.
                       </td>
                     </tr>
                   ) : (
-                    (tab === 'stations' ? (stations as Station[]) : (wards as Ward[])).map(
+                    sortedRecords.map(
                       (record) => (
                         <tr key={record.id} className="hover:bg-white/[0.025]">
                           <td className="px-5 py-3 text-sm text-white">{record.name}</td>

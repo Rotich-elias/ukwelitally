@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardNav from '@/components/DashboardNav'
 import PageHeader from '@/components/PageHeader'
+import LocationSelector from '@/components/LocationSelector'
+
+type SortKey = 'full_name' | 'email' | 'location' | 'status' | 'created_at'
+type SortDirection = 'asc' | 'desc'
 
 interface Volunteer {
   id: number
@@ -38,6 +42,15 @@ export default function VolunteerManagement() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [sortKey, setSortKey] = useState<SortKey>('created_at')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [locationFilter, setLocationFilter] = useState<{
+    countyId?: number
+    constituencyId?: number
+    wardId?: number
+    pollingStationId?: number
+  }>({})
+  const [locationFilterKey, setLocationFilterKey] = useState(0)
   const [selectedVolunteers, setSelectedVolunteers] = useState<number[]>([])
   const [bulkActionLoading, setBulkActionLoading] = useState(false)
   const [showBulkNotesModal, setShowBulkNotesModal] = useState(false)
@@ -114,13 +127,6 @@ export default function VolunteerManagement() {
     }
   }
 
-  const filteredVolunteers = volunteers.filter(volunteer =>
-    volunteer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    volunteer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    volunteer.phone.includes(searchTerm) ||
-    volunteer.id_number.includes(searchTerm)
-  )
-
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { color: 'bg-yellow-500/20 text-yellow-400', label: 'Pending' },
@@ -152,6 +158,107 @@ export default function VolunteerManagement() {
     }
     return 'Not specified'
   }
+
+  const hasLocationFilter = Boolean(
+    locationFilter.countyId ||
+    locationFilter.constituencyId ||
+    locationFilter.wardId ||
+    locationFilter.pollingStationId
+  )
+
+  const getLocationSortValue = (volunteer: Volunteer) =>
+    [
+      volunteer.county_name,
+      volunteer.constituency_name,
+      volunteer.ward_name,
+      volunteer.polling_station_name,
+      volunteer.polling_station_code,
+    ]
+      .map((part) => part || '')
+      .join('|')
+      .toLowerCase()
+
+  const filteredVolunteers = volunteers.filter(volunteer => {
+    const matchesSearch =
+      volunteer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      volunteer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      volunteer.phone.includes(searchTerm) ||
+      volunteer.id_number.includes(searchTerm)
+
+    const matchesCounty = !locationFilter.countyId || volunteer.county_id === locationFilter.countyId
+    const matchesConstituency =
+      !locationFilter.constituencyId || volunteer.constituency_id === locationFilter.constituencyId
+    const matchesWard = !locationFilter.wardId || volunteer.ward_id === locationFilter.wardId
+    const matchesStation =
+      !locationFilter.pollingStationId || volunteer.polling_station_id === locationFilter.pollingStationId
+
+    return matchesSearch && matchesCounty && matchesConstituency && matchesWard && matchesStation
+  })
+
+  const sortedVolunteers = [...filteredVolunteers].sort((a, b) => {
+    let aValue: string | number
+    let bValue: string | number
+
+    switch (sortKey) {
+      case 'full_name':
+        aValue = a.full_name.toLowerCase()
+        bValue = b.full_name.toLowerCase()
+        break
+      case 'email':
+        aValue = a.email.toLowerCase()
+        bValue = b.email.toLowerCase()
+        break
+      case 'location':
+        aValue = getLocationSortValue(a)
+        bValue = getLocationSortValue(b)
+        break
+      case 'status':
+        aValue = a.status
+        bValue = b.status
+        break
+      case 'created_at':
+      default:
+        aValue = new Date(a.created_at).getTime()
+        bValue = new Date(b.created_at).getTime()
+        break
+    }
+
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+    return 0
+  })
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortDirection('asc')
+    }
+  }
+
+  const renderSortHeader = (label: string, key: SortKey) => (
+    <button
+      type="button"
+      onClick={() => handleSort(key)}
+      className={`inline-flex items-center gap-1.5 uppercase transition-colors ${
+        sortKey === key ? 'text-white' : 'text-dark-300 hover:text-white'
+      }`}
+      title={`Sort by ${label.toLowerCase()}`}
+    >
+      {label}
+      <svg
+        className={`h-3 w-3 transition-transform ${
+          sortKey === key ? 'opacity-100' : 'opacity-40'
+        } ${sortKey === key && sortDirection === 'desc' ? 'rotate-180' : ''}`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" />
+      </svg>
+    </button>
+  )
 
   const handleSelectVolunteer = (volunteerId: number) => {
     setSelectedVolunteers(prev =>
@@ -382,6 +489,37 @@ export default function VolunteerManagement() {
               ))}
             </div>
           </div>
+
+          {/* Location Filter */}
+          <div className="mt-4 border-t border-white/[0.07] pt-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-dark-400">
+                Filter by location
+              </p>
+              {hasLocationFilter && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocationFilter({})
+                    setSelectedVolunteers([])
+                    setLocationFilterKey(prev => prev + 1)
+                  }}
+                  className="text-xs font-medium text-brand-300 transition-colors hover:text-brand-200"
+                >
+                  Clear location
+                </button>
+              )}
+            </div>
+            <LocationSelector
+              key={locationFilterKey}
+              variant="inline"
+              showPollingStations
+              onLocationChange={(location) => {
+                setLocationFilter(location)
+                setSelectedVolunteers([])
+              }}
+            />
+          </div>
         </div>
   
         {/* Bulk Actions Bar */}
@@ -443,17 +581,25 @@ export default function VolunteerManagement() {
                     <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
-                        checked={selectedVolunteers.length > 0 && selectedVolunteers.length === filteredVolunteers.length}
+                        checked={selectedVolunteers.length > 0 && selectedVolunteers.length === sortedVolunteers.length}
                         onChange={handleSelectAll}
                         className="w-4 h-4 text-blue-600 bg-white/[0.06] border-white/10 rounded focus:ring-blue-500 focus:ring-2"
                       />
-                      Volunteer
+                      {renderSortHeader('Volunteer', 'full_name')}
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Contact</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Location</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Registered</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">
+                    {renderSortHeader('Contact', 'email')}
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">
+                    {renderSortHeader('Location', 'location')}
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">
+                    {renderSortHeader('Status', 'status')}
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">
+                    {renderSortHeader('Registered', 'created_at')}
+                  </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-dark-300 uppercase">Actions</th>
                 </tr>
               </thead>
@@ -464,14 +610,14 @@ export default function VolunteerManagement() {
                       Loading volunteers...
                     </td>
                   </tr>
-                ) : filteredVolunteers.length === 0 ? (
+                ) : sortedVolunteers.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-dark-400">
                       No volunteers found
                     </td>
                   </tr>
                 ) : (
-                  filteredVolunteers.map((volunteer) => (
+                  sortedVolunteers.map((volunteer) => (
                     <tr key={volunteer.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
