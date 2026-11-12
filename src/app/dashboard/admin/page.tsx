@@ -42,6 +42,32 @@ interface UserDetails extends User {
   }
 }
 
+// Generate a random password that satisfies isStrongPassword (src/lib/auth.ts).
+// Uses the Web Crypto API rather than Math.random so the result is not
+// predictable. Ambiguous characters (0/O, 1/l/I) are left out because the
+// password is usually read out or typed by the user.
+function createRandomPassword(length = 12): string {
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+  const lower = 'abcdefghijkmnopqrstuvwxyz'
+  const digits = '23456789'
+  const symbols = '!@#$%&*'
+  const all = upper + lower + digits + symbols
+  const randomIndex = (max: number) => {
+    const buf = new Uint32Array(1)
+    crypto.getRandomValues(buf)
+    return buf[0] % max
+  }
+  const pick = (chars: string) => chars[randomIndex(chars.length)]
+  // Guarantee at least one character from each class, then fill and shuffle.
+  const chars = [pick(upper), pick(lower), pick(digits), pick(symbols)]
+  while (chars.length < length) chars.push(pick(all))
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomIndex(i + 1)
+    ;[chars[i], chars[j]] = [chars[j], chars[i]]
+  }
+  return chars.join('')
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
@@ -56,6 +82,17 @@ export default function AdminDashboard() {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserDetails | null>(null)
   const [editPassword, setEditPassword] = useState('')
+  const [editError, setEditError] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+  // Shown once after an admin resets a password so it can be shared with the
+  // user. Cleared when the dialog is closed; it is never stored anywhere.
+  const [resetCredentials, setResetCredentials] = useState<{
+    full_name: string
+    email: string
+    phone: string
+    password: string
+  } | null>(null)
+  const [credentialsCopied, setCredentialsCopied] = useState(false)
   const [paymentFormData, setPaymentFormData] = useState({
     expected_payment_amount: '',
     payment_amount: '',
@@ -351,7 +388,14 @@ export default function AdminDashboard() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Import failed')
+        // Show the per-row reasons, otherwise "No valid candidates" gives the
+        // admin nothing to fix.
+        const rowErrors: string[] = Array.isArray(data.errors) ? data.errors : []
+        const details = rowErrors.slice(0, 10).join('\n')
+        const more = rowErrors.length > 10 ? `\n…and ${rowErrors.length - 10} more` : ''
+        throw new Error(
+          [data.error || 'Import failed', details + more].filter(Boolean).join('\n')
+        )
       }
 
       setImportResult(data)
@@ -408,11 +452,7 @@ export default function AdminDashboard() {
     }
   }
 
-  const generatePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    let password = 'Pass' + Math.floor(Math.random() * 9000 + 1000)
-    return password
-  }
+  const generatePassword = () => createRandomPassword()
 
   const handleLocationChange = (location: any) => {
     setFormData({
@@ -442,7 +482,7 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleEditUser = async (userId: number) => {
+  const handleEditUser = async (userId: number, options: { resetPassword?: boolean } = {}) => {
     try {
       const token = localStorage.getItem('token')
       const response = await fetch(`/api/admin/users/${userId}`, {
@@ -454,7 +494,8 @@ export default function AdminDashboard() {
       if (response.ok) {
         const data = await response.json()
         setSelectedUser(data.data)
-        setEditPassword('')
+        setEditPassword(options.resetPassword ? createRandomPassword() : '')
+        setEditError('')
         setShowEditModal(true)
       }
     } catch (error) {
@@ -462,26 +503,12 @@ export default function AdminDashboard() {
     }
   }
 
-  const generateAgentPassword = () => {
-    const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
-    const lower = 'abcdefghijkmnopqrstuvwxyz'
-    const digits = '23456789'
-    const symbols = '!@#$%&*'
-    const pick = (chars: string) => chars[Math.floor(Math.random() * chars.length)]
-    const all = upper + lower + digits + symbols
-    // Guarantee at least one character from each class, then fill and shuffle.
-    const chars = [pick(upper), pick(lower), pick(digits), pick(symbols)]
-    while (chars.length < 12) chars.push(pick(all))
-    for (let i = chars.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[chars[i], chars[j]] = [chars[j], chars[i]]
-    }
-    setEditPassword(chars.join(''))
-  }
-
   const handleSaveEdit = async () => {
     if (!selectedUser) return
 
+    const newPassword = editPassword.trim()
+    setEditError('')
+    setEditSaving(true)
     try {
       const token = localStorage.getItem('token')
       const response = await fetch('/api/admin/users', {
@@ -502,10 +529,7 @@ export default function AdminDashboard() {
               ? selectedUser.access_status || 'active'
               : undefined,
           // Leave undefined when blank so the existing password is untouched.
-          password:
-            selectedUser.role === 'agent' && editPassword.trim()
-              ? editPassword.trim()
-              : undefined,
+          password: newPassword || undefined,
         }),
       })
 
@@ -516,11 +540,36 @@ export default function AdminDashboard() {
       }
 
       setSuccess('User updated successfully')
+      if (newPassword) {
+        setCredentialsCopied(false)
+        setResetCredentials({
+          full_name: selectedUser.full_name,
+          email: selectedUser.email,
+          phone: selectedUser.phone,
+          password: newPassword,
+        })
+      }
       setShowEditModal(false)
       setEditPassword('')
       fetchUsers()
     } catch (err: any) {
-      setError(err.message || 'Failed to update user')
+      setEditError(err.message || 'Failed to update user')
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  const handleCopyCredentials = async () => {
+    if (!resetCredentials) return
+    const text =
+      `Email: ${resetCredentials.email}\n` +
+      `Phone: ${resetCredentials.phone}\n` +
+      `Password: ${resetCredentials.password}`
+    try {
+      await navigator.clipboard.writeText(text)
+      setCredentialsCopied(true)
+    } catch {
+      setCredentialsCopied(false)
     }
   }
 
@@ -1182,6 +1231,15 @@ export default function AdminDashboard() {
                             </svg>
                           </button>
                           <button
+                            onClick={() => handleEditUser(user.id, { resetPassword: true })}
+                            className="p-2 hover:bg-amber-500/20 text-amber-400 rounded-lg transition-colors"
+                            title="Reset Password"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                            </svg>
+                          </button>
+                          <button
                             onClick={() => handleDeleteUser(user)}
                             className="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
                             title="Delete User"
@@ -1581,10 +1639,14 @@ export default function AdminDashboard() {
                   <p className="font-semibold text-blue-300 mb-1">Position Requirements:</p>
                   <ul className="space-y-1">
                     <li>• <strong>President:</strong> No location required</li>
-                    <li>• <strong>Governor/Senator/Women Rep:</strong> Requires county_id</li>
-                    <li>• <strong>MP:</strong> Requires constituency_id</li>
-                    <li>• <strong>MCA:</strong> Requires ward_id</li>
+                    <li>• <strong>Governor/Senator/Women Rep:</strong> Requires county</li>
+                    <li>• <strong>MP:</strong> Requires constituency (add county if the name is not unique)</li>
+                    <li>• <strong>MCA:</strong> Requires ward, plus constituency so the ward can be told apart from wards with the same name elsewhere</li>
                   </ul>
+                  <p className="mt-2">
+                    Use location <strong>names</strong>, e.g. <em>Nairobi</em>, <em>Westlands</em>,{' '}
+                    <em>Parklands/Highridge</em>. Capitalisation and punctuation do not matter.
+                  </p>
                 </div>
               </div>
 
@@ -1670,7 +1732,7 @@ export default function AdminDashboard() {
 
               {/* Error Display */}
               {error && (
-                <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm mb-4">
+                <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm mb-4 whitespace-pre-line">
                   {error}
                 </div>
               )}
@@ -2172,8 +2234,7 @@ export default function AdminDashboard() {
                   </select>
                 </div>
 
-                {selectedUser.role === 'agent' && (
-                  <div>
+                <div>
                     <label className="block text-sm font-medium text-dark-200 mb-2">
                       New password
                     </label>
@@ -2188,19 +2249,19 @@ export default function AdminDashboard() {
                       />
                       <button
                         type="button"
-                        onClick={generateAgentPassword}
+                        onClick={() => setEditPassword(createRandomPassword())}
                         className="px-4 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg transition-colors whitespace-nowrap"
                       >
                         Generate
                       </button>
                     </div>
                     <p className="text-xs text-dark-400 mt-2">
-                      Set a new password for this agent. It must be at least 8 characters and
-                      include an uppercase letter, a lowercase letter and a number. The agent will
-                      use it the next time they sign in.
+                      Use this when a user has forgotten their password. Existing passwords are
+                      stored encrypted and cannot be viewed, so set a new one and share it with
+                      the user. It must be at least 8 characters and include an uppercase letter,
+                      a lowercase letter and a number. Saving signs the user out of all devices.
                     </p>
                   </div>
-                )}
 
                 {selectedUser.role === 'candidate' && (
                   <div>
@@ -2233,18 +2294,58 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {editError && (
+                <div className="mt-4 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
+                  {editError}
+                </div>
+              )}
+
               <div className="flex gap-4 mt-6 pt-4 border-t border-white/[0.07]">
                 <button
                   onClick={handleSaveEdit}
-                  className="flex-1 btn-primary"
+                  disabled={editSaving}
+                  className="flex-1 btn-primary disabled:opacity-60"
                 >
-                  Save Changes
+                  {editSaving ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button
                   onClick={() => setShowEditModal(false)}
                   className="px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg transition-colors"
                 >
                   Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Password Credentials Modal */}
+      {resetCredentials && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-effect rounded-2xl max-w-md w-full">
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-white mb-2">Password reset</h2>
+              <p className="text-sm text-dark-300 mb-4">
+                Share these sign-in details with {resetCredentials.full_name}. The password is
+                shown only once and cannot be viewed again after you close this window.
+              </p>
+              <div className="space-y-2 rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 font-mono text-sm text-white">
+                <p><span className="text-dark-400">Email:</span> {resetCredentials.email}</p>
+                <p><span className="text-dark-400">Phone:</span> {resetCredentials.phone}</p>
+                <p className="break-all">
+                  <span className="text-dark-400">Password:</span> {resetCredentials.password}
+                </p>
+              </div>
+              <div className="flex gap-4 mt-6">
+                <button onClick={handleCopyCredentials} className="flex-1 btn-primary">
+                  {credentialsCopied ? 'Copied' : 'Copy details'}
+                </button>
+                <button
+                  onClick={() => setResetCredentials(null)}
+                  className="px-6 py-3 bg-white/[0.06] hover:bg-white/[0.08] text-white rounded-lg transition-colors"
+                >
+                  Done
                 </button>
               </div>
             </div>

@@ -171,7 +171,16 @@ export default function ManageAgentsPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to import agents')
+        // Show the per-row reasons, otherwise "No valid agents" gives the
+        // user nothing to fix.
+        const rowErrors: string[] = Array.isArray(data.errors) ? data.errors : []
+        const details = rowErrors.slice(0, 10).join('\n')
+        const more = rowErrors.length > 10 ? `\n…and ${rowErrors.length - 10} more` : ''
+        throw new Error(
+          [data.error || 'Failed to import agents', data.hint, details + more]
+            .filter(Boolean)
+            .join('\n')
+        )
       }
 
       setImportResult(data)
@@ -497,6 +506,19 @@ export default function ManageAgentsPage() {
                 >
                   ⬇️ Download CSV Template
                 </a>
+                <div className="mt-4 text-xs text-dark-400 space-y-1">
+                  <p>
+                    Give each agent&apos;s polling station by <strong>name</strong>: county,
+                    constituency, ward, polling station and stream, spelled as in the official
+                    IEBC list (capitalisation does not matter). The stream can be left empty
+                    when the station has only one.
+                  </p>
+                  <p>
+                    Alternatively, fill in <strong>polling_station_code</strong> (the IEBC code)
+                    and stream instead of the names.
+                  </p>
+                  <p>Leave the candidate column empty: agents are added to your own team.</p>
+                </div>
               </div>
 
               {/* Import mode */}
@@ -578,7 +600,7 @@ export default function ManageAgentsPage() {
 
               {/* Error Display */}
               {error && (
-                <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm mb-4">
+                <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm mb-4 whitespace-pre-line">
                   {error}
                 </div>
               )}

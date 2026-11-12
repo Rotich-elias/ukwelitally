@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, transaction, queryOne } from '@/lib/db'
 import { withAuth } from '@/middleware/auth'
+import { parseCsv, readCsvHeaders } from '@/lib/locationAdmin'
+import {
+  resolveCandidateLocation,
+  type ConstituencyRef,
+  type CountyRef,
+  type WardRef,
+} from '@/lib/candidateImportLocation'
 
 // Generate unique candidate number
 async function generateCandidateNumber(): Promise<string> {
@@ -50,11 +57,11 @@ async function handlePost(req: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Read CSV content
+    // parseCsv handles quoted values and both comma and tab separated files.
     const content = await file.text()
-    const lines = content.split('\n').filter((line) => line.trim())
+    const rows = parseCsv(content)
 
-    if (lines.length < 2) {
+    if (rows.length < 1) {
       return NextResponse.json(
         { error: 'CSV file must have at least a header and one data row' },
         { status: 400 }
@@ -62,7 +69,7 @@ async function handlePost(req: NextRequest) {
     }
 
     // Parse header
-    const header = lines[0].split(',').map((h) => h.trim().toLowerCase())
+    const header = readCsvHeaders(content)
     const requiredColumns = ['full_name', 'position', 'party_name', 'party_abbreviation']
     const missingColumns = requiredColumns.filter((col) => !header.includes(col))
 
@@ -70,7 +77,7 @@ async function handlePost(req: NextRequest) {
       return NextResponse.json(
         {
           error: `Missing required columns: ${missingColumns.join(', ')}`,
-          hint: 'CSV must have: full_name, position, party_name, party_abbreviation, county_id (optional), constituency_id (optional), ward_id (optional)',
+          hint: 'CSV must have: full_name, position, party_name, party_abbreviation, county, constituency, ward. Location columns hold names, for example "Nairobi", "Westlands", "Parklands/Highridge".',
         },
         { status: 400 }
       )
@@ -79,104 +86,67 @@ async function handlePost(req: NextRequest) {
     // Valid positions
     const validPositions = ['president', 'governor', 'senator', 'women_rep', 'mp', 'mca']
 
+    // Location names are matched against the whole geography, which is small
+    // enough (47 counties, ~290 constituencies, ~1,450 wards) to load once.
+    const [counties, constituencies, wards] = await Promise.all([
+      query<CountyRef>('SELECT id, name FROM counties'),
+      query<ConstituencyRef>('SELECT id, name, county_id FROM constituencies'),
+      query<WardRef>('SELECT id, name, constituency_id, county_id FROM wards'),
+    ])
+    const lookup = {
+      counties: counties.rows,
+      constituencies: constituencies.rows,
+      wards: wards.rows,
+    }
+
     // Parse data rows
     const candidates: any[] = []
     const errors: string[] = []
 
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim()
-      if (!line) continue
-
-      const values = line.split(',').map((v) => v.trim())
-      const row: any = {}
-
-      header.forEach((col, index) => {
-        row[col] = values[index] || null
-      })
+    rows.forEach((row, index) => {
+      const rowNumber = index + 2
+      if (Object.values(row).every((value) => !value)) return
 
       // Validate required fields
-      if (!row.full_name) {
-        errors.push(`Row ${i + 1}: Missing full_name`)
-        continue
+      for (const column of requiredColumns) {
+        if (!row[column]) {
+          errors.push(`Row ${rowNumber}: Missing ${column}`)
+          return
+        }
       }
 
-      if (!row.position) {
-        errors.push(`Row ${i + 1}: Missing position`)
-        continue
-      }
-
-      if (!validPositions.includes(row.position.toLowerCase())) {
-        errors.push(`Row ${i + 1}: Invalid position '${row.position}'. Must be one of: ${validPositions.join(', ')}`)
-        continue
-      }
-
-      if (!row.party_name) {
-        errors.push(`Row ${i + 1}: Missing party_name`)
-        continue
-      }
-
-      if (!row.party_abbreviation) {
-        errors.push(`Row ${i + 1}: Missing party_abbreviation`)
-        continue
+      const position = row.position.toLowerCase()
+      if (!validPositions.includes(position)) {
+        errors.push(`Row ${rowNumber}: Invalid position '${row.position}'. Must be one of: ${validPositions.join(', ')}`)
+        return
       }
 
       // Validate position-specific location requirements
-      const position = row.position.toLowerCase()
-
-      // President - no location required
-      if (position === 'president') {
-        // No location validation needed
-      }
-      // Governor, Senator, Women Rep - require county_id
-      else if (['governor', 'senator', 'women_rep'].includes(position)) {
-        if (!row.county_id) {
-          errors.push(`Row ${i + 1}: ${position} requires county_id`)
-          continue
-        }
-        const countyId = parseInt(row.county_id)
-        if (isNaN(countyId)) {
-          errors.push(`Row ${i + 1}: Invalid county_id '${row.county_id}'`)
-          continue
-        }
-        row.county_id = countyId
-      }
-      // MP - requires constituency_id
-      else if (position === 'mp') {
-        if (!row.constituency_id) {
-          errors.push(`Row ${i + 1}: MP requires constituency_id`)
-          continue
-        }
-        const constituencyId = parseInt(row.constituency_id)
-        if (isNaN(constituencyId)) {
-          errors.push(`Row ${i + 1}: Invalid constituency_id '${row.constituency_id}'`)
-          continue
-        }
-        row.constituency_id = constituencyId
-      }
-      // MCA - requires ward_id
-      else if (position === 'mca') {
-        if (!row.ward_id) {
-          errors.push(`Row ${i + 1}: MCA requires ward_id`)
-          continue
-        }
-        const wardId = parseInt(row.ward_id)
-        if (isNaN(wardId)) {
-          errors.push(`Row ${i + 1}: Invalid ward_id '${row.ward_id}'`)
-          continue
-        }
-        row.ward_id = wardId
+      const resolved = resolveCandidateLocation(
+        position,
+        {
+          county: row.county ?? row.county_name,
+          constituency: row.constituency ?? row.constituency_name,
+          ward: row.ward ?? row.ward_name,
+          county_id: row.county_id,
+          constituency_id: row.constituency_id,
+          ward_id: row.ward_id,
+        },
+        lookup
+      )
+      if (!resolved.ok) {
+        errors.push(`Row ${rowNumber} (${row.full_name}): ${resolved.error}`)
+        return
       }
 
       candidates.push({
         full_name: row.full_name,
-        position: position,
+        position,
         party_name: row.party_name,
         party_abbreviation: row.party_abbreviation,
-        county_id: row.county_id || null,
-        constituency_id: row.constituency_id || null,
-        ward_id: row.ward_id || null,
+        ...resolved.location,
       })
-    }
+    })
 
     if (candidates.length === 0) {
       return NextResponse.json(
@@ -224,45 +194,6 @@ async function handlePost(req: NextRequest) {
       }
 
       for (const candidate of candidates) {
-        // Verify county exists if provided
-        if (candidate.county_id) {
-          const countyExists = await client.query(
-            'SELECT id FROM counties WHERE id = $1',
-            [candidate.county_id]
-          )
-          if (countyExists.rows.length === 0) {
-            skipped++
-            skippedList.push(`${candidate.full_name} - County ID ${candidate.county_id} not found`)
-            continue
-          }
-        }
-
-        // Verify constituency exists if provided
-        if (candidate.constituency_id) {
-          const constituencyExists = await client.query(
-            'SELECT id FROM constituencies WHERE id = $1',
-            [candidate.constituency_id]
-          )
-          if (constituencyExists.rows.length === 0) {
-            skipped++
-            skippedList.push(`${candidate.full_name} - Constituency ID ${candidate.constituency_id} not found`)
-            continue
-          }
-        }
-
-        // Verify ward exists if provided
-        if (candidate.ward_id) {
-          const wardExists = await client.query(
-            'SELECT id FROM wards WHERE id = $1',
-            [candidate.ward_id]
-          )
-          if (wardExists.rows.length === 0) {
-            skipped++
-            skippedList.push(`${candidate.full_name} - Ward ID ${candidate.ward_id} not found`)
-            continue
-          }
-        }
-
         // The natural key is the name, the position and the electoral area.
         // Two candidates with the same name in different wards are different
         // people, while a corrected party for the same person is an update.
