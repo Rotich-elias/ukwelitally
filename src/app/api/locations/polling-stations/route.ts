@@ -5,6 +5,9 @@ import { authenticateRequest } from '@/lib/authenticate'
 
 export const dynamic = 'force-dynamic'
 
+// More than the largest county has, so a county view is never cut short.
+const MAX_STATIONS = 5000
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -70,11 +73,19 @@ export async function GET(request: NextRequest) {
       params.push(countyId)
     }
 
-    if (conditions.length > 0) {
-      queryText += ` WHERE ${conditions.join(' AND ')}`
+    // This route is public. Without a filter it returned every polling
+    // station in the country with four joins, which repeated calls could use
+    // to load the database. A ward, constituency or county is now required,
+    // and even a whole county is capped.
+    if (conditions.length === 0) {
+      return NextResponse.json(
+        { error: 'Choose a ward, constituency or county (ward_id, constituency_id or county_id).' },
+        { status: 400 }
+      )
     }
 
-    queryText += ` ORDER BY ps.name ASC`
+    queryText += ` WHERE ${conditions.join(' AND ')}`
+    queryText += ` ORDER BY ps.name ASC LIMIT ${MAX_STATIONS}`
 
     const result = await query(queryText, params)
 
