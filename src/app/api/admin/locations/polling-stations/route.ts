@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/middleware/auth'
-import { listPollingStations } from '@/lib/locationAdmin'
+import { countPollingStations, listPollingStations } from '@/lib/locationAdmin'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +16,7 @@ async function handleGet(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url)
-    const stations = await listPollingStations({
+    const filters = {
       countyId: searchParams.get('county_id') ? parseInt(searchParams.get('county_id')!) : null,
       constituencyId: searchParams.get('constituency_id')
         ? parseInt(searchParams.get('constituency_id')!)
@@ -25,9 +25,19 @@ async function handleGet(req: NextRequest) {
       search: searchParams.get('search'),
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
       offset: searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : undefined,
-    })
+    }
 
-    return NextResponse.json({ success: true, stations, count: stations.length })
+    const [stations, total] = await Promise.all([
+      listPollingStations(filters),
+      countPollingStations(filters),
+    ])
+
+    return NextResponse.json({
+      success: true,
+      stations,
+      count: stations.length,
+      total,
+    })
   } catch (error) {
     console.error('Error listing polling stations:', error)
     return NextResponse.json(

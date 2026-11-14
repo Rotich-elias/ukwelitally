@@ -61,6 +61,14 @@ type SortDirection = 'asc' | 'desc'
 
 type ImportPhase = 'idle' | 'uploading' | 'processing'
 
+/**
+ * The wards are a short reference list, so the table loads all of them. The
+ * polling stations run into the tens of thousands, so that table stays capped
+ * and relies on the filters.
+ */
+const WARD_LIMIT = 5000
+const STATION_LIMIT = 300
+
 /** A byte count as a short size for the progress line, e.g. "1.2 MB". */
 function formatBytes(bytes: number): string {
   if (!bytes) return '0 B'
@@ -127,6 +135,7 @@ export default function LocationManager() {
   const [tab, setTab] = useState<Tab>('wards')
   const [wards, setWards] = useState<Ward[]>([])
   const [stations, setStations] = useState<Station[]>([])
+  const [stationTotal, setStationTotal] = useState(0)
   const [counties, setCounties] = useState<County[]>([])
   const [constituencies, setConstituencies] = useState<Constituency[]>([])
   const [wardOptions, setWardOptions] = useState<WardOption[]>([])
@@ -138,6 +147,7 @@ export default function LocationManager() {
   const [sortKey, setSortKey] = useState<SortKey>('name')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -171,13 +181,17 @@ export default function LocationManager() {
       if (constituencyId) params.set('constituency_id', constituencyId)
       if (wardId) params.set('ward_id', wardId)
       if (search.trim()) params.set('search', search.trim())
-      params.set('limit', '300')
+
+      const wardParams = new URLSearchParams(params)
+      wardParams.set('limit', String(WARD_LIMIT))
+      const stationParams = new URLSearchParams(params)
+      stationParams.set('limit', String(STATION_LIMIT))
 
       const [wardResponse, stationResponse] = await Promise.all([
-        fetch(`/api/admin/locations/wards?${params.toString()}`, {
+        fetch(`/api/admin/locations/wards?${wardParams.toString()}`, {
           headers: { Authorization: `Bearer ${token()}` },
         }),
-        fetch(`/api/admin/locations/polling-stations?${params.toString()}`, {
+        fetch(`/api/admin/locations/polling-stations?${stationParams.toString()}`, {
           headers: { Authorization: `Bearer ${token()}` },
         }),
       ])
@@ -193,6 +207,7 @@ export default function LocationManager() {
       if (stationResponse.ok) {
         const body = await stationResponse.json()
         setStations(body.stations || [])
+        setStationTotal(Number(body.total ?? body.count ?? 0))
       }
     } catch (err) {
       console.error('Failed to load the locations:', err)
@@ -201,6 +216,46 @@ export default function LocationManager() {
       setLoading(false)
     }
   }, [countyId, constituencyId, wardId, search])
+
+  /**
+   * The station table is paged: every press fetches the next slice for the
+   * current filters. The wards are a short list and load in one go.
+   */
+  const loadMoreStations = useCallback(async () => {
+    if (loading || loadingMore) return
+    setLoadingMore(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams()
+      if (countyId) params.set('county_id', countyId)
+      if (constituencyId) params.set('constituency_id', constituencyId)
+      if (wardId) params.set('ward_id', wardId)
+      if (search.trim()) params.set('search', search.trim())
+      params.set('limit', String(STATION_LIMIT))
+      params.set('offset', String(stations.length))
+
+      const response = await fetch(
+        `/api/admin/locations/polling-stations?${params.toString()}`,
+        { headers: { Authorization: `Bearer ${token()}` } }
+      )
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(body.error || 'Could not load more polling stations')
+
+      setStations((previous) => {
+        const seen = new Set(previous.map((station) => station.id))
+        return [
+          ...previous,
+          ...((body.stations || []) as Station[]).filter((station) => !seen.has(station.id)),
+        ]
+      })
+      setStationTotal(Number(body.total ?? body.count ?? 0))
+    } catch (err) {
+      console.error('Failed to load more polling stations:', err)
+      setError('Could not load more polling stations')
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [countyId, constituencyId, wardId, search, stations.length, loading, loadingMore])
 
   useEffect(() => {
     const t = token()
@@ -932,6 +987,25 @@ export default function LocationManager() {
                 </tbody>
               </table>
             </div>
+
+            {tab === 'stations' && stationTotal > 0 && (
+              <div className="flex flex-col gap-3 border-t border-white/[0.07] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-dark-300">
+                  Showing {stations.length.toLocaleString()} of{' '}
+                  {stationTotal.toLocaleString()} polling stations
+                </p>
+                {stations.length < stationTotal && (
+                  <button
+                    type="button"
+                    onClick={loadMoreStations}
+                    disabled={loadingMore || loading}
+                    className="btn-secondary text-sm py-2"
+                  >
+                    {loadingMore ? 'Loading...' : `Load ${STATION_LIMIT} more`}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </>
       )}

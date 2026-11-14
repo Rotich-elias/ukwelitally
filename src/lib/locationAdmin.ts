@@ -114,6 +114,13 @@ export interface LocationFilters {
   offset?: number
 }
 
+/**
+ * The wards are a small reference list (about 1,450 nationwide), so the admin
+ * table is allowed to load all of them at once. Polling stations are far more
+ * numerous and stay on the smaller cap.
+ */
+export const MAX_WARD_LIMIT = 5000
+
 /** A short, stable hash of a name, used to tell apart codes that share a prefix. */
 function shortHash(value: string): string {
   let hash = 0
@@ -186,7 +193,7 @@ export async function listWards(filters: LocationFilters = {}): Promise<WardRow[
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-  const limit = Math.min(Math.max(filters.limit ?? 200, 1), 1000)
+  const limit = Math.min(Math.max(filters.limit ?? 200, 1), MAX_WARD_LIMIT)
   const offset = Math.max(filters.offset ?? 0, 0)
 
   return queryMany<WardRow>(
@@ -204,11 +211,10 @@ export async function listWards(filters: LocationFilters = {}): Promise<WardRow[
 }
 
 /**
- * The polling stations, with the number of submissions at each.
+ * The conditions shared by the station list and by its total count, so the
+ * page the admin sees and the number in its footer can never disagree.
  */
-export async function listPollingStations(
-  filters: LocationFilters = {}
-): Promise<PollingStationRow[]> {
+function stationFilter(filters: LocationFilters): { where: string; params: any[] } {
   const params: any[] = []
   const conditions: string[] = []
 
@@ -231,7 +237,19 @@ export async function listPollingStations(
     params.push(`%${filters.search.trim()}%`)
   }
 
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+  return {
+    where: conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '',
+    params,
+  }
+}
+
+/**
+ * The polling stations, with the number of submissions at each.
+ */
+export async function listPollingStations(
+  filters: LocationFilters = {}
+): Promise<PollingStationRow[]> {
+  const { where, params } = stationFilter(filters)
   const limit = Math.min(Math.max(filters.limit ?? 200, 1), 1000)
   const offset = Math.max(filters.offset ?? 0, 0)
 
@@ -249,6 +267,16 @@ export async function listPollingStations(
       LIMIT ${limit} OFFSET ${offset}`,
     params
   )
+}
+
+/** How many stations the same filters select, for paging the admin table. */
+export async function countPollingStations(filters: LocationFilters = {}): Promise<number> {
+  const { where, params } = stationFilter(filters)
+  const rows = await queryMany<{ total: number }>(
+    `SELECT COUNT(*)::int AS total FROM polling_stations ps ${where}`,
+    params
+  )
+  return Number(rows[0]?.total ?? 0)
 }
 
 /* -------------------------------------------------------------------------- */
