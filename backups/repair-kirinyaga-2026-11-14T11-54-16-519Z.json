@@ -1,0 +1,216 @@
+{
+  "created_at": "2026-11-14T11:54:16.519Z",
+  "county": "Kirinyaga",
+  "plan": {
+    "county": {
+      "id": 20,
+      "name": "Kirinyaga"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 4028,
+          "name": "Kanyeki-ini",
+          "code": "0513",
+          "constituencyId": 103,
+          "constituencyName": "Kirinyaga Central",
+          "constituencyCode": "103",
+          "stations": 0,
+          "constituencyStations": 60,
+          "constituencyWards": 5,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4888,
+          "name": "KANYEKINI",
+          "code": "KANYEKINI",
+          "constituencyId": 103,
+          "constituencyName": "Kirinyaga Central",
+          "constituencyCode": "103",
+          "stations": 14,
+          "constituencyStations": 60,
+          "constituencyWards": 5,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": []
+  },
+  "wards": [
+    {
+      "id": 4028,
+      "name": "Kanyeki-ini",
+      "code": "0513",
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 0
+    },
+    {
+      "id": 4888,
+      "name": "KANYEKINI",
+      "code": "KANYEKINI",
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 21863
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 103,
+      "name": "Kirinyaga Central",
+      "code": "103",
+      "county_id": 20,
+      "registered_voters": 82049
+    }
+  ],
+  "stations": [
+    {
+      "id": 8702,
+      "name": "KIANGUNGU PRIMARY SCHOOL",
+      "code": "020103051301701",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 675
+    },
+    {
+      "id": 8703,
+      "name": "MUKINDURI PRIMARY SCHOOL",
+      "code": "020103051301801",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 2787
+    },
+    {
+      "id": 8704,
+      "name": "NJEGA PRIMARY SCHOOL",
+      "code": "020103051301901",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 1713
+    },
+    {
+      "id": 8705,
+      "name": "KIANJEGE EAST PRIMARY SCHOOL",
+      "code": "020103051302001",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 1417
+    },
+    {
+      "id": 8706,
+      "name": "KIRIMUNGE PRIMARY SCHOOL",
+      "code": "020103051302101",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 1822
+    },
+    {
+      "id": 8707,
+      "name": "NGORANO COFFEE FACTORY",
+      "code": "020103051302201",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 734
+    },
+    {
+      "id": 8708,
+      "name": "MUTITU PRIMARY SCHOOL",
+      "code": "020103051302301",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 2386
+    },
+    {
+      "id": 8709,
+      "name": "KIRIMA PRIMARY SCHOOL",
+      "code": "020103051302401",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 773
+    },
+    {
+      "id": 8710,
+      "name": "NGARU PRIMARY SCHOOL",
+      "code": "020103051302501",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 1703
+    },
+    {
+      "id": 8711,
+      "name": "GATUTO PRIMARY SCHOOL",
+      "code": "020103051302601",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 1101
+    },
+    {
+      "id": 8712,
+      "name": "GITWE PRIMARY SCHOOL",
+      "code": "020103051302701",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 1934
+    },
+    {
+      "id": 8713,
+      "name": "KIRINYAGA UNIVERSITY",
+      "code": "020103051302801",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 2121
+    },
+    {
+      "id": 8714,
+      "name": "KIAGA PRIMARY SCHOOL",
+      "code": "020103051302901",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 1830
+    },
+    {
+      "id": 8715,
+      "name": "KIAMUTHAMBI CATTLE DIP",
+      "code": "020103051303001",
+      "stream": "1",
+      "ward_id": 4888,
+      "constituency_id": 103,
+      "county_id": 20,
+      "registered_voters": 867
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}

@@ -1,0 +1,2836 @@
+{
+  "created_at": "2026-11-14T11:49:56.529Z",
+  "county": "Homa Bay",
+  "plan": {
+    "county": {
+      "id": 43,
+      "name": "Homa Bay"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 4339,
+          "name": "Gembe",
+          "code": "1255",
+          "constituencyId": 251,
+          "constituencyName": "Mbita",
+          "constituencyCode": "251",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 5,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4921,
+          "name": "GEMBE",
+          "code": "GEMBE",
+          "constituencyId": 293,
+          "constituencyName": "Suba North",
+          "constituencyCode": "SUBANORTH",
+          "stations": 25,
+          "constituencyStations": 128,
+          "constituencyWards": 5,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4340,
+          "name": "Kasgunga",
+          "code": "1254",
+          "constituencyId": 251,
+          "constituencyName": "Mbita",
+          "constituencyCode": "251",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 5,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4922,
+          "name": "KASGUNGA",
+          "code": "KASGUNGA",
+          "constituencyId": 293,
+          "constituencyName": "Suba North",
+          "constituencyCode": "SUBANORTH",
+          "stations": 20,
+          "constituencyStations": 128,
+          "constituencyWards": 5,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4341,
+          "name": "Lambwe",
+          "code": "1256",
+          "constituencyId": 251,
+          "constituencyName": "Mbita",
+          "constituencyCode": "251",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 5,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4923,
+          "name": "LAMBWE",
+          "code": "LAMBWE",
+          "constituencyId": 293,
+          "constituencyName": "Suba North",
+          "constituencyCode": "SUBANORTH",
+          "stations": 31,
+          "constituencyStations": 128,
+          "constituencyWards": 5,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4342,
+          "name": "Mfangano Island",
+          "code": "1252",
+          "constituencyId": 251,
+          "constituencyName": "Mbita",
+          "constituencyCode": "251",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 5,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4924,
+          "name": "MFANGANO ISLAND",
+          "code": "MFANGANOISLAND",
+          "constituencyId": 293,
+          "constituencyName": "Suba North",
+          "constituencyCode": "SUBANORTH",
+          "stations": 30,
+          "constituencyStations": 128,
+          "constituencyWards": 5,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4343,
+          "name": "Rusinga Island",
+          "code": "1253",
+          "constituencyId": 251,
+          "constituencyName": "Mbita",
+          "constituencyCode": "251",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 5,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4925,
+          "name": "RUSINGA ISLAND",
+          "code": "RUSINGAISLAND",
+          "constituencyId": 293,
+          "constituencyName": "Suba North",
+          "constituencyCode": "SUBANORTH",
+          "stations": 22,
+          "constituencyStations": 128,
+          "constituencyWards": 5,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4709,
+          "name": "Gwassi North",
+          "code": "1258",
+          "constituencyId": 252,
+          "constituencyName": "Suba",
+          "constituencyCode": "252",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 4,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4926,
+          "name": "GWASSI NORTH",
+          "code": "GWASSINORTH",
+          "constituencyId": 294,
+          "constituencyName": "Suba South",
+          "constituencyCode": "SUBASOUTH",
+          "stations": 30,
+          "constituencyStations": 110,
+          "constituencyWards": 4,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4710,
+          "name": "Gwassi South",
+          "code": "1257",
+          "constituencyId": 252,
+          "constituencyName": "Suba",
+          "constituencyCode": "252",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 4,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4927,
+          "name": "GWASSI SOUTH",
+          "code": "GWASSISOUTH",
+          "constituencyId": 294,
+          "constituencyName": "Suba South",
+          "constituencyCode": "SUBASOUTH",
+          "stations": 37,
+          "constituencyStations": 110,
+          "constituencyWards": 4,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4711,
+          "name": "Kaksingri West",
+          "code": "1259",
+          "constituencyId": 252,
+          "constituencyName": "Suba",
+          "constituencyCode": "252",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 4,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4928,
+          "name": "KAKSINGRI WEST",
+          "code": "KAKSINGRIWEST",
+          "constituencyId": 294,
+          "constituencyName": "Suba South",
+          "constituencyCode": "SUBASOUTH",
+          "stations": 24,
+          "constituencyStations": 110,
+          "constituencyWards": 4,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4712,
+          "name": "Ruma kaksingri East",
+          "code": "1260",
+          "constituencyId": 252,
+          "constituencyName": "Suba",
+          "constituencyCode": "252",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 4,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4929,
+          "name": "RUMA-KAKSINGRI",
+          "code": "RUMAKAKSINGRI",
+          "constituencyId": 294,
+          "constituencyName": "Suba South",
+          "constituencyCode": "SUBASOUTH",
+          "stations": 19,
+          "constituencyStations": 110,
+          "constituencyWards": 4,
+          "numeric": false
+        },
+        "reason": "stale constituency (spelling)"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": [
+      {
+        "id": 251,
+        "name": "Mbita",
+        "code": "251",
+        "destinationId": 293,
+        "destinationName": "Suba North"
+      },
+      {
+        "id": 252,
+        "name": "Suba",
+        "code": "252",
+        "destinationId": 294,
+        "destinationName": "Suba South"
+      }
+    ]
+  },
+  "wards": [
+    {
+      "id": 4339,
+      "name": "Gembe",
+      "code": "1255",
+      "constituency_id": 251,
+      "county_id": 43,
+      "registered_voters": 0
+    },
+    {
+      "id": 4340,
+      "name": "Kasgunga",
+      "code": "1254",
+      "constituency_id": 251,
+      "county_id": 43,
+      "registered_voters": 0
+    },
+    {
+      "id": 4341,
+      "name": "Lambwe",
+      "code": "1256",
+      "constituency_id": 251,
+      "county_id": 43,
+      "registered_voters": 0
+    },
+    {
+      "id": 4342,
+      "name": "Mfangano Island",
+      "code": "1252",
+      "constituency_id": 251,
+      "county_id": 43,
+      "registered_voters": 0
+    },
+    {
+      "id": 4343,
+      "name": "Rusinga Island",
+      "code": "1253",
+      "constituency_id": 251,
+      "county_id": 43,
+      "registered_voters": 0
+    },
+    {
+      "id": 4709,
+      "name": "Gwassi North",
+      "code": "1258",
+      "constituency_id": 252,
+      "county_id": 43,
+      "registered_voters": 0
+    },
+    {
+      "id": 4710,
+      "name": "Gwassi South",
+      "code": "1257",
+      "constituency_id": 252,
+      "county_id": 43,
+      "registered_voters": 0
+    },
+    {
+      "id": 4711,
+      "name": "Kaksingri West",
+      "code": "1259",
+      "constituency_id": 252,
+      "county_id": 43,
+      "registered_voters": 0
+    },
+    {
+      "id": 4712,
+      "name": "Ruma kaksingri East",
+      "code": "1260",
+      "constituency_id": 252,
+      "county_id": 43,
+      "registered_voters": 0
+    },
+    {
+      "id": 4921,
+      "name": "GEMBE",
+      "code": "GEMBE",
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 9941
+    },
+    {
+      "id": 4922,
+      "name": "KASGUNGA",
+      "code": "KASGUNGA",
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 12876
+    },
+    {
+      "id": 4923,
+      "name": "LAMBWE",
+      "code": "LAMBWE",
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 12968
+    },
+    {
+      "id": 4924,
+      "name": "MFANGANO ISLAND",
+      "code": "MFANGANOISLAND",
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 10569
+    },
+    {
+      "id": 4925,
+      "name": "RUSINGA ISLAND",
+      "code": "RUSINGAISLAND",
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 14320
+    },
+    {
+      "id": 4926,
+      "name": "GWASSI NORTH",
+      "code": "GWASSINORTH",
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 15405
+    },
+    {
+      "id": 4927,
+      "name": "GWASSI SOUTH",
+      "code": "GWASSISOUTH",
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 18433
+    },
+    {
+      "id": 4928,
+      "name": "KAKSINGRI WEST",
+      "code": "KAKSINGRIWEST",
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 13960
+    },
+    {
+      "id": 4929,
+      "name": "RUMA-KAKSINGRI",
+      "code": "RUMAKAKSINGRI",
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 7040
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 251,
+      "name": "Mbita",
+      "code": "251",
+      "county_id": 43,
+      "registered_voters": 0
+    },
+    {
+      "id": 252,
+      "name": "Suba",
+      "code": "252",
+      "county_id": 43,
+      "registered_voters": 0
+    },
+    {
+      "id": 293,
+      "name": "Suba North",
+      "code": "SUBANORTH",
+      "county_id": 43,
+      "registered_voters": 60674
+    },
+    {
+      "id": 294,
+      "name": "Suba South",
+      "code": "SUBASOUTH",
+      "county_id": 43,
+      "registered_voters": 54838
+    }
+  ],
+  "stations": [
+    {
+      "id": 31290,
+      "name": "OSENO PRIMARY SCHOOL",
+      "code": "043251125507301",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 252
+    },
+    {
+      "id": 31291,
+      "name": "PONGE PRIMARY SCHOOL",
+      "code": "043251125507401",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 268
+    },
+    {
+      "id": 31292,
+      "name": "OLWEYA PRIMARY SCHOOL",
+      "code": "043251125507501",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 223
+    },
+    {
+      "id": 31293,
+      "name": "OBALAWANDA PRIMARY SCHOOL",
+      "code": "043251125507601",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 460
+    },
+    {
+      "id": 31294,
+      "name": "GOD AWENDO PRIMARY SCHOOL",
+      "code": "043251125507701",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 307
+    },
+    {
+      "id": 31295,
+      "name": "OSODO PRIMARY SCHOOL",
+      "code": "043251125507801",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 649
+    },
+    {
+      "id": 31296,
+      "name": "OBAMBO PRIMARY SCHOOL",
+      "code": "043251125507901",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 589
+    },
+    {
+      "id": 31297,
+      "name": "KAMSAMA PRIMARY SCHOOL",
+      "code": "043251125508001",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 418
+    },
+    {
+      "id": 31298,
+      "name": "GENGE PRIMARY SCHOOL",
+      "code": "043251125508101",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 505
+    },
+    {
+      "id": 31299,
+      "name": "NYAWIYA PRIMARY SCHOOL",
+      "code": "043251125508201",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 551
+    },
+    {
+      "id": 31300,
+      "name": "NGODHE PRIMARY SCHOOL - GEMBE",
+      "code": "043251125508301",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 462
+    },
+    {
+      "id": 31301,
+      "name": "USAO PRIMARY SCHOOL",
+      "code": "043251125508401",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 604
+    },
+    {
+      "id": 31302,
+      "name": "USUNGU PRIMARY SCHOOL",
+      "code": "043251125508501",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 607
+    },
+    {
+      "id": 31303,
+      "name": "POWO PRIMARY SCHOOL",
+      "code": "043251125508601",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 266
+    },
+    {
+      "id": 31304,
+      "name": "SUKRU NURSERY SCHOOL",
+      "code": "043251125508701",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 103
+    },
+    {
+      "id": 31305,
+      "name": "UWI PRIMARY SCHOOL",
+      "code": "043251125508801",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 338
+    },
+    {
+      "id": 31306,
+      "name": "WAONDO PRIMARY SCHOOL",
+      "code": "043251125508901",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 675
+    },
+    {
+      "id": 31307,
+      "name": "LWANDA OLOO PRIMARY SCHOOL",
+      "code": "043251125509001",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 335
+    },
+    {
+      "id": 31308,
+      "name": "NYANDENG'A SECONDARY SCHOOL",
+      "code": "043251125509101",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 463
+    },
+    {
+      "id": 31309,
+      "name": "NG'URA NURSERY SCHOOL",
+      "code": "043251125509201",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 136
+    },
+    {
+      "id": 31310,
+      "name": "ALERO PRIMARY SCHOOL",
+      "code": "043251125509301",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 389
+    },
+    {
+      "id": 31311,
+      "name": "KUGE PRIMARY SCHOOL",
+      "code": "043251125509401",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 450
+    },
+    {
+      "id": 31312,
+      "name": "KITARE PRIMARY SCHOOL",
+      "code": "043251125509501",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 515
+    },
+    {
+      "id": 31313,
+      "name": "GODE ARIYO PRIMARY SCHOOL",
+      "code": "043251125509601",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 216
+    },
+    {
+      "id": 31314,
+      "name": "MIRUNDA BEACH FISH BANDA",
+      "code": "043251125509701",
+      "stream": "1",
+      "ward_id": 4921,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 160
+    },
+    {
+      "id": 31315,
+      "name": "NYAMASARE PRIMARY SCHOOL",
+      "code": "043251125405301",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 719
+    },
+    {
+      "id": 31316,
+      "name": "WANGA PRIMARY SCHOOL",
+      "code": "043251125405401",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 470
+    },
+    {
+      "id": 31317,
+      "name": "KIRINDO PRIMARY SCHOOL",
+      "code": "043251125405501",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 485
+    },
+    {
+      "id": 31318,
+      "name": "KIRAMBO PRIMARY SCHOOL",
+      "code": "043251125405601",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 155
+    },
+    {
+      "id": 31319,
+      "name": "MBITA PRIMARY SCHOOL",
+      "code": "043251125405701",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 2284
+    },
+    {
+      "id": 31320,
+      "name": "NYAMANGA PRIMARY SCHOOL",
+      "code": "043251125405801",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 580
+    },
+    {
+      "id": 31321,
+      "name": "NYASUMBI PRIMARY SCHOOL",
+      "code": "043251125405901",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 252
+    },
+    {
+      "id": 31322,
+      "name": "KISUI PRIMARY SCHOOL",
+      "code": "043251125406001",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 564
+    },
+    {
+      "id": 31323,
+      "name": "CHAMAKOWA PRIMARY SCHOOL",
+      "code": "043251125406101",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 239
+    },
+    {
+      "id": 31324,
+      "name": "USARE PRIMARY SCHOOL",
+      "code": "043251125406201",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 2011
+    },
+    {
+      "id": 31325,
+      "name": "KOMBE PRIMARY SCHOOL",
+      "code": "043251125406301",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 1219
+    },
+    {
+      "id": 31326,
+      "name": "LUANDA FISH BANDA",
+      "code": "043251125406401",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 550
+    },
+    {
+      "id": 31327,
+      "name": "KAUGEGE FISH BANDA",
+      "code": "043251125406501",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 240
+    },
+    {
+      "id": 31328,
+      "name": "OLAMBWE FISH BANDA",
+      "code": "043251125406601",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 234
+    },
+    {
+      "id": 31329,
+      "name": "NYAHERA NURSERY SCHOOL",
+      "code": "043251125406701",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 169
+    },
+    {
+      "id": 31330,
+      "name": "MBITA FISH BANDA",
+      "code": "043251125406801",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 1279
+    },
+    {
+      "id": 31331,
+      "name": "NYACHEBE FISH BANDA",
+      "code": "043251125406901",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 472
+    },
+    {
+      "id": 31332,
+      "name": "SENATOR KAJWANG SECONDARY SCHOOL",
+      "code": "043251125407001",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 293
+    },
+    {
+      "id": 31333,
+      "name": "KISUI FISH BANDA",
+      "code": "043251125407101",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 344
+    },
+    {
+      "id": 31334,
+      "name": "TABLA BEACH PRIMARY SCHOOL",
+      "code": "043251125407201",
+      "stream": "1",
+      "ward_id": 4922,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 317
+    },
+    {
+      "id": 31335,
+      "name": "WAIGA PRIMARY SCHOOL",
+      "code": "043251125609801",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 407
+    },
+    {
+      "id": 31336,
+      "name": "GOT RATENG PRIMARY SCHOOL",
+      "code": "043251125609901",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 499
+    },
+    {
+      "id": 31337,
+      "name": "NYAMAJI PRIMARY SCHOOL",
+      "code": "043251125610001",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 564
+    },
+    {
+      "id": 31338,
+      "name": "SIKRI JERUSALEM PRIMARY SCHOOL",
+      "code": "043251125610101",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 271
+    },
+    {
+      "id": 31339,
+      "name": "KISAKA PRIMARY SCHOOL",
+      "code": "043251125610201",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 422
+    },
+    {
+      "id": 31340,
+      "name": "URIANDA PRIMARY SCHOOL",
+      "code": "043251125610301",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 816
+    },
+    {
+      "id": 31341,
+      "name": "PAGA PRIMARY SCHOOL",
+      "code": "043251125610401",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 387
+    },
+    {
+      "id": 31342,
+      "name": "OWICH PRIMARY SCHOOL",
+      "code": "043251125610501",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 434
+    },
+    {
+      "id": 31343,
+      "name": "NYAKAYIEMBA PRIMARY SCHOOL",
+      "code": "043251125610601",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 391
+    },
+    {
+      "id": 31344,
+      "name": "WANDIJI PRIMARY SCHOOL",
+      "code": "043251125610701",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 754
+    },
+    {
+      "id": 31345,
+      "name": "OCHIENG ODIERE PRIMARY SCHOOL",
+      "code": "043251125610801",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 389
+    },
+    {
+      "id": 31346,
+      "name": "ARINGO PRIMARY SCHOOL",
+      "code": "043251125610901",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 709
+    },
+    {
+      "id": 31347,
+      "name": "GOD JOPE PRIMARY SCHOOL",
+      "code": "043251125611001",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 787
+    },
+    {
+      "id": 31348,
+      "name": "LAMBWE PRIMARY SCHOOL",
+      "code": "043251125611101",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 868
+    },
+    {
+      "id": 31349,
+      "name": "RAPORA PRIMARY SCHOOL",
+      "code": "043251125611201",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 525
+    },
+    {
+      "id": 31350,
+      "name": "KAMATO PRIMARY SCHOOL",
+      "code": "043251125611301",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 466
+    },
+    {
+      "id": 31351,
+      "name": "OGANDO PRIMARY SCHOOL",
+      "code": "043251125611401",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 439
+    },
+    {
+      "id": 31352,
+      "name": "NDHURU PRIMARY SCHOOL",
+      "code": "043251125611501",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 642
+    },
+    {
+      "id": 31353,
+      "name": "GOT NYASUMBI PRIMARY",
+      "code": "043251125611601",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 343
+    },
+    {
+      "id": 31354,
+      "name": "SULWE PRIMARY SCHOOL",
+      "code": "043251125611701",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 224
+    },
+    {
+      "id": 31355,
+      "name": "NYASANJA PRIMARY SCHOOL",
+      "code": "043251125611801",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 244
+    },
+    {
+      "id": 31356,
+      "name": "GOT KOPOLO PRIMARY SCHOOL",
+      "code": "043251125611901",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 465
+    },
+    {
+      "id": 31357,
+      "name": "WARINGA PRIMARY SCHOOL",
+      "code": "043251125612001",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 355
+    },
+    {
+      "id": 31358,
+      "name": "UYORE NURSERY SCHOOL",
+      "code": "043251125612101",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 280
+    },
+    {
+      "id": 31359,
+      "name": "LWALA NURSERY SCHOOL",
+      "code": "043251125612201",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 216
+    },
+    {
+      "id": 31360,
+      "name": "NDIRU NURSERY SCHOOL",
+      "code": "043251125612301",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 173
+    },
+    {
+      "id": 31361,
+      "name": "GAMBA NURSERY SCHOOL",
+      "code": "043251125612401",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 265
+    },
+    {
+      "id": 31362,
+      "name": "PUNDO-OGANDO NURSERY SCHOOL",
+      "code": "043251125612501",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 141
+    },
+    {
+      "id": 31363,
+      "name": "BEDIE PRIMARY SCHOOL",
+      "code": "043251125612601",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 165
+    },
+    {
+      "id": 31364,
+      "name": "MARIWA NURSERY SCHOOL",
+      "code": "043251125612701",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 145
+    },
+    {
+      "id": 31365,
+      "name": "PUNDO-KAMATO NURSERY SCHOOL",
+      "code": "043251125612801",
+      "stream": "1",
+      "ward_id": 4923,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 182
+    },
+    {
+      "id": 31366,
+      "name": "SOKLO PRIMARY SCHOOL",
+      "code": "043251125200101",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 326
+    },
+    {
+      "id": 31367,
+      "name": "WAKULA PRIMARY SCHOOL",
+      "code": "043251125200201",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 590
+    },
+    {
+      "id": 31368,
+      "name": "WASAMO PRIMARY SCHOOL",
+      "code": "043251125200301",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 438
+    },
+    {
+      "id": 31369,
+      "name": "SENA PRIMARY SCHOOL",
+      "code": "043251125200401",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 605
+    },
+    {
+      "id": 31370,
+      "name": "MISORI PRIMARY SCHOOL",
+      "code": "043251125200501",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 532
+    },
+    {
+      "id": 31371,
+      "name": "TAKAWIRI PRIMARY SCHOOL",
+      "code": "043251125200601",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 208
+    },
+    {
+      "id": 31372,
+      "name": "KAKIMBA PRIMARY SCHOOL",
+      "code": "043251125200701",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 429
+    },
+    {
+      "id": 31373,
+      "name": "NYAKWERI PRIMARY SCHOOL",
+      "code": "043251125200801",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 574
+    },
+    {
+      "id": 31374,
+      "name": "RAMBA PRIMARY SCHOOL",
+      "code": "043251125200901",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 515
+    },
+    {
+      "id": 31375,
+      "name": "MASISI PRIMARY SCHOOL",
+      "code": "043251125201001",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 438
+    },
+    {
+      "id": 31376,
+      "name": "UGINA PRIMARY SCHOOL",
+      "code": "043251125201101",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 535
+    },
+    {
+      "id": 31377,
+      "name": "WAMAI PRIMARY SCHOOL",
+      "code": "043251125201201",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 252
+    },
+    {
+      "id": 31378,
+      "name": "NYAHERA PRIMARY SCHOOL",
+      "code": "043251125201301",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 152
+    },
+    {
+      "id": 31379,
+      "name": "KIWARI PRIMARY SCHOOL",
+      "code": "043251125201401",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 240
+    },
+    {
+      "id": 31380,
+      "name": "RINGITI PRIMARY SCHOOL",
+      "code": "043251125201501",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 507
+    },
+    {
+      "id": 31381,
+      "name": "TUMBI NURSERY SCHOOL",
+      "code": "043251125201601",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 228
+    },
+    {
+      "id": 31382,
+      "name": "KITENYI PRIMARY SCHOOL",
+      "code": "043251125201701",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 270
+    },
+    {
+      "id": 31383,
+      "name": "WAKIANGATA PRIMARY SCHOOL",
+      "code": "043251125201801",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 165
+    },
+    {
+      "id": 31384,
+      "name": "KAGUNGU PRIMARY SCHOOL",
+      "code": "043251125201901",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 197
+    },
+    {
+      "id": 31385,
+      "name": "MAUTA PRIMARY SCHOOL",
+      "code": "043251125202001",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 283
+    },
+    {
+      "id": 31386,
+      "name": "REMBA PRIMARY SCHOOL",
+      "code": "043251125202101",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 733
+    },
+    {
+      "id": 31387,
+      "name": "TAKAWIRI FISH BANDA",
+      "code": "043251125202201",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 298
+    },
+    {
+      "id": 31388,
+      "name": "LUGONZI PRIMARY SCHOOL",
+      "code": "043251125202301",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 210
+    },
+    {
+      "id": 31389,
+      "name": "KONYAHERO BEACH FISH BANDA",
+      "code": "043251125202401",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 146
+    },
+    {
+      "id": 31390,
+      "name": "GULWE PRIMARY SCHOOL",
+      "code": "043251125202501",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 202
+    },
+    {
+      "id": 31391,
+      "name": "NYAWALONGO FISH BANDA",
+      "code": "043251125202601",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 120
+    },
+    {
+      "id": 31392,
+      "name": "RINYA PRIMARY SCHOOL",
+      "code": "043251125202701",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 300
+    },
+    {
+      "id": 31393,
+      "name": "KAKRIGU PRIMARY SCHOOL - MFANGANO",
+      "code": "043251125202801",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 329
+    },
+    {
+      "id": 31394,
+      "name": "UOZI PRIMARY SCHOOL",
+      "code": "043251125202901",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 263
+    },
+    {
+      "id": 31395,
+      "name": "SENA BEACH FISH BANDA",
+      "code": "043251125203001",
+      "stream": "1",
+      "ward_id": 4924,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 484
+    },
+    {
+      "id": 31396,
+      "name": "KAMGERE PRIMARY SCHOOL",
+      "code": "043251125303101",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 567
+    },
+    {
+      "id": 31397,
+      "name": "WAKIAGA YOUTH POLYTECHNIC",
+      "code": "043251125303201",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 662
+    },
+    {
+      "id": 31398,
+      "name": "UTAJO PRIMARY SCHOOL",
+      "code": "043251125303301",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 504
+    },
+    {
+      "id": 31399,
+      "name": "LIANDA PRIMARY SCHOOL",
+      "code": "043251125303401",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 560
+    },
+    {
+      "id": 31400,
+      "name": "WASARIA PRIMARY SCHOOL",
+      "code": "043251125303501",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 1444
+    },
+    {
+      "id": 31401,
+      "name": "NYAMUGA PRIMARY SCHOOL",
+      "code": "043251125303601",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 637
+    },
+    {
+      "id": 31402,
+      "name": "WAKONDO PRIMARY SCHOOL",
+      "code": "043251125303701",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 468
+    },
+    {
+      "id": 31403,
+      "name": "KAMAYOGE PRIMARY SCHOOL",
+      "code": "043251125303801",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 739
+    },
+    {
+      "id": 31404,
+      "name": "KAMASENGRE PRIMARY SCHOOL",
+      "code": "043251125303901",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 1259
+    },
+    {
+      "id": 31405,
+      "name": "UYA PRIMARY SCHOOL",
+      "code": "043251125304001",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 711
+    },
+    {
+      "id": 31406,
+      "name": "TOM MBOYA SECONDARY SCHOOL",
+      "code": "043251125304101",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 725
+    },
+    {
+      "id": 31407,
+      "name": "KASWANGA PRIMARY SCHOOL",
+      "code": "043251125304201",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 792
+    },
+    {
+      "id": 31408,
+      "name": "WANYAMA PRIMARY SCHOOL",
+      "code": "043251125304301",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 726
+    },
+    {
+      "id": 31409,
+      "name": "TEMO PRIMARY SCHOOL",
+      "code": "043251125304401",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 504
+    },
+    {
+      "id": 31410,
+      "name": "WAREGI PRIMARY SCHOOL",
+      "code": "043251125304501",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 586
+    },
+    {
+      "id": 31411,
+      "name": "NGODHE PRIMARY SCHOOL - RUSINGA",
+      "code": "043251125304601",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 294
+    },
+    {
+      "id": 31412,
+      "name": "DR. WILLIAMS PRIMARY SCHOOL",
+      "code": "043251125304701",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 717
+    },
+    {
+      "id": 31413,
+      "name": "NYAGINA FISH BANDA",
+      "code": "043251125304801",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 978
+    },
+    {
+      "id": 31414,
+      "name": "KIUMBA FISH BANDA",
+      "code": "043251125304901",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 711
+    },
+    {
+      "id": 31415,
+      "name": "EDDY MEMORIAL PRIMARY SCHOOL",
+      "code": "043251125305001",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 382
+    },
+    {
+      "id": 31416,
+      "name": "ULUGI FISH BANDA",
+      "code": "043251125305101",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 176
+    },
+    {
+      "id": 31417,
+      "name": "WAMUANGA PRIMARY SCHOOL",
+      "code": "043251125305201",
+      "stream": "1",
+      "ward_id": 4925,
+      "constituency_id": 293,
+      "county_id": 43,
+      "registered_voters": 178
+    },
+    {
+      "id": 31418,
+      "name": "KISEGI PRIMARY SCHOOL",
+      "code": "043252125803401",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 587
+    },
+    {
+      "id": 31419,
+      "name": "UTERERE PRIMARY SCHOOL",
+      "code": "043252125803501",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 574
+    },
+    {
+      "id": 31420,
+      "name": "NYAGWETHE PRIMARY SCHOOL",
+      "code": "043252125803601",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 1105
+    },
+    {
+      "id": 31421,
+      "name": "KISAKU PRIMARY SCHOOL",
+      "code": "043252125803701",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 743
+    },
+    {
+      "id": 31422,
+      "name": "OBANGA PRIMARY SCHOOL",
+      "code": "043252125803801",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 330
+    },
+    {
+      "id": 31423,
+      "name": "OSIRI PRIMARY SCHOOL",
+      "code": "043252125803901",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 519
+    },
+    {
+      "id": 31424,
+      "name": "KITAWA PRIMARY SCHOOL",
+      "code": "043252125804001",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 582
+    },
+    {
+      "id": 31425,
+      "name": "KOYOMBE PRIMARY SCHOOL",
+      "code": "043252125804101",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 325
+    },
+    {
+      "id": 31426,
+      "name": "NYANDIWA PRIMARY SCHOOL",
+      "code": "043252125804201",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 1902
+    },
+    {
+      "id": 31427,
+      "name": "TONGA PRIMARY SCHOOL",
+      "code": "043252125804301",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 672
+    },
+    {
+      "id": 31428,
+      "name": "KIWA PRIMARY SCHOOL",
+      "code": "043252125804401",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 568
+    },
+    {
+      "id": 31429,
+      "name": "MIRAMBA PRIMARY SCHOOL",
+      "code": "043252125804501",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 658
+    },
+    {
+      "id": 31430,
+      "name": "KIEMBE PRIMARY SCHOOL",
+      "code": "043252125804601",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 497
+    },
+    {
+      "id": 31431,
+      "name": "MWIYOYO PRIMARY SCHOOL",
+      "code": "043252125804701",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 373
+    },
+    {
+      "id": 31432,
+      "name": "KIRAMBO PRIMARY SCHOOL",
+      "code": "043252125804801",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 359
+    },
+    {
+      "id": 31433,
+      "name": "KIKUBI PRIMARY SCHOOL",
+      "code": "043252125804901",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 860
+    },
+    {
+      "id": 31434,
+      "name": "KIBURA PRIMARY SCHOOL",
+      "code": "043252125805001",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 550
+    },
+    {
+      "id": 31435,
+      "name": "KICHARE PRIMARY SCHOOL",
+      "code": "043252125805101",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 577
+    },
+    {
+      "id": 31436,
+      "name": "KUMUINDA PRIMARY SCHOOL",
+      "code": "043252125805201",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 251
+    },
+    {
+      "id": 31437,
+      "name": "KISEGI BEACH FISH BANDA",
+      "code": "043252125805301",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 413
+    },
+    {
+      "id": 31438,
+      "name": "NYANDIWA BEACH FISH BANDA",
+      "code": "043252125805401",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 722
+    },
+    {
+      "id": 31439,
+      "name": "SOKO PRIMARY SCHOOL",
+      "code": "043252125805501",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 306
+    },
+    {
+      "id": 31440,
+      "name": "RAMULA PRIMARY SCHOOL",
+      "code": "043252125805601",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 425
+    },
+    {
+      "id": 31441,
+      "name": "KIRIBA NURSERY SCHOOL",
+      "code": "043252125805701",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 278
+    },
+    {
+      "id": 31442,
+      "name": "NYAKASERA PRIMARY SCHOOL",
+      "code": "043252125805801",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 264
+    },
+    {
+      "id": 31443,
+      "name": "MALONGO PRIMARY SCHOOL",
+      "code": "043252125805901",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 405
+    },
+    {
+      "id": 31444,
+      "name": "NYABWECHECHE PRIMARY SCHOOL",
+      "code": "043252125810101",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 162
+    },
+    {
+      "id": 31445,
+      "name": "MWIRARIA PRIMARY SCHOOL",
+      "code": "043252125810201",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 127
+    },
+    {
+      "id": 31446,
+      "name": "ONGALO PRIMARY SCHOOL",
+      "code": "043252125810301",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 174
+    },
+    {
+      "id": 31447,
+      "name": "KWIKONGO PRIMARY SCHOOL",
+      "code": "043252125810401",
+      "stream": "1",
+      "ward_id": 4926,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 97
+    },
+    {
+      "id": 31448,
+      "name": "GOD BURA PRIMARY SCHOOL",
+      "code": "043252125700101",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 598
+    },
+    {
+      "id": 31449,
+      "name": "NYENGA PRIMARY SCHOOL",
+      "code": "043252125700201",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 550
+    },
+    {
+      "id": 31450,
+      "name": "KIABUYA PRIMARY SCHOOL",
+      "code": "043252125700301",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 777
+    },
+    {
+      "id": 31451,
+      "name": "KIMORO PRIMARY SCHOOL",
+      "code": "043252125700401",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 740
+    },
+    {
+      "id": 31452,
+      "name": "OMA PRIMARY SCHOOL",
+      "code": "043252125700501",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 417
+    },
+    {
+      "id": 31453,
+      "name": "NYASOTI PRIMARY SCHOOL",
+      "code": "043252125700601",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 584
+    },
+    {
+      "id": 31454,
+      "name": "MAGUNGA PRIMARY SCHOOL",
+      "code": "043252125700701",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 1322
+    },
+    {
+      "id": 31455,
+      "name": "SANJWERU PRIMARY SCHOOL",
+      "code": "043252125700801",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 391
+    },
+    {
+      "id": 31456,
+      "name": "WIGA PRIMARY SCHOOL",
+      "code": "043252125700901",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 867
+    },
+    {
+      "id": 31457,
+      "name": "OLANDO PRIMARY SCHOOL",
+      "code": "043252125701001",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 754
+    },
+    {
+      "id": 31458,
+      "name": "GENDO PRIMARY SCHOOL",
+      "code": "043252125701101",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 389
+    },
+    {
+      "id": 31459,
+      "name": "NYAMADEDE PRIMARY SCHOOL",
+      "code": "043252125701201",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 721
+    },
+    {
+      "id": 31460,
+      "name": "MWIREGWA PRIMARY SCHOOL",
+      "code": "043252125701301",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 251
+    },
+    {
+      "id": 31461,
+      "name": "KIGOTO PRIMARY SCHOOL",
+      "code": "043252125701401",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 849
+    },
+    {
+      "id": 31462,
+      "name": "GOD OLOO PRIMARY SCHOOL",
+      "code": "043252125701501",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 840
+    },
+    {
+      "id": 31463,
+      "name": "SEKA PRIMARY SCHOOL",
+      "code": "043252125701601",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 676
+    },
+    {
+      "id": 31464,
+      "name": "ORORE PRIMARY SCHOOL",
+      "code": "043252125701701",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 293
+    },
+    {
+      "id": 31465,
+      "name": "LWANDA PRIMARY SCHOOL",
+      "code": "043252125701801",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 557
+    },
+    {
+      "id": 31466,
+      "name": "KOGA PRIMARY SCHOOL",
+      "code": "043252125701901",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 485
+    },
+    {
+      "id": 31467,
+      "name": "LIGONGO PRIMARY SCHOOL",
+      "code": "043252125702001",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 357
+    },
+    {
+      "id": 31468,
+      "name": "KIMANGE PRIMARY SCHOOL",
+      "code": "043252125702101",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 471
+    },
+    {
+      "id": 31469,
+      "name": "PUNDO PRIMARY SCHOOL",
+      "code": "043252125702201",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 639
+    },
+    {
+      "id": 31470,
+      "name": "NYAWACHA PRIMARY SCHOOL",
+      "code": "043252125702301",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 186
+    },
+    {
+      "id": 31471,
+      "name": "MIKUYU PRIMARY SCHOOL",
+      "code": "043252125702401",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 386
+    },
+    {
+      "id": 31472,
+      "name": "NYATAMBE PRIMARY SCHOOL",
+      "code": "043252125702501",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 632
+    },
+    {
+      "id": 31473,
+      "name": "KINDA BEACH FISH BANDA",
+      "code": "043252125702601",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 568
+    },
+    {
+      "id": 31474,
+      "name": "MUMISA PRIMARY SCHOOL",
+      "code": "043252125702701",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 448
+    },
+    {
+      "id": 31475,
+      "name": "KITHEREKA PRIMARY SCHOOL",
+      "code": "043252125702801",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 475
+    },
+    {
+      "id": 31476,
+      "name": "NYABURU PRIMARY SCHOOL",
+      "code": "043252125702901",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 373
+    },
+    {
+      "id": 31477,
+      "name": "MIRIYA PRIMARY SCHOOL",
+      "code": "043252125703001",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 347
+    },
+    {
+      "id": 31478,
+      "name": "SOKONI PRIMARY SCHOOL",
+      "code": "043252125703101",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 246
+    },
+    {
+      "id": 31479,
+      "name": "OGAKA PRIMARY SCHOOL",
+      "code": "043252125703201",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 358
+    },
+    {
+      "id": 31480,
+      "name": "KUMBATHA PRIMARY SCHOOL",
+      "code": "043252125703301",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 343
+    },
+    {
+      "id": 31481,
+      "name": "GOT ADUNDO PRIMARY SCHOOL",
+      "code": "043252125709701",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 153
+    },
+    {
+      "id": 31482,
+      "name": "ONG'ONG'O PRIMARY SCHOOL",
+      "code": "043252125709801",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 138
+    },
+    {
+      "id": 31483,
+      "name": "BUNGE PRIMARY SCHOOL",
+      "code": "043252125709901",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 138
+    },
+    {
+      "id": 31484,
+      "name": "KINCHORORIO PRIMARY SCHOOL",
+      "code": "043252125710001",
+      "stream": "1",
+      "ward_id": 4927,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 114
+    },
+    {
+      "id": 31485,
+      "name": "KIANYUMBA PRIMARY SCHOOL",
+      "code": "043252125906001",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 546
+    },
+    {
+      "id": 31486,
+      "name": "SINDO PRIMARY SCHOOL",
+      "code": "043252125906101",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 1065
+    },
+    {
+      "id": 31487,
+      "name": "GINGO PRIMARY SCHOOL",
+      "code": "043252125906201",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 420
+    },
+    {
+      "id": 31488,
+      "name": "KINYASAGA PRIMARY SCHOOL",
+      "code": "043252125906301",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 541
+    },
+    {
+      "id": 31489,
+      "name": "ROWO PRIMARY SCHOOL",
+      "code": "043252125906401",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 558
+    },
+    {
+      "id": 31490,
+      "name": "MSARE PRIMARY SCHOOL",
+      "code": "043252125906501",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 693
+    },
+    {
+      "id": 31491,
+      "name": "ROO PRIMARY SCHOOL",
+      "code": "043252125906601",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 889
+    },
+    {
+      "id": 31492,
+      "name": "MWIRENDIA PRIMARY SCHOOL",
+      "code": "043252125906701",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 439
+    },
+    {
+      "id": 31493,
+      "name": "NGERI PRIMARY SCHOOL",
+      "code": "043252125906801",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 939
+    },
+    {
+      "id": 31494,
+      "name": "RAGWE PRIMARY SCHOOL",
+      "code": "043252125906901",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 872
+    },
+    {
+      "id": 31495,
+      "name": "KIBUOGI PRIMARY SCHOOL",
+      "code": "043252125907001",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 202
+    },
+    {
+      "id": 31496,
+      "name": "MUKENDE PRIMARY SCHOOL",
+      "code": "043252125907101",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 290
+    },
+    {
+      "id": 31497,
+      "name": "NYABOMO PRIMARY SCHOOL",
+      "code": "043252125907201",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 744
+    },
+    {
+      "id": 31498,
+      "name": "ST. JOSEPH MIKIUNDU PRIMARY SCHOOL",
+      "code": "043252125907301",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 569
+    },
+    {
+      "id": 31499,
+      "name": "KISIAMBI PRIMARY SCHOOL",
+      "code": "043252125907401",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 275
+    },
+    {
+      "id": 31500,
+      "name": "SINDO YOUTH POLYTECHNIC",
+      "code": "043252125907501",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 1833
+    },
+    {
+      "id": 31501,
+      "name": "GINGO BEACH FISH BANDA",
+      "code": "043252125907601",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 538
+    },
+    {
+      "id": 31502,
+      "name": "KALOKO BEACH FISH BANDA",
+      "code": "043252125907701",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 337
+    },
+    {
+      "id": 31503,
+      "name": "SINDO MAIN BEACH BANDA",
+      "code": "043252125907801",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 946
+    },
+    {
+      "id": 31504,
+      "name": "GOT KOMBUTO PRIMARY SCHOOL",
+      "code": "043252125907901",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 274
+    },
+    {
+      "id": 31505,
+      "name": "WIRA PRIMARY SCHOOL",
+      "code": "043252125908001",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 213
+    },
+    {
+      "id": 31506,
+      "name": "SAGARUME PRIMARY SCHOOL",
+      "code": "043252125910501",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 154
+    },
+    {
+      "id": 31507,
+      "name": "KISENYE PRIMARY SCHOOL",
+      "code": "043252125910601",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 399
+    },
+    {
+      "id": 31508,
+      "name": "OMUTHUMA PRIMARY SCHOOL",
+      "code": "043252125910701",
+      "stream": "1",
+      "ward_id": 4928,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 224
+    },
+    {
+      "id": 31509,
+      "name": "NYADENDA PRIMARY SCHOOL",
+      "code": "043252126008101",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 346
+    },
+    {
+      "id": 31510,
+      "name": "ONYWERA PRIMARY SCHOOL",
+      "code": "043252126008201",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 622
+    },
+    {
+      "id": 31511,
+      "name": "MANYALLA PRIMARY SCHOOL",
+      "code": "043252126008301",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 442
+    },
+    {
+      "id": 31512,
+      "name": "NYATOTO PRIMARY SCHOOL",
+      "code": "043252126008401",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 733
+    },
+    {
+      "id": 31513,
+      "name": "NYABERA PRIMARY SCHOOL",
+      "code": "043252126008501",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 506
+    },
+    {
+      "id": 31514,
+      "name": "YONGO PRIMARY SCHOOL",
+      "code": "043252126008601",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 371
+    },
+    {
+      "id": 31515,
+      "name": "NYAKIYA PRIMARY SCHOOL",
+      "code": "043252126008701",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 296
+    },
+    {
+      "id": 31516,
+      "name": "KASINGA PRIMARY SCHOOL",
+      "code": "043252126008801",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 302
+    },
+    {
+      "id": 31517,
+      "name": "ONG'AYO PRIMARY SCHOOL",
+      "code": "043252126008901",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 469
+    },
+    {
+      "id": 31518,
+      "name": "KING'ENYO PRIMARY SCHOOL",
+      "code": "043252126009001",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 325
+    },
+    {
+      "id": 31519,
+      "name": "NYALKEMBO PRIMARY SCHOOL",
+      "code": "043252126009101",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 395
+    },
+    {
+      "id": 31520,
+      "name": "SUMBA PRIMARY SCHOOL",
+      "code": "043252126009201",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 418
+    },
+    {
+      "id": 31521,
+      "name": "VICTOR MUSOGA PRIMARY SCHOOL",
+      "code": "043252126009301",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 275
+    },
+    {
+      "id": 31522,
+      "name": "VALLEY NURSERY SCHOOL",
+      "code": "043252126009401",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 220
+    },
+    {
+      "id": 31523,
+      "name": "NYADENDA MAIZE STORE",
+      "code": "043252126009501",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 653
+    },
+    {
+      "id": 31524,
+      "name": "MATUNGA PRIMARY SCHOOL",
+      "code": "043252126009601",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 306
+    },
+    {
+      "id": 31525,
+      "name": "ONGORO PRIMARY SCHOOL",
+      "code": "043252126010801",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 155
+    },
+    {
+      "id": 31526,
+      "name": "NYAKWERI PRIMARY SCHOOL",
+      "code": "043252126010901",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 103
+    },
+    {
+      "id": 31527,
+      "name": "SAWANKA PRIMARY SCHOOL",
+      "code": "043252126011001",
+      "stream": "1",
+      "ward_id": 4929,
+      "constituency_id": 294,
+      "county_id": 43,
+      "registered_voters": 103
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}

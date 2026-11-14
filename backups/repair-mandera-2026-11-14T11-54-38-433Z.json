@@ -1,0 +1,629 @@
+{
+  "created_at": "2026-11-14T11:54:38.433Z",
+  "county": "Mandera",
+  "plan": {
+    "county": {
+      "id": 9,
+      "name": "Mandera"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 4126,
+          "name": "Libehia",
+          "code": "0216",
+          "constituencyId": 44,
+          "constituencyName": "Lafey",
+          "constituencyCode": "044",
+          "stations": 0,
+          "constituencyStations": 45,
+          "constituencyWards": 8,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4900,
+          "name": "LIBEHIA",
+          "code": "LIBEHIA",
+          "constituencyId": 43,
+          "constituencyName": "Mandera East",
+          "constituencyCode": "043",
+          "stations": 10,
+          "constituencyStations": 65,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "wrong constituency"
+      },
+      {
+        "keeper": {
+          "id": 4123,
+          "name": "Alungo gof",
+          "code": "0220",
+          "constituencyId": 44,
+          "constituencyName": "Lafey",
+          "constituencyCode": "044",
+          "stations": 0,
+          "constituencyStations": 45,
+          "constituencyWards": 8,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4897,
+          "name": "ALANGO GOF",
+          "code": "ALANGOGOF",
+          "constituencyId": 44,
+          "constituencyName": "Lafey",
+          "constituencyCode": "044",
+          "stations": 5,
+          "constituencyStations": 45,
+          "constituencyWards": 8,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      },
+      {
+        "keeper": {
+          "id": 4127,
+          "name": "Warankara",
+          "code": "0219",
+          "constituencyId": 44,
+          "constituencyName": "Lafey",
+          "constituencyCode": "044",
+          "stations": 0,
+          "constituencyStations": 45,
+          "constituencyWards": 8,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4899,
+          "name": "WARANQARA",
+          "code": "WARANQARA",
+          "constituencyId": 44,
+          "constituencyName": "Lafey",
+          "constituencyCode": "044",
+          "stations": 14,
+          "constituencyStations": 45,
+          "constituencyWards": 8,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      },
+      {
+        "keeper": {
+          "id": 4269,
+          "name": "Wargudud",
+          "code": "0206",
+          "constituencyId": 42,
+          "constituencyName": "Mandera South",
+          "constituencyCode": "042",
+          "stations": 0,
+          "constituencyStations": 79,
+          "constituencyWards": 6,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4901,
+          "name": "WARGADUD",
+          "code": "WARGADUD",
+          "constituencyId": 42,
+          "constituencyName": "Mandera South",
+          "constituencyCode": "042",
+          "stations": 12,
+          "constituencyStations": 79,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": []
+  },
+  "wards": [
+    {
+      "id": 4123,
+      "name": "Alungo gof",
+      "code": "0220",
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 0
+    },
+    {
+      "id": 4126,
+      "name": "Libehia",
+      "code": "0216",
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 0
+    },
+    {
+      "id": 4127,
+      "name": "Warankara",
+      "code": "0219",
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 0
+    },
+    {
+      "id": 4269,
+      "name": "Wargudud",
+      "code": "0206",
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 0
+    },
+    {
+      "id": 4897,
+      "name": "ALANGO GOF",
+      "code": "ALANGOGOF",
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 4478
+    },
+    {
+      "id": 4899,
+      "name": "WARANQARA",
+      "code": "WARANQARA",
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 3956
+    },
+    {
+      "id": 4900,
+      "name": "LIBEHIA",
+      "code": "LIBEHIA",
+      "constituency_id": 43,
+      "county_id": 9,
+      "registered_voters": 6296
+    },
+    {
+      "id": 4901,
+      "name": "WARGADUD",
+      "code": "WARGADUD",
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 7341
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 42,
+      "name": "Mandera South",
+      "code": "042",
+      "county_id": 9,
+      "registered_voters": 34691
+    },
+    {
+      "id": 43,
+      "name": "Mandera East",
+      "code": "043",
+      "county_id": 9,
+      "registered_voters": 47868
+    },
+    {
+      "id": 44,
+      "name": "Lafey",
+      "code": "044",
+      "county_id": 9,
+      "registered_voters": 18564
+    }
+  ],
+  "stations": [
+    {
+      "id": 15017,
+      "name": "ALUNGU GOF",
+      "code": "009044022002701",
+      "stream": "1",
+      "ward_id": 4897,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 693
+    },
+    {
+      "id": 15018,
+      "name": "ALUNGU PRIMARY SCHOOL",
+      "code": "009044022002801",
+      "stream": "1",
+      "ward_id": 4897,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 1100
+    },
+    {
+      "id": 15019,
+      "name": "YATHO CENTRE",
+      "code": "009044022002901",
+      "stream": "1",
+      "ward_id": 4897,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 793
+    },
+    {
+      "id": 15020,
+      "name": "SHAABAN GEDI",
+      "code": "009044022004501",
+      "stream": "1",
+      "ward_id": 4897,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 989
+    },
+    {
+      "id": 15021,
+      "name": "ALUNGU DAM",
+      "code": "009044022004601",
+      "stream": "1",
+      "ward_id": 4897,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 903
+    },
+    {
+      "id": 15048,
+      "name": "BAMBO PRIMARY SCHOOL",
+      "code": "009044021901701",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 366
+    },
+    {
+      "id": 15049,
+      "name": "BARMILLE CENTRE",
+      "code": "009044021901801",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 171
+    },
+    {
+      "id": 15050,
+      "name": "WARANQARA PRIMARY SCHOOL",
+      "code": "009044021901901",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 581
+    },
+    {
+      "id": 15051,
+      "name": "KAMOR FARDA WATER POINT",
+      "code": "009044021902001",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 236
+    },
+    {
+      "id": 15052,
+      "name": "GARI PRIMARY SCHOOL",
+      "code": "009044021902101",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 453
+    },
+    {
+      "id": 15053,
+      "name": "SOGLE CENTRE",
+      "code": "009044021902201",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 303
+    },
+    {
+      "id": 15054,
+      "name": "SAFO DAM",
+      "code": "009044021902301",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 329
+    },
+    {
+      "id": 15055,
+      "name": "KHEIRA ALI PRIMARY SCHOOL",
+      "code": "009044021902401",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 197
+    },
+    {
+      "id": 15056,
+      "name": "HAREY CENTRE",
+      "code": "009044021902501",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 260
+    },
+    {
+      "id": 15057,
+      "name": "GOTHEY CENTER",
+      "code": "009044021902601",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 256
+    },
+    {
+      "id": 15058,
+      "name": "GARI BOREHOLE",
+      "code": "009044021904001",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 239
+    },
+    {
+      "id": 15059,
+      "name": "AHMED ISSACK FARM",
+      "code": "009044021904101",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 273
+    },
+    {
+      "id": 15060,
+      "name": "GABANO CENTRE",
+      "code": "009044021904201",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 150
+    },
+    {
+      "id": 15061,
+      "name": "BASA JULUN",
+      "code": "009044021904301",
+      "stream": "1",
+      "ward_id": 4899,
+      "constituency_id": 44,
+      "county_id": 9,
+      "registered_voters": 142
+    },
+    {
+      "id": 15093,
+      "name": "ARESA PRIMARY SCHOOL",
+      "code": "009043021504701",
+      "stream": "1",
+      "ward_id": 4900,
+      "constituency_id": 43,
+      "county_id": 9,
+      "registered_voters": 1420
+    },
+    {
+      "id": 15094,
+      "name": "HARERI PRIMARY SCHOOL",
+      "code": "009043021504801",
+      "stream": "1",
+      "ward_id": 4900,
+      "constituency_id": 43,
+      "county_id": 9,
+      "registered_voters": 664
+    },
+    {
+      "id": 15095,
+      "name": "AMIN GUREY CENTER",
+      "code": "009043021504901",
+      "stream": "1",
+      "ward_id": 4900,
+      "constituency_id": 43,
+      "county_id": 9,
+      "registered_voters": 325
+    },
+    {
+      "id": 15096,
+      "name": "GUMBISO PRIMARY SCHOOL",
+      "code": "009043021505001",
+      "stream": "1",
+      "ward_id": 4900,
+      "constituency_id": 43,
+      "county_id": 9,
+      "registered_voters": 609
+    },
+    {
+      "id": 15097,
+      "name": "LIBEHIA PRIMARY SCHOOL",
+      "code": "009043021505101",
+      "stream": "1",
+      "ward_id": 4900,
+      "constituency_id": 43,
+      "county_id": 9,
+      "registered_voters": 1238
+    },
+    {
+      "id": 15098,
+      "name": "QURADER SHALLOW WELLS",
+      "code": "009043021505201",
+      "stream": "1",
+      "ward_id": 4900,
+      "constituency_id": 43,
+      "county_id": 9,
+      "registered_voters": 387
+    },
+    {
+      "id": 15099,
+      "name": "KAMOR BUHLOW",
+      "code": "009043021505301",
+      "stream": "1",
+      "ward_id": 4900,
+      "constituency_id": 43,
+      "county_id": 9,
+      "registered_voters": 163
+    },
+    {
+      "id": 15100,
+      "name": "QARARI SHALLOW WELLS",
+      "code": "009043021505401",
+      "stream": "1",
+      "ward_id": 4900,
+      "constituency_id": 43,
+      "county_id": 9,
+      "registered_voters": 126
+    },
+    {
+      "id": 15101,
+      "name": "ARESA GIRLS SECONDARY SCHOOL",
+      "code": "009043021506501",
+      "stream": "1",
+      "ward_id": 4900,
+      "constituency_id": 43,
+      "county_id": 9,
+      "registered_voters": 1032
+    },
+    {
+      "id": 15102,
+      "name": "HARERI MIXED SECONDARY SCHOOL",
+      "code": "009043021506601",
+      "stream": "1",
+      "ward_id": 4900,
+      "constituency_id": 43,
+      "county_id": 9,
+      "registered_voters": 332
+    },
+    {
+      "id": 15274,
+      "name": "ASAL CENTRE",
+      "code": "009042020600101",
+      "stream": "1",
+      "ward_id": 4901,
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 1166
+    },
+    {
+      "id": 15275,
+      "name": "ELELE PRIMARY SCHOOL",
+      "code": "009042020600201",
+      "stream": "1",
+      "ward_id": 4901,
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 446
+    },
+    {
+      "id": 15276,
+      "name": "ERES KINTO PRIMARY SCHOOL",
+      "code": "009042020600301",
+      "stream": "1",
+      "ward_id": 4901,
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 440
+    },
+    {
+      "id": 15277,
+      "name": "HARSANGA PRIMARY SCHOOL",
+      "code": "009042020600401",
+      "stream": "1",
+      "ward_id": 4901,
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 236
+    },
+    {
+      "id": 15278,
+      "name": "CHIROLE PRIMARY SCHOOL",
+      "code": "009042020600501",
+      "stream": "1",
+      "ward_id": 4901,
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 803
+    },
+    {
+      "id": 15279,
+      "name": "ARDA QALACHA PRIMARY SCHOOL",
+      "code": "009042020600601",
+      "stream": "1",
+      "ward_id": 4901,
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 515
+    },
+    {
+      "id": 15280,
+      "name": "ABEY BUQE PRIMARY SCHOOL",
+      "code": "009042020600701",
+      "stream": "1",
+      "ward_id": 4901,
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 753
+    },
+    {
+      "id": 15281,
+      "name": "WARGADUD PRIMARY SCHOOL",
+      "code": "009042020600801",
+      "stream": "1",
+      "ward_id": 4901,
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 1507
+    },
+    {
+      "id": 15282,
+      "name": "TULI PRIMARY SCHOOL",
+      "code": "009042020605501",
+      "stream": "1",
+      "ward_id": 4901,
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 674
+    },
+    {
+      "id": 15283,
+      "name": "CORNER S",
+      "code": "009042020605801",
+      "stream": "1",
+      "ward_id": 4901,
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 442
+    },
+    {
+      "id": 15284,
+      "name": "DAMOG PRIMARY SCHOOL",
+      "code": "009042020605901",
+      "stream": "1",
+      "ward_id": 4901,
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 31
+    },
+    {
+      "id": 15285,
+      "name": "AWALBANDERA VILLAGE CENTRE",
+      "code": "009042020606101",
+      "stream": "1",
+      "ward_id": 4901,
+      "constituency_id": 42,
+      "county_id": 9,
+      "registered_voters": 328
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}

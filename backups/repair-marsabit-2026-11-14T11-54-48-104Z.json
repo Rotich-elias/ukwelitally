@@ -1,0 +1,326 @@
+{
+  "created_at": "2026-11-14T11:54:48.104Z",
+  "county": "Marsabit",
+  "plan": {
+    "county": {
+      "id": 10,
+      "name": "Marsabit"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 4152,
+          "name": "Log logo",
+          "code": "0239",
+          "constituencyId": 48,
+          "constituencyName": "Laisamis",
+          "constituencyCode": "048",
+          "stations": 0,
+          "constituencyStations": 69,
+          "constituencyWards": 6,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4902,
+          "name": "LOGO LOGO",
+          "code": "LOGOLOGO",
+          "constituencyId": 48,
+          "constituencyName": "Laisamis",
+          "constituencyCode": "048",
+          "stations": 8,
+          "constituencyStations": 69,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      },
+      {
+        "keeper": {
+          "id": 4371,
+          "name": "Heilu-manyatta",
+          "code": "0223",
+          "constituencyId": 45,
+          "constituencyName": "Moyale",
+          "constituencyCode": "045",
+          "stations": 0,
+          "constituencyStations": 115,
+          "constituencyWards": 8,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4903,
+          "name": "HEILLU/MANYATTA",
+          "code": "HEILLUMANYATTA",
+          "constituencyId": 45,
+          "constituencyName": "Moyale",
+          "constituencyCode": "045",
+          "stations": 12,
+          "constituencyStations": 115,
+          "constituencyWards": 8,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": []
+  },
+  "wards": [
+    {
+      "id": 4152,
+      "name": "Log logo",
+      "code": "0239",
+      "constituency_id": 48,
+      "county_id": 10,
+      "registered_voters": 0
+    },
+    {
+      "id": 4371,
+      "name": "Heilu-manyatta",
+      "code": "0223",
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 0
+    },
+    {
+      "id": 4902,
+      "name": "LOGO LOGO",
+      "code": "LOGOLOGO",
+      "constituency_id": 48,
+      "county_id": 10,
+      "registered_voters": 4133
+    },
+    {
+      "id": 4903,
+      "name": "HEILLU/MANYATTA",
+      "code": "HEILLUMANYATTA",
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 10431
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 45,
+      "name": "Moyale",
+      "code": "045",
+      "county_id": 10,
+      "registered_voters": 66402
+    },
+    {
+      "id": 48,
+      "name": "Laisamis",
+      "code": "048",
+      "county_id": 10,
+      "registered_voters": 33446
+    }
+  ],
+  "stations": [
+    {
+      "id": 15406,
+      "name": "SANCHIR WATERPOINT",
+      "code": "010048023904501",
+      "stream": "1",
+      "ward_id": 4902,
+      "constituency_id": 48,
+      "county_id": 10,
+      "registered_voters": 204
+    },
+    {
+      "id": 15407,
+      "name": "MARTI NURSERY",
+      "code": "010048023904601",
+      "stream": "1",
+      "ward_id": 4902,
+      "constituency_id": 48,
+      "county_id": 10,
+      "registered_voters": 460
+    },
+    {
+      "id": 15408,
+      "name": "LOG LOGO PRIMARY",
+      "code": "010048023904701",
+      "stream": "1",
+      "ward_id": 4902,
+      "constituency_id": 48,
+      "county_id": 10,
+      "registered_voters": 621
+    },
+    {
+      "id": 15409,
+      "name": "LOKILELENG NURSERY",
+      "code": "010048023904801",
+      "stream": "1",
+      "ward_id": 4902,
+      "constituency_id": 48,
+      "county_id": 10,
+      "registered_voters": 442
+    },
+    {
+      "id": 15410,
+      "name": "ELBAAROK PRIMARY SCHOOL",
+      "code": "010048023904901",
+      "stream": "1",
+      "ward_id": 4902,
+      "constituency_id": 48,
+      "county_id": 10,
+      "registered_voters": 332
+    },
+    {
+      "id": 15411,
+      "name": "KAMBOE PRIMARY SCH",
+      "code": "010048023905001",
+      "stream": "1",
+      "ward_id": 4902,
+      "constituency_id": 48,
+      "county_id": 10,
+      "registered_voters": 1217
+    },
+    {
+      "id": 15412,
+      "name": "CATHOLIC NURSERY",
+      "code": "010048023905101",
+      "stream": "1",
+      "ward_id": 4902,
+      "constituency_id": 48,
+      "county_id": 10,
+      "registered_voters": 525
+    },
+    {
+      "id": 15413,
+      "name": "LESITIMA BOREHOLE",
+      "code": "010048023905201",
+      "stream": "1",
+      "ward_id": 4902,
+      "constituency_id": 48,
+      "county_id": 10,
+      "registered_voters": 332
+    },
+    {
+      "id": 15469,
+      "name": "MANYATTA BURJI MADRASSA",
+      "code": "010045022302701",
+      "stream": "1",
+      "ward_id": 4903,
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 1550
+    },
+    {
+      "id": 15470,
+      "name": "ST.MARY'S PRIMARY SCHOOL",
+      "code": "010045022302801",
+      "stream": "1",
+      "ward_id": 4903,
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 990
+    },
+    {
+      "id": 15471,
+      "name": "HEILU PRIMARY SCHOOL",
+      "code": "010045022302901",
+      "stream": "1",
+      "ward_id": 4903,
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 1065
+    },
+    {
+      "id": 15472,
+      "name": "MANSILE PRIMARY SCHOOL",
+      "code": "010045022303001",
+      "stream": "1",
+      "ward_id": 4903,
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 158
+    },
+    {
+      "id": 15473,
+      "name": "KINISA PRIMARY SCHOOL",
+      "code": "010045022303101",
+      "stream": "1",
+      "ward_id": 4903,
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 391
+    },
+    {
+      "id": 15474,
+      "name": "K/RASHIDIN PRIMARY SCHOOL",
+      "code": "010045022303201",
+      "stream": "1",
+      "ward_id": 4903,
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 1122
+    },
+    {
+      "id": 15475,
+      "name": "HEILU NURSERY SCHOOL",
+      "code": "010045022303301",
+      "stream": "1",
+      "ward_id": 4903,
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 1887
+    },
+    {
+      "id": 15476,
+      "name": "MANYATTA PRIMARY SCHOOL",
+      "code": "010045022303401",
+      "stream": "1",
+      "ward_id": 4903,
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 293
+    },
+    {
+      "id": 15477,
+      "name": "FATUL BAHRI MADRASA",
+      "code": "010045022303501",
+      "stream": "1",
+      "ward_id": 4903,
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 890
+    },
+    {
+      "id": 15478,
+      "name": "HEILU SOCIAL HALL",
+      "code": "010045022303601",
+      "stream": "1",
+      "ward_id": 4903,
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 1142
+    },
+    {
+      "id": 15479,
+      "name": "MOYALE GIRLS SECONDARY SCHOOL",
+      "code": "010045022303701",
+      "stream": "1",
+      "ward_id": 4903,
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 893
+    },
+    {
+      "id": 15480,
+      "name": "FUNAN DIMO MANYATTA CENTRE",
+      "code": "010045022303801",
+      "stream": "1",
+      "ward_id": 4903,
+      "constituency_id": 45,
+      "county_id": 10,
+      "registered_voters": 50
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}

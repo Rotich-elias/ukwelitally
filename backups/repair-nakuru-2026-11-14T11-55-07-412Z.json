@@ -1,0 +1,276 @@
+{
+  "created_at": "2026-11-14T11:55:07.412Z",
+  "county": "Nakuru",
+  "plan": {
+    "county": {
+      "id": 32,
+      "name": "Nakuru"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 4444,
+          "name": "Maai-mahiu",
+          "code": "0839",
+          "constituencyId": 168,
+          "constituencyName": "Naivasha",
+          "constituencyCode": "168",
+          "stations": 0,
+          "constituencyStations": 112,
+          "constituencyWards": 9,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4919,
+          "name": "MAI MAHIU",
+          "code": "MAIMAHIU",
+          "constituencyId": 168,
+          "constituencyName": "Naivasha",
+          "constituencyCode": "168",
+          "stations": 20,
+          "constituencyStations": 112,
+          "constituencyWards": 9,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": []
+  },
+  "wards": [
+    {
+      "id": 4444,
+      "name": "Maai-mahiu",
+      "code": "0839",
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 0
+    },
+    {
+      "id": 4919,
+      "name": "MAI MAHIU",
+      "code": "MAIMAHIU",
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 21934
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 168,
+      "name": "Naivasha",
+      "code": "168",
+      "county_id": 32,
+      "registered_voters": 157128
+    }
+  ],
+  "stations": [
+    {
+      "id": 25974,
+      "name": "KIJABE PRIMARY SCHOOL",
+      "code": "032168083902901",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 757
+    },
+    {
+      "id": 25975,
+      "name": "ERERI PRIMARY SCHOOL",
+      "code": "032168083903001",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 289
+    },
+    {
+      "id": 25976,
+      "name": "MUNENGI PRIMARY SCHOOL",
+      "code": "032168083903101",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 594
+    },
+    {
+      "id": 25977,
+      "name": "LONGONOT PRIMARY SCHOOL",
+      "code": "032168083903201",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 1105
+    },
+    {
+      "id": 25978,
+      "name": "MAAI-MAHIU PRIMARY SCHOOL",
+      "code": "032168083903301",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 1291
+    },
+    {
+      "id": 25979,
+      "name": "KARIMA PRIMARY SCHOOL",
+      "code": "032168083903401",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 1817
+    },
+    {
+      "id": 25980,
+      "name": "RARE NURSERY SCHOOL",
+      "code": "032168083903501",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 172
+    },
+    {
+      "id": 25981,
+      "name": "NYAKINYUA PRIMARY SCHOOL",
+      "code": "032168083903601",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 387
+    },
+    {
+      "id": 25982,
+      "name": "SATELITE PRIMARY SCHOOL",
+      "code": "032168083903701",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 317
+    },
+    {
+      "id": 25983,
+      "name": "NAMUNCHA PRIMARY SCHOOL",
+      "code": "032168083903801",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 1087
+    },
+    {
+      "id": 25984,
+      "name": "NGEYA PRIMARY SCHOOL",
+      "code": "032168083903901",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 5863
+    },
+    {
+      "id": 25985,
+      "name": "LONGONOT ECD CENTRE",
+      "code": "032168083904001",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 1439
+    },
+    {
+      "id": 25986,
+      "name": "JIKAZE CENTRE",
+      "code": "032168083904101",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 410
+    },
+    {
+      "id": 25987,
+      "name": "GOVERNOR TRADING CENTRE",
+      "code": "032168083904201",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 698
+    },
+    {
+      "id": 25988,
+      "name": "REV. JEREMIA PRIMARY SCHOOL",
+      "code": "032168083904301",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 4152
+    },
+    {
+      "id": 25989,
+      "name": "OITI PRIMARY SCHOOL",
+      "code": "032168083904401",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 318
+    },
+    {
+      "id": 25990,
+      "name": "GATHIMA PRIMARY SCHOOL",
+      "code": "032168083910101",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 286
+    },
+    {
+      "id": 25991,
+      "name": "MAAI MAHIU SOCIAL HALL",
+      "code": "032168083910201",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 833
+    },
+    {
+      "id": 25992,
+      "name": "UTHERI WA LARI PRIMARY SCHOOL",
+      "code": "032168083910301",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 80
+    },
+    {
+      "id": 25993,
+      "name": "Empeut Primary School",
+      "code": "032168083911501",
+      "stream": "1",
+      "ward_id": 4919,
+      "constituency_id": 168,
+      "county_id": 32,
+      "registered_voters": 39
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}

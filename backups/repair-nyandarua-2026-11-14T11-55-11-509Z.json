@@ -1,0 +1,1070 @@
+{
+  "created_at": "2026-11-14T11:55:11.509Z",
+  "county": "Nyandarua",
+  "plan": {
+    "county": {
+      "id": 18,
+      "name": "Nyandarua"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 4566,
+          "name": "Charagita",
+          "code": "0461",
+          "constituencyId": 92,
+          "constituencyName": "Ol Jorok",
+          "constituencyCode": "092",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 4,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4904,
+          "name": "CHARAGITA",
+          "code": "CHARAGITA",
+          "constituencyId": 291,
+          "constituencyName": "Ol Joro Orok",
+          "constituencyCode": "OLJOROOROK",
+          "stations": 18,
+          "constituencyStations": 63,
+          "constituencyWards": 4,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4567,
+          "name": "Gathanji",
+          "code": "0458",
+          "constituencyId": 92,
+          "constituencyName": "Ol Jorok",
+          "constituencyCode": "092",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 4,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4905,
+          "name": "GATHANJI",
+          "code": "GATHANJI",
+          "constituencyId": 291,
+          "constituencyName": "Ol Joro Orok",
+          "constituencyCode": "OLJOROOROK",
+          "stations": 13,
+          "constituencyStations": 63,
+          "constituencyWards": 4,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4568,
+          "name": "Gatimu",
+          "code": "0459",
+          "constituencyId": 92,
+          "constituencyName": "Ol Jorok",
+          "constituencyCode": "092",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 4,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4906,
+          "name": "GATIMU",
+          "code": "GATIMU",
+          "constituencyId": 291,
+          "constituencyName": "Ol Joro Orok",
+          "constituencyCode": "OLJOROOROK",
+          "stations": 11,
+          "constituencyStations": 63,
+          "constituencyWards": 4,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4569,
+          "name": "Weru",
+          "code": "0460",
+          "constituencyId": 92,
+          "constituencyName": "Ol Jorok",
+          "constituencyCode": "092",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 4,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4907,
+          "name": "WERU",
+          "code": "WERU",
+          "constituencyId": 291,
+          "constituencyName": "Ol Joro Orok",
+          "constituencyCode": "OLJOROOROK",
+          "stations": 21,
+          "constituencyStations": 63,
+          "constituencyWards": 4,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4571,
+          "name": "Kanjuiri ridge",
+          "code": "0454",
+          "constituencyId": 91,
+          "constituencyName": "Ol Kalou",
+          "constituencyCode": "091",
+          "stations": 0,
+          "constituencyStations": 73,
+          "constituencyWards": 6,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4908,
+          "name": "KANJUIRI RANGE",
+          "code": "KANJUIRIRANGE",
+          "constituencyId": 91,
+          "constituencyName": "Ol Kalou",
+          "constituencyCode": "091",
+          "stations": 17,
+          "constituencyStations": 73,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": [
+      {
+        "id": 92,
+        "name": "Ol Jorok",
+        "code": "092",
+        "destinationId": 291,
+        "destinationName": "Ol Joro Orok"
+      }
+    ]
+  },
+  "wards": [
+    {
+      "id": 4566,
+      "name": "Charagita",
+      "code": "0461",
+      "constituency_id": 92,
+      "county_id": 18,
+      "registered_voters": 0
+    },
+    {
+      "id": 4567,
+      "name": "Gathanji",
+      "code": "0458",
+      "constituency_id": 92,
+      "county_id": 18,
+      "registered_voters": 0
+    },
+    {
+      "id": 4568,
+      "name": "Gatimu",
+      "code": "0459",
+      "constituency_id": 92,
+      "county_id": 18,
+      "registered_voters": 0
+    },
+    {
+      "id": 4569,
+      "name": "Weru",
+      "code": "0460",
+      "constituency_id": 92,
+      "county_id": 18,
+      "registered_voters": 0
+    },
+    {
+      "id": 4571,
+      "name": "Kanjuiri ridge",
+      "code": "0454",
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 0
+    },
+    {
+      "id": 4904,
+      "name": "CHARAGITA",
+      "code": "CHARAGITA",
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 13932
+    },
+    {
+      "id": 4905,
+      "name": "GATHANJI",
+      "code": "GATHANJI",
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 12792
+    },
+    {
+      "id": 4906,
+      "name": "GATIMU",
+      "code": "GATIMU",
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 14875
+    },
+    {
+      "id": 4907,
+      "name": "WERU",
+      "code": "WERU",
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 18548
+    },
+    {
+      "id": 4908,
+      "name": "KANJUIRI RANGE",
+      "code": "KANJUIRIRANGE",
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 15596
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 91,
+      "name": "Ol Kalou",
+      "code": "091",
+      "county_id": 18,
+      "registered_voters": 72997
+    },
+    {
+      "id": 92,
+      "name": "Ol Jorok",
+      "code": "092",
+      "county_id": 18,
+      "registered_voters": 0
+    },
+    {
+      "id": 291,
+      "name": "Ol Joro Orok",
+      "code": "OLJOROOROK",
+      "county_id": 18,
+      "registered_voters": 60147
+    }
+  ],
+  "stations": [
+    {
+      "id": 20855,
+      "name": "MATINDIRI PRIMARY",
+      "code": "018092046103501",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 943
+    },
+    {
+      "id": 20856,
+      "name": "MUCHEMI PRIMARY",
+      "code": "018092046103601",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 632
+    },
+    {
+      "id": 20857,
+      "name": "RUIRU PRIMARY",
+      "code": "018092046103701",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1444
+    },
+    {
+      "id": 20858,
+      "name": "SABUGO PRIMARY",
+      "code": "018092046103801",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 723
+    },
+    {
+      "id": 20859,
+      "name": "NYAIROKO PRIMARY",
+      "code": "018092046103901",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 653
+    },
+    {
+      "id": 20860,
+      "name": "KIANIA NURSERY SCHOOL",
+      "code": "018092046104001",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 896
+    },
+    {
+      "id": 20861,
+      "name": "ORAIMUTIA PRIMARY",
+      "code": "018092046104101",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 941
+    },
+    {
+      "id": 20862,
+      "name": "UHURU PRIMARY",
+      "code": "018092046104201",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 871
+    },
+    {
+      "id": 20863,
+      "name": "NGATHA PRIMARY",
+      "code": "018092046104301",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 687
+    },
+    {
+      "id": 20864,
+      "name": "NGANO PRIMARY",
+      "code": "018092046104401",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1716
+    },
+    {
+      "id": 20865,
+      "name": "CHARAGITA PRIMARY",
+      "code": "018092046104501",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1649
+    },
+    {
+      "id": 20866,
+      "name": "KAMUKUNJI PRIMARY",
+      "code": "018092046104601",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 296
+    },
+    {
+      "id": 20867,
+      "name": "THAYU NURSERY SCHOOL",
+      "code": "018092046104701",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 600
+    },
+    {
+      "id": 20868,
+      "name": "MATINDIRI FARMERS SOCIETY",
+      "code": "018092046104801",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 707
+    },
+    {
+      "id": 20869,
+      "name": "MUNGA PRIMARY",
+      "code": "018092046104901",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 576
+    },
+    {
+      "id": 20870,
+      "name": "WANJURA SECONDARY",
+      "code": "018092046105001",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 250
+    },
+    {
+      "id": 20871,
+      "name": "KIMATHI PRIMARY SCHOOL",
+      "code": "018092046105101",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 129
+    },
+    {
+      "id": 20872,
+      "name": "KAGEMA PRIMARY SCHOOL",
+      "code": "018092046106301",
+      "stream": "1",
+      "ward_id": 4904,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 219
+    },
+    {
+      "id": 20873,
+      "name": "MUUNGANO PRIMARY",
+      "code": "018092045800101",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 2304
+    },
+    {
+      "id": 20874,
+      "name": "SILIBWET PRIMARY",
+      "code": "018092045800201",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 806
+    },
+    {
+      "id": 20875,
+      "name": "KIHEO PRIMARY",
+      "code": "018092045800301",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1385
+    },
+    {
+      "id": 20876,
+      "name": "GIKENO PRIMARY",
+      "code": "018092045800401",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1009
+    },
+    {
+      "id": 20877,
+      "name": "MWENJA PRIMARY",
+      "code": "018092045800501",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1778
+    },
+    {
+      "id": 20878,
+      "name": "GATHANJI PRIMARY",
+      "code": "018092045800601",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1147
+    },
+    {
+      "id": 20879,
+      "name": "CHAMUKA PRIMARY",
+      "code": "018092045800701",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1648
+    },
+    {
+      "id": 20880,
+      "name": "IGWAMITI PRIMARY",
+      "code": "018092045800801",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 664
+    },
+    {
+      "id": 20881,
+      "name": "BIDII PRIMARY",
+      "code": "018092045800901",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 714
+    },
+    {
+      "id": 20882,
+      "name": "MAHUA PRIMARY",
+      "code": "018092045801001",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 931
+    },
+    {
+      "id": 20883,
+      "name": "IGWAMITI SECONDARY SCHOOL",
+      "code": "018092045805201",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 65
+    },
+    {
+      "id": 20884,
+      "name": "KABATI SECONDARY SCHOOL",
+      "code": "018092045805301",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 99
+    },
+    {
+      "id": 20885,
+      "name": "SILIBWET SECONDARY SCHOOL",
+      "code": "018092045805401",
+      "stream": "1",
+      "ward_id": 4905,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 242
+    },
+    {
+      "id": 20886,
+      "name": "GATIMU PRIMARY",
+      "code": "018092045901101",
+      "stream": "1",
+      "ward_id": 4906,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 2460
+    },
+    {
+      "id": 20887,
+      "name": "KIBATHI PRIMARY",
+      "code": "018092045901201",
+      "stream": "1",
+      "ward_id": 4906,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 2600
+    },
+    {
+      "id": 20888,
+      "name": "BARAKA PRIMARY",
+      "code": "018092045901301",
+      "stream": "1",
+      "ward_id": 4906,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1122
+    },
+    {
+      "id": 20889,
+      "name": "RIVERSIDE PRIMARY",
+      "code": "018092045901401",
+      "stream": "1",
+      "ward_id": 4906,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 2409
+    },
+    {
+      "id": 20890,
+      "name": "KANGUU PRIMARY",
+      "code": "018092045901501",
+      "stream": "1",
+      "ward_id": 4906,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1076
+    },
+    {
+      "id": 20891,
+      "name": "JACARANDA PRIMARY",
+      "code": "018092045901601",
+      "stream": "1",
+      "ward_id": 4906,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1325
+    },
+    {
+      "id": 20892,
+      "name": "OL JORO OROK A.H.I.T.I",
+      "code": "018092045901701",
+      "stream": "1",
+      "ward_id": 4906,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1019
+    },
+    {
+      "id": 20893,
+      "name": "GIKINGI PRIMARY",
+      "code": "018092045901801",
+      "stream": "1",
+      "ward_id": 4906,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1333
+    },
+    {
+      "id": 20894,
+      "name": "KIANJATA PRIMARY",
+      "code": "018092045901901",
+      "stream": "1",
+      "ward_id": 4906,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1156
+    },
+    {
+      "id": 20895,
+      "name": "EQUATOR PRIMARY SCHOOL",
+      "code": "018092045905501",
+      "stream": "1",
+      "ward_id": 4906,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 172
+    },
+    {
+      "id": 20896,
+      "name": "RIVERSIDE SECONDARY SCHOOL",
+      "code": "018092045905601",
+      "stream": "1",
+      "ward_id": 4906,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 203
+    },
+    {
+      "id": 20897,
+      "name": "WERU PRIMARY",
+      "code": "018092046002001",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 2959
+    },
+    {
+      "id": 20898,
+      "name": "UIGUANO PRIMARY",
+      "code": "018092046002101",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1540
+    },
+    {
+      "id": 20899,
+      "name": "KARANDI PRIMARY",
+      "code": "018092046002201",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 809
+    },
+    {
+      "id": 20900,
+      "name": "GATUMBIRO PRIMARY",
+      "code": "018092046002301",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1150
+    },
+    {
+      "id": 20901,
+      "name": "GATITU PRIMARY",
+      "code": "018092046002401",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 551
+    },
+    {
+      "id": 20902,
+      "name": "LESIRKO PRIMARY",
+      "code": "018092046002501",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1300
+    },
+    {
+      "id": 20903,
+      "name": "KIRIMANGAI PRIMARY",
+      "code": "018092046002601",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1120
+    },
+    {
+      "id": 20904,
+      "name": "OL JORO OROK PRIMARY",
+      "code": "018092046002701",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 2937
+    },
+    {
+      "id": 20905,
+      "name": "KANGUI SECONDARY",
+      "code": "018092046002801",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 756
+    },
+    {
+      "id": 20906,
+      "name": "MADARAKA PRIMARY",
+      "code": "018092046002901",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 619
+    },
+    {
+      "id": 20907,
+      "name": "CHAKARELI PRIMARY",
+      "code": "018092046003001",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 1184
+    },
+    {
+      "id": 20908,
+      "name": "KAMUKWA SIMBA NURSERY",
+      "code": "018092046003101",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 677
+    },
+    {
+      "id": 20909,
+      "name": "KAHINGO PRIMARY",
+      "code": "018092046003201",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 931
+    },
+    {
+      "id": 20910,
+      "name": "KIRIMA PRIMARY",
+      "code": "018092046003301",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 562
+    },
+    {
+      "id": 20911,
+      "name": "KANGUI YOUTH POLYTECHNIC",
+      "code": "018092046003401",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 419
+    },
+    {
+      "id": 20912,
+      "name": "INOORO PRIMARY SCHOOL",
+      "code": "018092046005701",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 144
+    },
+    {
+      "id": 20913,
+      "name": "WERU SECONDARY SCHOOL",
+      "code": "018092046005801",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 257
+    },
+    {
+      "id": 20914,
+      "name": "OLJOROROK NURSERY SCHOOL",
+      "code": "018092046005901",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 158
+    },
+    {
+      "id": 20915,
+      "name": "OLJOROROK SECONDARY SCHOOL",
+      "code": "018092046006001",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 47
+    },
+    {
+      "id": 20916,
+      "name": "MATURA SECONDARY SCHOOL",
+      "code": "018092046006101",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 327
+    },
+    {
+      "id": 20917,
+      "name": "KAMAINA PRIMARY SCHOOL",
+      "code": "018092046006201",
+      "stream": "1",
+      "ward_id": 4907,
+      "constituency_id": 291,
+      "county_id": 18,
+      "registered_voters": 101
+    },
+    {
+      "id": 20931,
+      "name": "NGORIKA PRIMARY",
+      "code": "018091045401101",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 2319
+    },
+    {
+      "id": 20932,
+      "name": "NYAITUGA PRIMARY",
+      "code": "018091045401201",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 980
+    },
+    {
+      "id": 20933,
+      "name": "RUTARA PRIMARY",
+      "code": "018091045401301",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 1312
+    },
+    {
+      "id": 20934,
+      "name": "WIYUMIRIRIE PRIMARY",
+      "code": "018091045401401",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 1062
+    },
+    {
+      "id": 20935,
+      "name": "KANGATHIA PRIMARY",
+      "code": "018091045401501",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 584
+    },
+    {
+      "id": 20936,
+      "name": "KANJUIRI PRIMARY",
+      "code": "018091045401601",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 1701
+    },
+    {
+      "id": 20937,
+      "name": "MURINDATI PRIMARY",
+      "code": "018091045401701",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 883
+    },
+    {
+      "id": 20938,
+      "name": "KAHIGU PRIMARY",
+      "code": "018091045401801",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 785
+    },
+    {
+      "id": 20939,
+      "name": "KANJAU MUTARAKWA NURSERY",
+      "code": "018091045401901",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 799
+    },
+    {
+      "id": 20940,
+      "name": "CIIRA PRIMARY",
+      "code": "018091045402001",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 571
+    },
+    {
+      "id": 20941,
+      "name": "KIHOTO PRIMARY",
+      "code": "018091045402101",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 965
+    },
+    {
+      "id": 20942,
+      "name": "KIRATHIMO PRIMARY",
+      "code": "018091045402201",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 534
+    },
+    {
+      "id": 20943,
+      "name": "TUMAINI SECONDARY",
+      "code": "018091045402301",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 2116
+    },
+    {
+      "id": 20944,
+      "name": "WANJURA PRIMARY",
+      "code": "018091045402401",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 148
+    },
+    {
+      "id": 20945,
+      "name": "HARAMBEE NURSERY SCHOOL",
+      "code": "018091045402501",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 378
+    },
+    {
+      "id": 20946,
+      "name": "TUMAINI PRIMARY SCHOOL",
+      "code": "018091045406201",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 275
+    },
+    {
+      "id": 20947,
+      "name": "KIO PRIMARY SCHOOL",
+      "code": "018091045406301",
+      "stream": "1",
+      "ward_id": 4908,
+      "constituency_id": 91,
+      "county_id": 18,
+      "registered_voters": 184
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}

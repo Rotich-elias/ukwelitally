@@ -1,0 +1,246 @@
+{
+  "created_at": "2026-11-14T11:54:12.628Z",
+  "county": "Kakamega",
+  "plan": {
+    "county": {
+      "id": 37,
+      "name": "Kakamega"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 4492,
+          "name": "Shinoyi-shikomari-",
+          "code": "1016",
+          "constituencyId": 203,
+          "constituencyName": "Navakholo",
+          "constituencyCode": "203",
+          "stations": 0,
+          "constituencyStations": 86,
+          "constituencyWards": 6,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4920,
+          "name": "SHINOYI-SHIKOMARI-ESUMEYIA",
+          "code": "SHINOYISHIKOMARIESUMEYIA",
+          "constituencyId": 203,
+          "constituencyName": "Navakholo",
+          "constituencyCode": "203",
+          "stations": 17,
+          "constituencyStations": 86,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": []
+  },
+  "wards": [
+    {
+      "id": 4492,
+      "name": "Shinoyi-shikomari-",
+      "code": "1016",
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 0
+    },
+    {
+      "id": 4920,
+      "name": "SHINOYI-SHIKOMARI-ESUMEYIA",
+      "code": "SHINOYISHIKOMARIESUMEYIA",
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 11689
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 203,
+      "name": "Navakholo",
+      "code": "203",
+      "county_id": 37,
+      "registered_voters": 64743
+    }
+  ],
+  "stations": [
+    {
+      "id": 28996,
+      "name": "SHINOYI PRIMARY SCHOOL",
+      "code": "037203101601001",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 1614
+    },
+    {
+      "id": 28997,
+      "name": "NALUCHIRA PRIMARY SCHOOL",
+      "code": "037203101601101",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 484
+    },
+    {
+      "id": 28998,
+      "name": "SHIKOMARI PRIMARY SCHOOL",
+      "code": "037203101601201",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 1441
+    },
+    {
+      "id": 28999,
+      "name": "SHING'OTO PRIMARY SCHOOL",
+      "code": "037203101601301",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 658
+    },
+    {
+      "id": 29000,
+      "name": "ESUMEYIA PRIMARY SCHOOL",
+      "code": "037203101601401",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 910
+    },
+    {
+      "id": 29001,
+      "name": "EBUTENJE PRIMARY SCHOOL",
+      "code": "037203101601501",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 913
+    },
+    {
+      "id": 29002,
+      "name": "ESHIKHONI PRIMARY SCHOOL",
+      "code": "037203101601601",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 525
+    },
+    {
+      "id": 29003,
+      "name": "SHIBEMBE S.A NURSERY SCHOOL",
+      "code": "037203101601701",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 741
+    },
+    {
+      "id": 29004,
+      "name": "BUMAMU PRIMARY SCHOOL",
+      "code": "037203101601801",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 713
+    },
+    {
+      "id": 29005,
+      "name": "LIFE SPRING ACADEMY SCHOOL",
+      "code": "037203101601901",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 505
+    },
+    {
+      "id": 29006,
+      "name": "EBUSHIBO PRIMARY SCHOOL",
+      "code": "037203101602001",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 380
+    },
+    {
+      "id": 29007,
+      "name": "MUSHILILIE CHILD DEVELOPMENT CENTER",
+      "code": "037203101602101",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 628
+    },
+    {
+      "id": 29008,
+      "name": "ESHIYENGA PRIMARY SCHOOL",
+      "code": "037203101602201",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 372
+    },
+    {
+      "id": 29009,
+      "name": "EBUMANGALE ECD SCHOOL",
+      "code": "037203101602301",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 497
+    },
+    {
+      "id": 29010,
+      "name": "MWIKOLI PRIMARY SCHOOL",
+      "code": "037203101602401",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 421
+    },
+    {
+      "id": 29011,
+      "name": "EBURENGA PRIMARY SCHOOL",
+      "code": "037203101602501",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 530
+    },
+    {
+      "id": 29012,
+      "name": "NAMUNG'OMA MULEMBE CHURCH",
+      "code": "037203101608401",
+      "stream": "1",
+      "ward_id": 4920,
+      "constituency_id": 203,
+      "county_id": 37,
+      "registered_voters": 357
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}

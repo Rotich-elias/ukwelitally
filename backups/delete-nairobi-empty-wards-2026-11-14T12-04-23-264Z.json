@@ -1,0 +1,57 @@
+{
+  "deletedAt": "2026-11-14T12:04:23.265Z",
+  "wards": [
+    {
+      "id": 4890,
+      "name": "MATOPENI/SPRING VALLEY",
+      "code": "MATOPENISPRINGVALLEY",
+      "constituency_id": 284,
+      "county_id": 47,
+      "registered_voters": 0,
+      "constituency": "Embakasi Central",
+      "county": "Nairobi",
+      "stations": 0,
+      "candidates": 0,
+      "volunteers": 0
+    },
+    {
+      "id": 4891,
+      "name": "WOODLEY/KENYATTA GOLF COURSE",
+      "code": "WOODLEYKENYATTAGOLFCOURSE",
+      "constituency_id": 278,
+      "county_id": 47,
+      "registered_voters": 0,
+      "constituency": "Kibra",
+      "county": "Nairobi",
+      "stations": 0,
+      "candidates": 0,
+      "volunteers": 0
+    },
+    {
+      "id": 4892,
+      "name": "MUGUMU-INI",
+      "code": "MUGUMUINI",
+      "constituency_id": 277,
+      "county_id": 47,
+      "registered_voters": 0,
+      "constituency": "Langata",
+      "county": "Nairobi",
+      "stations": 0,
+      "candidates": 0,
+      "volunteers": 0
+    },
+    {
+      "id": 4893,
+      "name": "WOODLEY/KENYATTA",
+      "code": "WOODLEYKENYATTA",
+      "constituency_id": 278,
+      "county_id": 47,
+      "registered_voters": 0,
+      "constituency": "Kibra",
+      "county": "Nairobi",
+      "stations": 0,
+      "candidates": 0,
+      "volunteers": 0
+    }
+  ]
+}

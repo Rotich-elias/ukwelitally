@@ -1,0 +1,1116 @@
+{
+  "created_at": "2026-11-14T11:54:52.769Z",
+  "county": "Murang'a",
+  "plan": {
+    "county": {
+      "id": 21,
+      "name": "Murang'a"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 4281,
+          "name": "Ichagaki",
+          "code": "0537",
+          "constituencyId": 108,
+          "constituencyName": "Maragwa",
+          "constituencyCode": "108",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 6,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4909,
+          "name": "ICHAGAKI",
+          "code": "ICHAGAKI",
+          "constituencyId": 292,
+          "constituencyName": "Maragua",
+          "constituencyCode": "MARAGUA",
+          "stations": 10,
+          "constituencyStations": 81,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4282,
+          "name": "Kamahuha",
+          "code": "0536",
+          "constituencyId": 108,
+          "constituencyName": "Maragwa",
+          "constituencyCode": "108",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 6,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4910,
+          "name": "KAMAHUHA",
+          "code": "KAMAHUHA",
+          "constituencyId": 292,
+          "constituencyName": "Maragua",
+          "constituencyCode": "MARAGUA",
+          "stations": 11,
+          "constituencyStations": 81,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4283,
+          "name": "Kambiti",
+          "code": "0535",
+          "constituencyId": 108,
+          "constituencyName": "Maragwa",
+          "constituencyCode": "108",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 6,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4911,
+          "name": "KAMBITI",
+          "code": "KAMBITI",
+          "constituencyId": 292,
+          "constituencyName": "Maragua",
+          "constituencyCode": "MARAGUA",
+          "stations": 17,
+          "constituencyStations": 81,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4284,
+          "name": "Kimorori/Wempa",
+          "code": "0533",
+          "constituencyId": 108,
+          "constituencyName": "Maragwa",
+          "constituencyCode": "108",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 6,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4912,
+          "name": "KIMORORI/WEMPA",
+          "code": "KIMORORIWEMPA",
+          "constituencyId": 292,
+          "constituencyName": "Maragua",
+          "constituencyCode": "MARAGUA",
+          "stations": 14,
+          "constituencyStations": 81,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4285,
+          "name": "Makuyu",
+          "code": "0534",
+          "constituencyId": 108,
+          "constituencyName": "Maragwa",
+          "constituencyCode": "108",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 6,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4913,
+          "name": "MAKUYU",
+          "code": "MAKUYU",
+          "constituencyId": 292,
+          "constituencyName": "Maragua",
+          "constituencyCode": "MARAGUA",
+          "stations": 14,
+          "constituencyStations": 81,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      },
+      {
+        "keeper": {
+          "id": 4286,
+          "name": "Nginda",
+          "code": "0538",
+          "constituencyId": 108,
+          "constituencyName": "Maragwa",
+          "constituencyCode": "108",
+          "stations": 0,
+          "constituencyStations": 0,
+          "constituencyWards": 6,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4914,
+          "name": "NGINDA",
+          "code": "NGINDA",
+          "constituencyId": 292,
+          "constituencyName": "Maragua",
+          "constituencyCode": "MARAGUA",
+          "stations": 15,
+          "constituencyStations": 81,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "stale constituency"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": [
+      {
+        "id": 108,
+        "name": "Maragwa",
+        "code": "108",
+        "destinationId": 292,
+        "destinationName": "Maragua"
+      }
+    ]
+  },
+  "wards": [
+    {
+      "id": 4281,
+      "name": "Ichagaki",
+      "code": "0537",
+      "constituency_id": 108,
+      "county_id": 21,
+      "registered_voters": 0
+    },
+    {
+      "id": 4282,
+      "name": "Kamahuha",
+      "code": "0536",
+      "constituency_id": 108,
+      "county_id": 21,
+      "registered_voters": 0
+    },
+    {
+      "id": 4283,
+      "name": "Kambiti",
+      "code": "0535",
+      "constituency_id": 108,
+      "county_id": 21,
+      "registered_voters": 0
+    },
+    {
+      "id": 4284,
+      "name": "Kimorori/Wempa",
+      "code": "0533",
+      "constituency_id": 108,
+      "county_id": 21,
+      "registered_voters": 0
+    },
+    {
+      "id": 4285,
+      "name": "Makuyu",
+      "code": "0534",
+      "constituency_id": 108,
+      "county_id": 21,
+      "registered_voters": 0
+    },
+    {
+      "id": 4286,
+      "name": "Nginda",
+      "code": "0538",
+      "constituency_id": 108,
+      "county_id": 21,
+      "registered_voters": 0
+    },
+    {
+      "id": 4909,
+      "name": "ICHAGAKI",
+      "code": "ICHAGAKI",
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 13524
+    },
+    {
+      "id": 4910,
+      "name": "KAMAHUHA",
+      "code": "KAMAHUHA",
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 16236
+    },
+    {
+      "id": 4911,
+      "name": "KAMBITI",
+      "code": "KAMBITI",
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 13186
+    },
+    {
+      "id": 4912,
+      "name": "KIMORORI/WEMPA",
+      "code": "KIMORORIWEMPA",
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 26433
+    },
+    {
+      "id": 4913,
+      "name": "MAKUYU",
+      "code": "MAKUYU",
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 16588
+    },
+    {
+      "id": 4914,
+      "name": "NGINDA",
+      "code": "NGINDA",
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 16416
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 108,
+      "name": "Maragwa",
+      "code": "108",
+      "county_id": 21,
+      "registered_voters": 0
+    },
+    {
+      "id": 292,
+      "name": "Maragua",
+      "code": "MARAGUA",
+      "county_id": 21,
+      "registered_voters": 102383
+    }
+  ],
+  "stations": [
+    {
+      "id": 21436,
+      "name": "MARIIKI NURSERY SCHOOL",
+      "code": "021108053705701",
+      "stream": "1",
+      "ward_id": 4909,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 723
+    },
+    {
+      "id": 21437,
+      "name": "MUNGUINI PRIMARY SCHOOL",
+      "code": "021108053705801",
+      "stream": "1",
+      "ward_id": 4909,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 920
+    },
+    {
+      "id": 21438,
+      "name": "WAIRURI PRIMARY SCHOOL",
+      "code": "021108053705901",
+      "stream": "1",
+      "ward_id": 4909,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 985
+    },
+    {
+      "id": 21439,
+      "name": "KIANJIRUINI PRIMARY SCHOOL",
+      "code": "021108053706001",
+      "stream": "1",
+      "ward_id": 4909,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1470
+    },
+    {
+      "id": 21440,
+      "name": "GITHUYA PRIMARY SCHOOL",
+      "code": "021108053706101",
+      "stream": "1",
+      "ward_id": 4909,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1582
+    },
+    {
+      "id": 21441,
+      "name": "MUGUMO PRIMARY SCHOOL",
+      "code": "021108053706201",
+      "stream": "1",
+      "ward_id": 4909,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1392
+    },
+    {
+      "id": 21442,
+      "name": "ICHAGAKI PRIMARY SCHOOL",
+      "code": "021108053706301",
+      "stream": "1",
+      "ward_id": 4909,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1734
+    },
+    {
+      "id": 21443,
+      "name": "GIKOMORA PRIMARY SCHOOL",
+      "code": "021108053706401",
+      "stream": "1",
+      "ward_id": 4909,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1749
+    },
+    {
+      "id": 21444,
+      "name": "ITAARA PRIMARY SCHOOL",
+      "code": "021108053706501",
+      "stream": "1",
+      "ward_id": 4909,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 796
+    },
+    {
+      "id": 21445,
+      "name": "MARAGWA CENTRAL BUSINESS MARKET",
+      "code": "021108053706601",
+      "stream": "1",
+      "ward_id": 4909,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 2173
+    },
+    {
+      "id": 21446,
+      "name": "THAARA PRIMARY SCHOOL",
+      "code": "021108053604601",
+      "stream": "1",
+      "ward_id": 4910,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 2891
+    },
+    {
+      "id": 21447,
+      "name": "NDOROME PRIMARY SCHOOL",
+      "code": "021108053604701",
+      "stream": "1",
+      "ward_id": 4910,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 313
+    },
+    {
+      "id": 21448,
+      "name": "KAHAINI PRIMARY SCHOOL",
+      "code": "021108053604801",
+      "stream": "1",
+      "ward_id": 4910,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1168
+    },
+    {
+      "id": 21449,
+      "name": "NYATI PRIMARY SCHOOL",
+      "code": "021108053604901",
+      "stream": "1",
+      "ward_id": 4910,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 914
+    },
+    {
+      "id": 21450,
+      "name": "KAHARATI PRIMARY SCHOOL",
+      "code": "021108053605001",
+      "stream": "1",
+      "ward_id": 4910,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1537
+    },
+    {
+      "id": 21451,
+      "name": "SABASABA PRIMARY SCHOOL",
+      "code": "021108053605101",
+      "stream": "1",
+      "ward_id": 4910,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 3241
+    },
+    {
+      "id": 21452,
+      "name": "GATHURI PRIMARY SCHOOL",
+      "code": "021108053605201",
+      "stream": "1",
+      "ward_id": 4910,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 932
+    },
+    {
+      "id": 21453,
+      "name": "WATHIANI PRIMARY SCHOOL",
+      "code": "021108053605301",
+      "stream": "1",
+      "ward_id": 4910,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1230
+    },
+    {
+      "id": 21454,
+      "name": "MAGANJO PRIMARY SCHOOL",
+      "code": "021108053605401",
+      "stream": "1",
+      "ward_id": 4910,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1228
+    },
+    {
+      "id": 21455,
+      "name": "IGIKIRO PRIMARY SCHOOL",
+      "code": "021108053605501",
+      "stream": "1",
+      "ward_id": 4910,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1901
+    },
+    {
+      "id": 21456,
+      "name": "IGANJO PRIMARY SCHOOL",
+      "code": "021108053605601",
+      "stream": "1",
+      "ward_id": 4910,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 881
+    },
+    {
+      "id": 21457,
+      "name": "KAMBITI PRIMARY SCHOOL",
+      "code": "021108053502901",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 786
+    },
+    {
+      "id": 21458,
+      "name": "GATHANGA PRIMARY SCHOOL",
+      "code": "021108053503001",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 364
+    },
+    {
+      "id": 21459,
+      "name": "MATHENGETA PRIMARY SCHOOL",
+      "code": "021108053503101",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1628
+    },
+    {
+      "id": 21460,
+      "name": "KIAMBAA PRIMARY SCHOOL",
+      "code": "021108053503201",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 404
+    },
+    {
+      "id": 21461,
+      "name": "KITUNE PRIMARY SCHOOL",
+      "code": "021108053503301",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 460
+    },
+    {
+      "id": 21462,
+      "name": "KIUGUINI PRIMARY SCHOOL",
+      "code": "021108053503401",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1104
+    },
+    {
+      "id": 21463,
+      "name": "KIAMBAMBA PRIMARY SCHOOL",
+      "code": "021108053503501",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 843
+    },
+    {
+      "id": 21464,
+      "name": "MIHANG'O PRIMARY SCHOOL",
+      "code": "021108053503601",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1093
+    },
+    {
+      "id": 21465,
+      "name": "HUHOINI PRIMARY SCHOOL",
+      "code": "021108053503701",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1105
+    },
+    {
+      "id": 21466,
+      "name": "MARANJAU PRIMARY SCHOOL",
+      "code": "021108053503801",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 743
+    },
+    {
+      "id": 21467,
+      "name": "KAMUIRU PRIMARY SCHOOL",
+      "code": "021108053503901",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 445
+    },
+    {
+      "id": 21468,
+      "name": "KAWAMANDA PRIMARY SCHOOL",
+      "code": "021108053504001",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 738
+    },
+    {
+      "id": 21469,
+      "name": "MATANYA PRIMARY SCHOOL",
+      "code": "021108053504101",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 761
+    },
+    {
+      "id": 21470,
+      "name": "MUMBI NURSERY",
+      "code": "021108053504201",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1158
+    },
+    {
+      "id": 21471,
+      "name": "KIYO PRIMARY SCHOOL",
+      "code": "021108053504301",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 621
+    },
+    {
+      "id": 21472,
+      "name": "MUCHAGARA PRIMARY SCHOOL",
+      "code": "021108053504401",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 557
+    },
+    {
+      "id": 21473,
+      "name": "MAREMA PRIMARY SCHOOL",
+      "code": "021108053504501",
+      "stream": "1",
+      "ward_id": 4911,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 376
+    },
+    {
+      "id": 21474,
+      "name": "KABATI POLYTECHNIC",
+      "code": "021108053300101",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 3183
+    },
+    {
+      "id": 21475,
+      "name": "METHI NURSERY SCHOOL",
+      "code": "021108053300201",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 3524
+    },
+    {
+      "id": 21476,
+      "name": "KANGANGU PRIMARY SCHOOL",
+      "code": "021108053300301",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 2324
+    },
+    {
+      "id": 21477,
+      "name": "MANGOTO NURSERY SCHOOL",
+      "code": "021108053300401",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 828
+    },
+    {
+      "id": 21478,
+      "name": "KIMORORI PRIMARY SCHOOL",
+      "code": "021108053300501",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 6554
+    },
+    {
+      "id": 21479,
+      "name": "KARUNG'ANG'I PRIMARY SCHOOL",
+      "code": "021108053300601",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1577
+    },
+    {
+      "id": 21480,
+      "name": "KAGAA PRIMARY SCHOOL",
+      "code": "021108053300701",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 2748
+    },
+    {
+      "id": 21481,
+      "name": "ATHAARA PRIMARY SCHOOL",
+      "code": "021108053300801",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 319
+    },
+    {
+      "id": 21482,
+      "name": "GICHOHI PRIMARY SCHOOL",
+      "code": "021108053300901",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 727
+    },
+    {
+      "id": 21483,
+      "name": "P.K PRIMARY SCHOOL",
+      "code": "021108053301001",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1383
+    },
+    {
+      "id": 21484,
+      "name": "THANGIRA SEC SCHOOL",
+      "code": "021108053301101",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 961
+    },
+    {
+      "id": 21485,
+      "name": "GITHANJI PRIMARY SCHOOL",
+      "code": "021108053301201",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 581
+    },
+    {
+      "id": 21486,
+      "name": "GATHUNGURURU PRIMARY SCHOOL",
+      "code": "021108053301301",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1049
+    },
+    {
+      "id": 21487,
+      "name": "THANGIRA PRIMARY SCHOOL",
+      "code": "021108053301401",
+      "stream": "1",
+      "ward_id": 4912,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 675
+    },
+    {
+      "id": 21488,
+      "name": "MUTITHI PRIMARY SCHOOL",
+      "code": "021108053401501",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1042
+    },
+    {
+      "id": 21489,
+      "name": "MAJI KIBOKO PRIMARY SCHOOL",
+      "code": "021108053401601",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 699
+    },
+    {
+      "id": 21490,
+      "name": "GAICHANJIRU NURSERY",
+      "code": "021108053401701",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 892
+    },
+    {
+      "id": 21491,
+      "name": "KIRIMIRI PRIMARY SCHOOL",
+      "code": "021108053401801",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 964
+    },
+    {
+      "id": 21492,
+      "name": "MITHINI PRIMARY SCHOOL",
+      "code": "021108053401901",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 2092
+    },
+    {
+      "id": 21493,
+      "name": "KINOO PRIMARY SCHOOL",
+      "code": "021108053402001",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 825
+    },
+    {
+      "id": 21494,
+      "name": "MAKUYU TOWN COUNCIL NURSERY",
+      "code": "021108053402101",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 2216
+    },
+    {
+      "id": 21495,
+      "name": "MUGIRA PRIMARY SCHOOL",
+      "code": "021108053402201",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 997
+    },
+    {
+      "id": 21496,
+      "name": "NDERA PRIMARY SCHOOL",
+      "code": "021108053402301",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1348
+    },
+    {
+      "id": 21497,
+      "name": "PUNDA MILIA PRIMARY SCHOOL",
+      "code": "021108053402401",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1864
+    },
+    {
+      "id": 21498,
+      "name": "MARURA PRIMARY SCHOOL",
+      "code": "021108053402501",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 923
+    },
+    {
+      "id": 21499,
+      "name": "MURANG'A COLLEGE PRIMARY SCHOOL",
+      "code": "021108053402601",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1205
+    },
+    {
+      "id": 21500,
+      "name": "KIHARA PRIMARY SCHOOL",
+      "code": "021108053402701",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 446
+    },
+    {
+      "id": 21501,
+      "name": "MAKUYU PRIMARY SCHOOL",
+      "code": "021108053402801",
+      "stream": "1",
+      "ward_id": 4913,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1075
+    },
+    {
+      "id": 21502,
+      "name": "ITAAGA PRIMARY SCHOOL",
+      "code": "021108053806701",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1373
+    },
+    {
+      "id": 21503,
+      "name": "NYAGACHUGU PRIMARY SCHOOL",
+      "code": "021108053806801",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 595
+    },
+    {
+      "id": 21504,
+      "name": "IREMBU PRIMARY SCHOOL",
+      "code": "021108053806901",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1174
+    },
+    {
+      "id": 21505,
+      "name": "IHUMBU PRIMARY SCHOOL",
+      "code": "021108053807001",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 847
+    },
+    {
+      "id": 21506,
+      "name": "GATHERA PRIMARY SCHOOL",
+      "code": "021108053807101",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1217
+    },
+    {
+      "id": 21507,
+      "name": "GATHERA ACC&S NURSERY",
+      "code": "021108053807201",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 796
+    },
+    {
+      "id": 21508,
+      "name": "KAHARO PRIMARY SCHOOL",
+      "code": "021108053807301",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1476
+    },
+    {
+      "id": 21509,
+      "name": "KIRIMAINI PRIMARY SCHOOL",
+      "code": "021108053807401",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 390
+    },
+    {
+      "id": 21510,
+      "name": "NGINDA PRIMARY SCHOOL",
+      "code": "021108053807501",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 891
+    },
+    {
+      "id": 21511,
+      "name": "IHIGAINI PRIMARY SCHOOL",
+      "code": "021108053807601",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 587
+    },
+    {
+      "id": 21512,
+      "name": "GAKOIGO PRIMARY SCHOOL",
+      "code": "021108053807701",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 675
+    },
+    {
+      "id": 21513,
+      "name": "GAKOIGO SHOW GROUND",
+      "code": "021108053807801",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1355
+    },
+    {
+      "id": 21514,
+      "name": "IKUNDU PRIMARY SCHOOL",
+      "code": "021108053807901",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 895
+    },
+    {
+      "id": 21515,
+      "name": "MARAGUA PRIMARY SCHOOL",
+      "code": "021108053808001",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 1027
+    },
+    {
+      "id": 21516,
+      "name": "MARAGUA MUSLIM . MADARASA",
+      "code": "021108053808101",
+      "stream": "1",
+      "ward_id": 4914,
+      "constituency_id": 292,
+      "county_id": 21,
+      "registered_voters": 3118
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}

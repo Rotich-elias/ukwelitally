@@ -1,0 +1,639 @@
+{
+  "created_at": "2026-11-14T11:54:32.494Z",
+  "county": "Laikipia",
+  "plan": {
+    "county": {
+      "id": 31,
+      "name": "Laikipia"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 4139,
+          "name": "Mukogondo East",
+          "code": "0825",
+          "constituencyId": 165,
+          "constituencyName": "Laikipia North",
+          "constituencyCode": "165",
+          "stations": 0,
+          "constituencyStations": 105,
+          "constituencyWards": 6,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4916,
+          "name": "MUGOGODO EAST",
+          "code": "MUGOGODOEAST",
+          "constituencyId": 165,
+          "constituencyName": "Laikipia North",
+          "constituencyCode": "165",
+          "stations": 29,
+          "constituencyStations": 105,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      },
+      {
+        "keeper": {
+          "id": 4140,
+          "name": "Mukogondo West",
+          "code": "0824",
+          "constituencyId": 165,
+          "constituencyName": "Laikipia North",
+          "constituencyCode": "165",
+          "stations": 0,
+          "constituencyStations": 105,
+          "constituencyWards": 6,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4917,
+          "name": "MUGOGODO WEST",
+          "code": "MUGOGODOWEST",
+          "constituencyId": 165,
+          "constituencyName": "Laikipia North",
+          "constituencyCode": "165",
+          "stations": 23,
+          "constituencyStations": 105,
+          "constituencyWards": 6,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": []
+  },
+  "wards": [
+    {
+      "id": 4139,
+      "name": "Mukogondo East",
+      "code": "0825",
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 0
+    },
+    {
+      "id": 4140,
+      "name": "Mukogondo West",
+      "code": "0824",
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 0
+    },
+    {
+      "id": 4916,
+      "name": "MUGOGODO EAST",
+      "code": "MUGOGODOEAST",
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 11579
+    },
+    {
+      "id": 4917,
+      "name": "MUGOGODO WEST",
+      "code": "MUGOGODOWEST",
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 6436
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 165,
+      "name": "Laikipia North",
+      "code": "165",
+      "county_id": 31,
+      "registered_voters": 47752
+    }
+  ],
+  "stations": [
+    {
+      "id": 25213,
+      "name": "LUKOSERO PRIMARY SCHOOL",
+      "code": "031165082507101",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 259
+    },
+    {
+      "id": 25214,
+      "name": "KIWANJA YA NDEGE PRIMARY SCHOOL",
+      "code": "031165082507301",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 536
+    },
+    {
+      "id": 25215,
+      "name": "OLKEINYEI PRIMARY SCHOOL",
+      "code": "031165082507401",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 125
+    },
+    {
+      "id": 25216,
+      "name": "LARIAKOROK PRIMARY SCHOOL",
+      "code": "031165082507501",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 83
+    },
+    {
+      "id": 25217,
+      "name": "KATONGA NURSERY SCHOOL",
+      "code": "031165082507601",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 133
+    },
+    {
+      "id": 25218,
+      "name": "ARJIJO PRIMARY SCHOOL",
+      "code": "031165082507701",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 176
+    },
+    {
+      "id": 25219,
+      "name": "SIEKU PRIMARY SCHOOL",
+      "code": "031165082507801",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 218
+    },
+    {
+      "id": 25220,
+      "name": "KURIKURI PRIMARY SCHOOL",
+      "code": "031165082507901",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 148
+    },
+    {
+      "id": 25221,
+      "name": "DOLDOL PRIMARY SCHOOL",
+      "code": "031165082508001",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 601
+    },
+    {
+      "id": 25222,
+      "name": "ILMUKONGO NURSERY SCHOOL",
+      "code": "031165082508101",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 92
+    },
+    {
+      "id": 25223,
+      "name": "MURUANA IRUSHA PRIMARY SCHOOL",
+      "code": "031165082508201",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 123
+    },
+    {
+      "id": 25224,
+      "name": "ILINGWESI BANDAS (CUTURAL)",
+      "code": "031165082508301",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 70
+    },
+    {
+      "id": 25225,
+      "name": "NANDUNGORU NURSERY SCHOOL",
+      "code": "031165082508401",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 150
+    },
+    {
+      "id": 25226,
+      "name": "CHUMVI PRIMARY SCHOOL",
+      "code": "031165082508501",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 817
+    },
+    {
+      "id": 25227,
+      "name": "ETHI PRIMARY SCHOOL",
+      "code": "031165082508601",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 504
+    },
+    {
+      "id": 25228,
+      "name": "NGENIA PRIMARY SCHOOL",
+      "code": "031165082508701",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 831
+    },
+    {
+      "id": 25229,
+      "name": "NGENIA SECONDARY SCHOOL",
+      "code": "031165082508801",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 1066
+    },
+    {
+      "id": 25230,
+      "name": "BOKISH NURSERY SCHOOL",
+      "code": "031165082508901",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 261
+    },
+    {
+      "id": 25231,
+      "name": "SEEK MOBILE",
+      "code": "031165082509001",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 34
+    },
+    {
+      "id": 25232,
+      "name": "KAIRIGIRE PRIMARY SCHOOL",
+      "code": "031165082509101",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 739
+    },
+    {
+      "id": 25233,
+      "name": "KANTANA NURSERY SCHOOL",
+      "code": "031165082509201",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 78
+    },
+    {
+      "id": 25234,
+      "name": "TASIA MOBILE",
+      "code": "031165082509301",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 109
+    },
+    {
+      "id": 25235,
+      "name": "MELAU NAYEU PRIMARY SCHOOL",
+      "code": "031165082509401",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 985
+    },
+    {
+      "id": 25236,
+      "name": "SIRIMON PRIMARY SCHOOL",
+      "code": "031165082509501",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 597
+    },
+    {
+      "id": 25237,
+      "name": "MIAMOJA PRIMARY SCHOOL",
+      "code": "031165082509601",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 1589
+    },
+    {
+      "id": 25238,
+      "name": "ENAIKISHOMI PRIMARY SCHOOL",
+      "code": "031165082509701",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 207
+    },
+    {
+      "id": 25239,
+      "name": "KIIBO FARM",
+      "code": "031165082509801",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 485
+    },
+    {
+      "id": 25240,
+      "name": "SIOR MOBILE",
+      "code": "031165082509901",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 25
+    },
+    {
+      "id": 25241,
+      "name": "ROTASHA PRIMARY SCHOOL",
+      "code": "031165082510001",
+      "stream": "1",
+      "ward_id": 4916,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 538
+    },
+    {
+      "id": 25242,
+      "name": "EWASO PRIMARY SCHOOL",
+      "code": "031165082405001",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 792
+    },
+    {
+      "id": 25243,
+      "name": "OLMUNISHOI PRIMARY SCHOOL",
+      "code": "031165082405101",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 374
+    },
+    {
+      "id": 25244,
+      "name": "SALT LICK LIVESTOCK CENTRE",
+      "code": "031165082405201",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 109
+    },
+    {
+      "id": 25245,
+      "name": "NAIPERERE PRIMARY SCHOOL",
+      "code": "031165082405301",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 175
+    },
+    {
+      "id": 25246,
+      "name": "ILMOTIOK PRIMARY SCHOOL",
+      "code": "031165082405401",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 460
+    },
+    {
+      "id": 25247,
+      "name": "TURA JUNCTION FIELD",
+      "code": "031165082405501",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 187
+    },
+    {
+      "id": 25248,
+      "name": "NG'ABOLO PRIMARY SCHOOL",
+      "code": "031165082405601",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 275
+    },
+    {
+      "id": 25249,
+      "name": "KIMANJO PRIMARY SCHOOL",
+      "code": "031165082405701",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 616
+    },
+    {
+      "id": 25250,
+      "name": "MUSUL PRIMARY SCHOOL",
+      "code": "031165082405801",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 280
+    },
+    {
+      "id": 25251,
+      "name": "SOITO OLTASHE NURSERY SCHOOL",
+      "code": "031165082405901",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 118
+    },
+    {
+      "id": 25252,
+      "name": "PICHA NURSERY SCHOOL",
+      "code": "031165082406001",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 272
+    },
+    {
+      "id": 25253,
+      "name": "ILPOLEI PRIMARY SCHOOL",
+      "code": "031165082406101",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 188
+    },
+    {
+      "id": 25254,
+      "name": "SARAMBA PRIMARY SCHOOL",
+      "code": "031165082406201",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 228
+    },
+    {
+      "id": 25255,
+      "name": "SEEK PRIMARY SCHOOL",
+      "code": "031165082406301",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 149
+    },
+    {
+      "id": 25256,
+      "name": "EMULANGO BAPTIST NURSERY SCHOOL",
+      "code": "031165082406401",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 424
+    },
+    {
+      "id": 25257,
+      "name": "NOSIRAI TRADING CENTRE",
+      "code": "031165082406501",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 198
+    },
+    {
+      "id": 25258,
+      "name": "TIAMAMUT NURSERY SCHOOL",
+      "code": "031165082406601",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 194
+    },
+    {
+      "id": 25259,
+      "name": "TOR NURSERY SCHOOL",
+      "code": "031165082406701",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 327
+    },
+    {
+      "id": 25260,
+      "name": "OLOSHAKI NURSERY SCHOOL",
+      "code": "031165082406801",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 158
+    },
+    {
+      "id": 25261,
+      "name": "SOITOUDO PRIMARY SCHOOL",
+      "code": "031165082406901",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 234
+    },
+    {
+      "id": 25262,
+      "name": "NJURUM NURSERY SCHOOL",
+      "code": "031165082407001",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 273
+    },
+    {
+      "id": 25263,
+      "name": "KURUM PRIMARY SCHOOL",
+      "code": "031165082407201",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 335
+    },
+    {
+      "id": 25264,
+      "name": "NGIRIRIT PRIMARY SCHOOL",
+      "code": "031165082410501",
+      "stream": "1",
+      "ward_id": 4917,
+      "constituency_id": 165,
+      "county_id": 31,
+      "registered_voters": 70
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}

@@ -1,0 +1,799 @@
+{
+  "created_at": "2026-11-14T11:54:20.717Z",
+  "county": "Kisii",
+  "plan": {
+    "county": {
+      "id": 45,
+      "name": "Kisii"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 3516,
+          "name": "Bobasi bogetaorio",
+          "code": "1319",
+          "constituencyId": 264,
+          "constituencyName": "Bobasi",
+          "constituencyCode": "264",
+          "stations": 0,
+          "constituencyStations": 156,
+          "constituencyWards": 10,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4930,
+          "name": "BASI BOGETAORIO",
+          "code": "BASIBOGETAORIO",
+          "constituencyId": 264,
+          "constituencyName": "Bobasi",
+          "constituencyCode": "264",
+          "stations": 28,
+          "constituencyStations": 156,
+          "constituencyWards": 10,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      },
+      {
+        "keeper": {
+          "id": 3518,
+          "name": "Bobasi Central",
+          "code": "1317",
+          "constituencyId": 264,
+          "constituencyName": "Bobasi",
+          "constituencyCode": "264",
+          "stations": 0,
+          "constituencyStations": 156,
+          "constituencyWards": 10,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4931,
+          "name": "BASI CENTRAL",
+          "code": "BASICENTRAL",
+          "constituencyId": 264,
+          "constituencyName": "Bobasi",
+          "constituencyCode": "264",
+          "stations": 19,
+          "constituencyStations": 156,
+          "constituencyWards": 10,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      },
+      {
+        "keeper": {
+          "id": 3530,
+          "name": "Majoge",
+          "code": "1323",
+          "constituencyId": 265,
+          "constituencyName": "Bomachoge Chache",
+          "constituencyCode": "265",
+          "stations": 0,
+          "constituencyStations": 64,
+          "constituencyWards": 4,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4932,
+          "name": "MAJOGE BASI",
+          "code": "MAJOGEBASI",
+          "constituencyId": 265,
+          "constituencyName": "Bomachoge Chache",
+          "constituencyCode": "265",
+          "stations": 16,
+          "constituencyStations": 64,
+          "constituencyWards": 4,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": []
+  },
+  "wards": [
+    {
+      "id": 3516,
+      "name": "Bobasi bogetaorio",
+      "code": "1319",
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 0
+    },
+    {
+      "id": 3518,
+      "name": "Bobasi Central",
+      "code": "1317",
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 0
+    },
+    {
+      "id": 3530,
+      "name": "Majoge",
+      "code": "1323",
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 0
+    },
+    {
+      "id": 4930,
+      "name": "BASI BOGETAORIO",
+      "code": "BASIBOGETAORIO",
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 16319
+    },
+    {
+      "id": 4931,
+      "name": "BASI CENTRAL",
+      "code": "BASICENTRAL",
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 13122
+    },
+    {
+      "id": 4932,
+      "name": "MAJOGE BASI",
+      "code": "MAJOGEBASI",
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 13016
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 264,
+      "name": "Bobasi",
+      "code": "264",
+      "county_id": 45,
+      "registered_voters": 106060
+    },
+    {
+      "id": 265,
+      "name": "Bomachoge Chache",
+      "code": "265",
+      "county_id": 45,
+      "registered_voters": 49301
+    }
+  ],
+  "stations": [
+    {
+      "id": 32240,
+      "name": "ROGONGO PRIMARY SCHOOL",
+      "code": "045264131907201",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 941
+    },
+    {
+      "id": 32241,
+      "name": "NYABETE PRIMARY SCHOOL",
+      "code": "045264131907301",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 512
+    },
+    {
+      "id": 32242,
+      "name": "NYABOTERERE PRIMARY SCHOOL",
+      "code": "045264131907401",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 1072
+    },
+    {
+      "id": 32243,
+      "name": "OGANDA PRIMARY SCHOOL",
+      "code": "045264131907501",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 558
+    },
+    {
+      "id": 32244,
+      "name": "GETAI PRIMARY SCHOOL",
+      "code": "045264131907601",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 1414
+    },
+    {
+      "id": 32245,
+      "name": "RIONTWEKA PRIMARY SCHOOL",
+      "code": "045264131907701",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 655
+    },
+    {
+      "id": 32246,
+      "name": "NYANTIRA PRIMARY SCHOOL",
+      "code": "045264131907801",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 816
+    },
+    {
+      "id": 32247,
+      "name": "GIONSARIA PRIMARY SCHOOL",
+      "code": "045264131907901",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 777
+    },
+    {
+      "id": 32248,
+      "name": "RIGENA PRIMARY SCHOOL",
+      "code": "045264131908001",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 577
+    },
+    {
+      "id": 32249,
+      "name": "KIONDUSO PRIMARY SCHOOL",
+      "code": "045264131908101",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 514
+    },
+    {
+      "id": 32250,
+      "name": "NYANGUSU PRIMARY SCHOOL",
+      "code": "045264131908201",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 1458
+    },
+    {
+      "id": 32251,
+      "name": "NYACHOGOCHOGO PRIMARY SCHOOL",
+      "code": "045264131908301",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 640
+    },
+    {
+      "id": 32252,
+      "name": "RIKURA PRIMARY SCHOOL",
+      "code": "045264131908401",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 310
+    },
+    {
+      "id": 32253,
+      "name": "BENDERA PRIMARY SCHOOL",
+      "code": "045264131908501",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 593
+    },
+    {
+      "id": 32254,
+      "name": "EKEONGA PRIMARY SCHOOL",
+      "code": "045264131908601",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 480
+    },
+    {
+      "id": 32255,
+      "name": "NYAMACHE PRIMARY SCHOOL",
+      "code": "045264131908701",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 796
+    },
+    {
+      "id": 32256,
+      "name": "NYABIGONKORU PRIMARY SCHOOL",
+      "code": "045264131908801",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 294
+    },
+    {
+      "id": 32257,
+      "name": "NYARONGE PRIMARY SCHOOL",
+      "code": "045264131908901",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 574
+    },
+    {
+      "id": 32258,
+      "name": "NYAGWENGI PRIMARY SCHOOL",
+      "code": "045264131909001",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 396
+    },
+    {
+      "id": 32259,
+      "name": "BONYANCHA PRIMARY SCHOOL",
+      "code": "045264131909101",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 403
+    },
+    {
+      "id": 32260,
+      "name": "NYAMATERA PRIMARY SCHOOL",
+      "code": "045264131909201",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 362
+    },
+    {
+      "id": 32261,
+      "name": "GETUNU PRIMARY SCHOOL",
+      "code": "045264131909301",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 368
+    },
+    {
+      "id": 32262,
+      "name": "KIONGETI PRIMARY SCHOOL",
+      "code": "045264131909401",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 409
+    },
+    {
+      "id": 32263,
+      "name": "NYAMARAMBE PRIMARY SCHOOL",
+      "code": "045264131909501",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 502
+    },
+    {
+      "id": 32264,
+      "name": "RIAMABEYA TEA BUYING CENTRE",
+      "code": "045264131909601",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 379
+    },
+    {
+      "id": 32265,
+      "name": "NYANGUSU TEA BUYING CENTRE",
+      "code": "045264131914601",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 169
+    },
+    {
+      "id": 32266,
+      "name": "RIGENA SDA PRIMARY SCHOOL",
+      "code": "045264131914701",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 134
+    },
+    {
+      "id": 32267,
+      "name": "RIONYIEGO TEA BUYING CENTRE",
+      "code": "045264131914901",
+      "stream": "1",
+      "ward_id": 4930,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 216
+    },
+    {
+      "id": 32268,
+      "name": "BOSANSA PRIMARY SCHOOL",
+      "code": "045264131703301",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 811
+    },
+    {
+      "id": 32269,
+      "name": "ITIBONGE PRIMARY SCHOOL",
+      "code": "045264131703401",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 795
+    },
+    {
+      "id": 32270,
+      "name": "SUGUTA PRIMARY SCHOOL",
+      "code": "045264131703501",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 747
+    },
+    {
+      "id": 32271,
+      "name": "EKENYORU PRIMARY SCHOOL",
+      "code": "045264131703601",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 581
+    },
+    {
+      "id": 32272,
+      "name": "NYOERA PRIMARY SCHOOL",
+      "code": "045264131703701",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 1584
+    },
+    {
+      "id": 32273,
+      "name": "EMENWA PRIMARY SCHOOL",
+      "code": "045264131703801",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 992
+    },
+    {
+      "id": 32274,
+      "name": "MOSASA PRIMARY SCHOOL",
+      "code": "045264131703901",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 553
+    },
+    {
+      "id": 32275,
+      "name": "ITUMBE PRIMARY SCHOOL",
+      "code": "045264131704001",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 552
+    },
+    {
+      "id": 32276,
+      "name": "BORANGI P.A.G PRIMARY SCHOOL",
+      "code": "045264131704101",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 753
+    },
+    {
+      "id": 32277,
+      "name": "MAJI MAZURI PRIMARY SCHOOL",
+      "code": "045264131704201",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 801
+    },
+    {
+      "id": 32278,
+      "name": "EBIGOGO PRIMARY SCHOOL",
+      "code": "045264131704301",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 475
+    },
+    {
+      "id": 32279,
+      "name": "NYAMWARE PRIMARY SCHOOL",
+      "code": "045264131704401",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 543
+    },
+    {
+      "id": 32280,
+      "name": "OMOBONDO PRIMARY SCHOOL",
+      "code": "045264131704501",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 916
+    },
+    {
+      "id": 32281,
+      "name": "NYAKONA PRIMARY SCHOOL",
+      "code": "045264131704601",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 580
+    },
+    {
+      "id": 32282,
+      "name": "GETARE PRIMARY SCHOOL",
+      "code": "045264131704701",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 333
+    },
+    {
+      "id": 32283,
+      "name": "KEGOCHI PRIMARY SCHOOL",
+      "code": "045264131704801",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 687
+    },
+    {
+      "id": 32284,
+      "name": "IKENYE PRIMARY SCHOOL",
+      "code": "045264131704901",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 800
+    },
+    {
+      "id": 32285,
+      "name": "ENCHORO PEFA SECONDARY SCHOOL",
+      "code": "045264131714301",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 280
+    },
+    {
+      "id": 32286,
+      "name": "OMORIBE TEA BUYING CENTRE",
+      "code": "045264131714801",
+      "stream": "1",
+      "ward_id": 4931,
+      "constituency_id": 264,
+      "county_id": 45,
+      "registered_voters": 339
+    },
+    {
+      "id": 32510,
+      "name": "NYAMIOBO S.D.A. PRIMARY SCHOOL",
+      "code": "045265132300101",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 690
+    },
+    {
+      "id": 32511,
+      "name": "NYATARO II PRIMARY SCHOOL",
+      "code": "045265132300201",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 939
+    },
+    {
+      "id": 32512,
+      "name": "NYAGESA PRIMARY SCHOOL",
+      "code": "045265132300301",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 1611
+    },
+    {
+      "id": 32513,
+      "name": "GAKERO PRIMARY SCHOOL",
+      "code": "045265132300401",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 645
+    },
+    {
+      "id": 32514,
+      "name": "NYAMAONDE PRIMARY SCHOOL",
+      "code": "045265132300501",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 846
+    },
+    {
+      "id": 32515,
+      "name": "NYAGENKE PRIMARY SCHOOL",
+      "code": "045265132300601",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 1040
+    },
+    {
+      "id": 32516,
+      "name": "TUNTA PRIMARY SCHOOL",
+      "code": "045265132300701",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 588
+    },
+    {
+      "id": 32517,
+      "name": "BUYONGE PRIMARY SCHOOL",
+      "code": "045265132300801",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 965
+    },
+    {
+      "id": 32518,
+      "name": "NYAMBOGA PRIMARY SCHOOL",
+      "code": "045265132300901",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 689
+    },
+    {
+      "id": 32519,
+      "name": "NYAMORONGA PRIMARY SCHOOL",
+      "code": "045265132301001",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 528
+    },
+    {
+      "id": 32520,
+      "name": "ITABAGO PRIMARY SCHOOL",
+      "code": "045265132301101",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 711
+    },
+    {
+      "id": 32521,
+      "name": "NTAMOCHA PRIMARY SCHOOL",
+      "code": "045265132301201",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 934
+    },
+    {
+      "id": 32522,
+      "name": "NYAMASEBE PRIMARY SCHOOL",
+      "code": "045265132301301",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 293
+    },
+    {
+      "id": 32523,
+      "name": "NYANTOGO PRIMARY SCHOOL",
+      "code": "045265132301401",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 429
+    },
+    {
+      "id": 32524,
+      "name": "KEBEGE COFFEE FACTORY",
+      "code": "045265132301501",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 1273
+    },
+    {
+      "id": 32525,
+      "name": "EGETONTO HEALTH CENTRE",
+      "code": "045265132301601",
+      "stream": "1",
+      "ward_id": 4932,
+      "constituency_id": 265,
+      "county_id": 45,
+      "registered_voters": 835
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}

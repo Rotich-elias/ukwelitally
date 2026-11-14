@@ -1,0 +1,366 @@
+{
+  "created_at": "2026-11-14T11:54:28.502Z",
+  "county": "Kwale",
+  "plan": {
+    "county": {
+      "id": 2,
+      "name": "Kwale"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 4005,
+          "name": "Nadavaya",
+          "code": "0044",
+          "constituencyId": 10,
+          "constituencyName": "Kinango",
+          "constituencyCode": "010",
+          "stations": 0,
+          "constituencyStations": 184,
+          "constituencyWards": 8,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4894,
+          "name": "NDAVAYA",
+          "code": "NDAVAYA",
+          "constituencyId": 10,
+          "constituencyName": "Kinango",
+          "constituencyCode": "010",
+          "stations": 29,
+          "constituencyStations": 184,
+          "constituencyWards": 8,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": []
+  },
+  "wards": [
+    {
+      "id": 4005,
+      "name": "Nadavaya",
+      "code": "0044",
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 0
+    },
+    {
+      "id": 4894,
+      "name": "NDAVAYA",
+      "code": "NDAVAYA",
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 12743
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 10,
+      "name": "Kinango",
+      "code": "010",
+      "county_id": 2,
+      "registered_voters": 98123
+    }
+  ],
+  "stations": [
+    {
+      "id": 13229,
+      "name": "NGAURO PRIMARY SCHOOL",
+      "code": "002010004400101",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 220
+    },
+    {
+      "id": 13230,
+      "name": "MWALUKOMBE PRIMARY SCHOOL",
+      "code": "002010004400201",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 1005
+    },
+    {
+      "id": 13231,
+      "name": "MAGODZONI PRIMARY SCHOOL",
+      "code": "002010004400301",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 87
+    },
+    {
+      "id": 13232,
+      "name": "KIFYONZO PRIMARY SCHOOL",
+      "code": "002010004400401",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 908
+    },
+    {
+      "id": 13233,
+      "name": "MAPHANGA PRIMARY SCHOOL",
+      "code": "002010004400501",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 236
+    },
+    {
+      "id": 13234,
+      "name": "NDAUNI PRIMARY SCHOOL",
+      "code": "002010004400601",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 255
+    },
+    {
+      "id": 13235,
+      "name": "MABANDA PRIMARY SCHOOL",
+      "code": "002010004400701",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 406
+    },
+    {
+      "id": 13236,
+      "name": "GULANZE PRIMARY SCHOOL",
+      "code": "002010004400801",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 737
+    },
+    {
+      "id": 13237,
+      "name": "MWACHANDA PRIMARY SCHOOL",
+      "code": "002010004400901",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 670
+    },
+    {
+      "id": 13238,
+      "name": "GULANZE YOUTH POLYTECHNIC",
+      "code": "002010004401001",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 348
+    },
+    {
+      "id": 13239,
+      "name": "NDAVAYA PRIMARY SCHOOL",
+      "code": "002010004401101",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 1221
+    },
+    {
+      "id": 13240,
+      "name": "GANDINI SOUTH PRIMARY SCHOOL",
+      "code": "002010004401201",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 654
+    },
+    {
+      "id": 13241,
+      "name": "BOMANI PRIMARY SCHOOL",
+      "code": "002010004401301",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 602
+    },
+    {
+      "id": 13242,
+      "name": "MKANG'OMBE PRIMARY SCHOOL",
+      "code": "002010004401401",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 601
+    },
+    {
+      "id": 13243,
+      "name": "MBWALENI PRIMARY SCHOOL",
+      "code": "002010004401501",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 447
+    },
+    {
+      "id": 13244,
+      "name": "MBITA PRIMARY SCHOOL",
+      "code": "002010004401601",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 590
+    },
+    {
+      "id": 13245,
+      "name": "MWAKIJEMBE PRIMARY SCHOOL",
+      "code": "002010004401701",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 356
+    },
+    {
+      "id": 13246,
+      "name": "MWALUVUNO PRIMARY SCHOOL",
+      "code": "002010004401801",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 155
+    },
+    {
+      "id": 13247,
+      "name": "VYOGATO PRIMARY SCHOOL",
+      "code": "002010004401901",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 431
+    },
+    {
+      "id": 13248,
+      "name": "DZOYAHEWA NURSERY SCHOOL",
+      "code": "002010004402001",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 415
+    },
+    {
+      "id": 13249,
+      "name": "MBULUNI PRIMARY SCHOOL",
+      "code": "002010004402101",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 1003
+    },
+    {
+      "id": 13250,
+      "name": "MWANDIMU PRIMARY SCHOOL",
+      "code": "002010004402201",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 236
+    },
+    {
+      "id": 13251,
+      "name": "BUMANI PRIMARY SCHOOL",
+      "code": "002010004402301",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 211
+    },
+    {
+      "id": 13252,
+      "name": "KAWELU NURSERY SCHOOL",
+      "code": "002010004402401",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 160
+    },
+    {
+      "id": 13253,
+      "name": "MAFUNDANI NURSERY SCHOOL",
+      "code": "002010004402501",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 209
+    },
+    {
+      "id": 13254,
+      "name": "ZIA RA DUNDO",
+      "code": "002010004417901",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 93
+    },
+    {
+      "id": 13255,
+      "name": "MWANGAURE ECD",
+      "code": "002010004418001",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 89
+    },
+    {
+      "id": 13256,
+      "name": "JITEGEMEE PRIMARY SCHOOL",
+      "code": "002010004418101",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 252
+    },
+    {
+      "id": 13257,
+      "name": "DUDU ECDE",
+      "code": "002010004418201",
+      "stream": "1",
+      "ward_id": 4894,
+      "constituency_id": 10,
+      "county_id": 2,
+      "registered_voters": 146
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}

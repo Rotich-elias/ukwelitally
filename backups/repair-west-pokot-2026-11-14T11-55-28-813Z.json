@@ -1,0 +1,336 @@
+{
+  "created_at": "2026-11-14T11:55:28.813Z",
+  "county": "West Pokot",
+  "plan": {
+    "county": {
+      "id": 24,
+      "name": "West Pokot"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 3817,
+          "name": "Kapckok",
+          "code": "0653",
+          "constituencyId": 131,
+          "constituencyName": "Kacheliba",
+          "constituencyCode": "131",
+          "stations": 0,
+          "constituencyStations": 210,
+          "constituencyWards": 7,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4915,
+          "name": "KAPCHOK",
+          "code": "KAPCHOK",
+          "constituencyId": 131,
+          "constituencyName": "Kacheliba",
+          "constituencyCode": "131",
+          "stations": 26,
+          "constituencyStations": 210,
+          "constituencyWards": 7,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": []
+  },
+  "wards": [
+    {
+      "id": 3817,
+      "name": "Kapckok",
+      "code": "0653",
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 0
+    },
+    {
+      "id": 4915,
+      "name": "KAPCHOK",
+      "code": "KAPCHOK",
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 7416
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 131,
+      "name": "Kacheliba",
+      "code": "131",
+      "county_id": 24,
+      "registered_voters": 51146
+    }
+  ],
+  "stations": [
+    {
+      "id": 22827,
+      "name": "LOSAM PRIMARY SCHOOL",
+      "code": "024131065408201",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 303
+    },
+    {
+      "id": 22828,
+      "name": "KODERA PRIMARY SCHOOL",
+      "code": "024131065408301",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 277
+    },
+    {
+      "id": 22829,
+      "name": "KONYAO SECONDARY SCHOOL",
+      "code": "024131065408401",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 1188
+    },
+    {
+      "id": 22830,
+      "name": "KAMECHWA PRIMARY SCHOOL",
+      "code": "024131065408501",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 103
+    },
+    {
+      "id": 22831,
+      "name": "TUWIIT PRIMARY SCHOOL",
+      "code": "024131065408601",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 174
+    },
+    {
+      "id": 22832,
+      "name": "NGOTUT PRIMARY SCHOOL",
+      "code": "024131065408701",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 1018
+    },
+    {
+      "id": 22833,
+      "name": "ROCK-VALLEY PRIMARY SCHOOL",
+      "code": "024131065408801",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 421
+    },
+    {
+      "id": 22834,
+      "name": "KOPEYON NURSERY SCHOOL",
+      "code": "024131065408901",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 111
+    },
+    {
+      "id": 22835,
+      "name": "KALUKUNA PRIMARY SCHOOL",
+      "code": "024131065409001",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 120
+    },
+    {
+      "id": 22836,
+      "name": "AMALER WATER POINT",
+      "code": "024131065409101",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 444
+    },
+    {
+      "id": 22837,
+      "name": "CHEPTOKOL PRIMARY SCHOOL",
+      "code": "024131065409201",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 180
+    },
+    {
+      "id": 22838,
+      "name": "KARIAMAWOI PRIMARY SCHOOL",
+      "code": "024131065409301",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 152
+    },
+    {
+      "id": 22839,
+      "name": "KAWOLOK PRIMARY SCHOOL",
+      "code": "024131065409401",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 240
+    },
+    {
+      "id": 22840,
+      "name": "ST. DORCAS PRIMARY SCHOOL",
+      "code": "024131065409501",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 495
+    },
+    {
+      "id": 22841,
+      "name": "LOKASUR NURSERY SCHOOL",
+      "code": "024131065409601",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 247
+    },
+    {
+      "id": 22842,
+      "name": "LOKITEDEL MANYATTA",
+      "code": "024131065409701",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 478
+    },
+    {
+      "id": 22843,
+      "name": "NAPITIRO PRIMARY SCHOOL",
+      "code": "024131065409801",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 669
+    },
+    {
+      "id": 22844,
+      "name": "NASAKAM ECDE CENTRE",
+      "code": "024131065419001",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 63
+    },
+    {
+      "id": 22845,
+      "name": "CHITKAGH PRIMARY SCHOOL",
+      "code": "024131065419101",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 110
+    },
+    {
+      "id": 22846,
+      "name": "KASES ECDE CENTRE",
+      "code": "024131065419201",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 67
+    },
+    {
+      "id": 22847,
+      "name": "BARAKA PRIMARY SCHOOL",
+      "code": "024131065419301",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 86
+    },
+    {
+      "id": 22848,
+      "name": "PISAA ECDE CENTRE",
+      "code": "024131065419401",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 66
+    },
+    {
+      "id": 22849,
+      "name": "KODERA ECDE CENTRE",
+      "code": "024131065419501",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 70
+    },
+    {
+      "id": 22850,
+      "name": "MENJOO ECDE CENTRE",
+      "code": "024131065419601",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 177
+    },
+    {
+      "id": 22851,
+      "name": "LOKWALOI ECDE CENTRE",
+      "code": "024131065419701",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 74
+    },
+    {
+      "id": 22852,
+      "name": "MOTUI ECDE CENTRE",
+      "code": "024131065419801",
+      "stream": "1",
+      "ward_id": 4915,
+      "constituency_id": 131,
+      "county_id": 24,
+      "registered_voters": 83
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}

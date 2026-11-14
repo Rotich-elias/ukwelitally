@@ -1,0 +1,276 @@
+{
+  "created_at": "2026-11-14T11:55:24.513Z",
+  "county": "Wajir",
+  "plan": {
+    "county": {
+      "id": 8,
+      "name": "Wajir"
+    },
+    "pairs": [
+      {
+        "keeper": {
+          "id": 4857,
+          "name": "Ademasajide",
+          "code": "0178",
+          "constituencyId": 36,
+          "constituencyName": "Wajir West",
+          "constituencyCode": "036",
+          "stations": 0,
+          "constituencyStations": 90,
+          "constituencyWards": 5,
+          "numeric": true
+        },
+        "duplicate": {
+          "id": 4896,
+          "name": "ADAMASAJIDE",
+          "code": "ADAMASAJIDE",
+          "constituencyId": 36,
+          "constituencyName": "Wajir West",
+          "constituencyCode": "036",
+          "stations": 20,
+          "constituencyStations": 90,
+          "constituencyWards": 5,
+          "numeric": false
+        },
+        "reason": "same constituency (spelling)"
+      }
+    ],
+    "notes": [],
+    "staleConstituencies": []
+  },
+  "wards": [
+    {
+      "id": 4857,
+      "name": "Ademasajide",
+      "code": "0178",
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 0
+    },
+    {
+      "id": 4896,
+      "name": "ADAMASAJIDE",
+      "code": "ADAMASAJIDE",
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 6541
+    }
+  ],
+  "constituencies": [
+    {
+      "id": 36,
+      "name": "Wajir West",
+      "code": "036",
+      "county_id": 8,
+      "registered_voters": 31334
+    }
+  ],
+  "stations": [
+    {
+      "id": 14868,
+      "name": "ADEMASAJIDA PRIMARY",
+      "code": "008036017802801",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 704
+    },
+    {
+      "id": 14869,
+      "name": "LOLKUTA SOUTH PRIMARY",
+      "code": "008036017802901",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 218
+    },
+    {
+      "id": 14870,
+      "name": "HADADO SOUTH PRIMARY",
+      "code": "008036017803001",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 351
+    },
+    {
+      "id": 14871,
+      "name": "HADADO SOUTH MARKET",
+      "code": "008036017803101",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 505
+    },
+    {
+      "id": 14872,
+      "name": "KANCHARA WEST PRIMARY",
+      "code": "008036017803201",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 372
+    },
+    {
+      "id": 14873,
+      "name": "WARA MOBILE",
+      "code": "008036017803301",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 82
+    },
+    {
+      "id": 14874,
+      "name": "KANCHARA NORTH CENTRE",
+      "code": "008036017803401",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 328
+    },
+    {
+      "id": 14875,
+      "name": "GESDOR NURSARY",
+      "code": "008036017803501",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 108
+    },
+    {
+      "id": 14876,
+      "name": "WASO GIRLS PRIMARY",
+      "code": "008036017803601",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 357
+    },
+    {
+      "id": 14877,
+      "name": "ADEMASAJIDA SECONDARY",
+      "code": "008036017803701",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 563
+    },
+    {
+      "id": 14878,
+      "name": "LAGHDIMA PRIMARY",
+      "code": "008036017803801",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 937
+    },
+    {
+      "id": 14879,
+      "name": "GUTICHA",
+      "code": "008036017803901",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 462
+    },
+    {
+      "id": 14880,
+      "name": "LMD PRIMARY",
+      "code": "008036017804001",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 272
+    },
+    {
+      "id": 14881,
+      "name": "BILIQ CENTRE",
+      "code": "008036017808301",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 102
+    },
+    {
+      "id": 14882,
+      "name": "MACANEY CENTRE",
+      "code": "008036017808401",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 312
+    },
+    {
+      "id": 14883,
+      "name": "JIRTOY MOBILE",
+      "code": "008036017808501",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 263
+    },
+    {
+      "id": 14884,
+      "name": "BURIYA DAM",
+      "code": "008036017808601",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 120
+    },
+    {
+      "id": 14885,
+      "name": "RIQA-NORTH CENTRE",
+      "code": "008036017808701",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 46
+    },
+    {
+      "id": 14886,
+      "name": "WELDIRI CENTRE",
+      "code": "008036017808801",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 176
+    },
+    {
+      "id": 14887,
+      "name": "WASO GIRLS SECONDARY",
+      "code": "008036017808901",
+      "stream": "1",
+      "ward_id": 4896,
+      "constituency_id": 36,
+      "county_id": 8,
+      "registered_voters": 263
+    }
+  ],
+  "counts": {
+    "candidate_wards": 0,
+    "candidate_constituencies": 0,
+    "volunteer_wards": 0,
+    "volunteer_constituencies": 0
+  }
+}
